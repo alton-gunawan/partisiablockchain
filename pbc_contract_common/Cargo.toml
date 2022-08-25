@@ -1,0 +1,21 @@
+[package]
+name = "pbc_contract_common"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[features]
+abi = ["pbc_traits/abi"]
+zk = []
+test_examples = []
+
+[dependencies]
+pbc_external = { path = "../pbc_external" }
+sha2 = "0.9"
+read_write_state_derive = { path = "../read_write_state_derive" }
+read_write_rpc_derive = { path = "../read_write_rpc_derive" }
+quote = "1.0"
+pbc_traits = { path = "../pbc_traits" }
+
+[dev-dependencies]
+file_diff = "1.0.0"

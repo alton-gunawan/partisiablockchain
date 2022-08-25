@@ -1,0 +1,29 @@
+[package]
+name = "pbc_contract_codegen"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+resolver = "1"
+
+[features]
+zk = ["pbc_contract_common/zk"]
+abi = ["pbc_contract_common/abi", "pbc_traits/abi", "pbc_lib/abi"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+sha2 = "0.9.5"
+syn = { version = "1.0.89", features = ["full"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+pbc_contract_common = { path = "../pbc_contract_common" }
+pbc_traits = {path = "../pbc_traits"}
+pbc_external = { path = "../pbc_external" }
+pbc_lib = { path = "../pbc_lib"}
+
+[dev-dependencies]
+pbc_contract_common = { path = "../pbc_contract_common", features = ["test_examples"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+trybuild = "1.0.55"

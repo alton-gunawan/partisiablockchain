@@ -1,0 +1,7 @@
+error: custom attribute panicked
+ --> tests/action/fail/two_arguments_not_correct_types.rs:6:1
+  |
+6 | #[action]
+  | ^^^^^^^^^
+  |
+  = help: message: Functions annotated with this macro must have at least 1 return values, but had only 0

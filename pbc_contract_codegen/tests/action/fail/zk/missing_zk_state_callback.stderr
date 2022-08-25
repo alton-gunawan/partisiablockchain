@@ -1,0 +1,7 @@
+error: custom attribute panicked
+ --> tests/action/fail/zk/missing_zk_state_callback.rs:5:1
+  |
+5 | #[callback(shortname = 0x02)]
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = help: message: Functions annotated with this macro must have at least 4 arguments, but had only 3

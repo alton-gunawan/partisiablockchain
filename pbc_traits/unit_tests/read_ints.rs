@@ -1,0 +1,298 @@
+use std::fmt::Debug;
+use std::io::Cursor;
+
+use super::ReadInt;
+
+fn assert_val<T: Eq + Debug>(buf: Vec<u8>, func: fn(&mut Cursor<Vec<u8>>) -> T, expected: T) {
+    let mut cursor = Cursor::new(buf);
+    let actual = func(&mut cursor);
+    assert_eq!(actual, expected);
+}
+
+fn assert_u8(vec: Vec<u8>, expected: u8) {
+    assert_val(vec, ReadInt::read_u8, expected);
+}
+
+fn assert_i8(vec: Vec<u8>, expected: i8) {
+    assert_val(vec, ReadInt::read_i8, expected);
+}
+
+fn assert_u16(vec: Vec<u8>, expected: u16) {
+    assert_val(vec, ReadInt::read_u16_be, expected);
+}
+
+fn assert_i16(vec: Vec<u8>, expected: i16) {
+    assert_val(vec, ReadInt::read_i16_be, expected);
+}
+
+fn assert_u32(vec: Vec<u8>, expected: u32) {
+    assert_val(vec, ReadInt::read_u32_be, expected);
+}
+
+fn assert_i32(vec: Vec<u8>, expected: i32) {
+    assert_val(vec, ReadInt::read_i32_be, expected);
+}
+
+fn assert_u64(vec: Vec<u8>, expected: u64) {
+    assert_val(vec, ReadInt::read_u64_be, expected);
+}
+
+fn assert_i64(vec: Vec<u8>, expected: i64) {
+    assert_val(vec, ReadInt::read_i64_be, expected);
+}
+
+fn assert_u128(vec: Vec<u8>, expected: u128) {
+    assert_val(vec, ReadInt::read_u128_be, expected);
+}
+
+fn assert_i128(vec: Vec<u8>, expected: i128) {
+    assert_val(vec, ReadInt::read_i128_be, expected);
+}
+
+#[test]
+pub fn read_u8() {
+    for i in 0..255u8 {
+        assert_u8(vec![i], i);
+    }
+
+    assert_u8(vec![0x00], 0);
+    assert_u8(vec![0x01], 1);
+    assert_u8(vec![0xFF], 255);
+    assert_u8(vec![0xBE, 0xEF], 190);
+}
+
+#[test]
+pub fn read_i8() {
+    assert_i8(vec![0], 0);
+    assert_i8(vec![1], 1);
+    assert_i8(vec![127], 127);
+    assert_i8(vec![128], -128);
+    assert_i8(vec![255], -1);
+}
+
+#[test]
+pub fn read_u16() {
+    assert_u16(vec![0x00, 0x01], 1);
+    assert_u16(vec![0x01, 0x01], 257);
+    assert_u16(vec![0xFF, 0x01], 65281);
+    assert_u16(vec![0x01, 0xFF], 511);
+    assert_u16(vec![0xFF, 0xFF], 65535);
+}
+
+#[test]
+#[should_panic]
+pub fn read_u16_fail() {
+    assert_u16(vec![0x00], 0);
+}
+
+#[test]
+pub fn read_i16() {
+    assert_i16(vec![0x00, 0x01], 1);
+    assert_i16(vec![0x01, 0x01], 257);
+    assert_i16(vec![0xFF, 0x01], -255);
+    assert_i16(vec![0x01, 0xFF], 511);
+    assert_i16(vec![0xFF, 0xFF], -1);
+
+    assert_i16(vec![0x80, 0x00], i16::MIN);
+    assert_i16(vec![0x7F, 0xFF], i16::MAX);
+}
+
+#[test]
+#[should_panic]
+pub fn read_i16_fail() {
+    assert_i16(vec![0x00], 0);
+}
+
+#[test]
+pub fn read_u32() {
+    assert_u32(vec![0x00, 0x00, 0x00, 0x01], 0x00000001);
+    assert_u32(vec![0x00, 0x00, 0x01, 0x01], 0x00000101);
+    assert_u32(vec![0x00, 0x01, 0x01, 0x01], 0x00010101);
+    assert_u32(vec![0x01, 0x01, 0x01, 0x01], 0x01010101);
+    assert_u32(vec![0xF7, 0xFF, 0xFF, 0xFF], 0xF7FFFFFF);
+    assert_u32(vec![0xFF, 0xFF, 0xFF, 0xFF], 0xFFFFFFFF);
+}
+
+#[test]
+#[should_panic]
+pub fn read_u32_fail() {
+    assert_u32(vec![0x00, 0x00, 0x00], 0);
+}
+
+#[test]
+pub fn read_i32() {
+    assert_i32(vec![0x00, 0x00, 0x00, 0x01], 0x00000001);
+    assert_i32(vec![0x00, 0x00, 0x01, 0x01], 0x00000101);
+    assert_i32(vec![0x00, 0x01, 0x01, 0x01], 0x00010101);
+    assert_i32(vec![0x01, 0x01, 0x01, 0x01], 0x01010101);
+
+    assert_i32(vec![0xF7, 0xFF, 0xFF, 0xFF], -134217729);
+    assert_i32(vec![0xFF, 0xFF, 0xFF, 0xFF], -1);
+
+    assert_i32(vec![0x80, 0x00, 0x00, 0x00], i32::MIN);
+    assert_i32(vec![0x7F, 0xFF, 0xFF, 0xFF], i32::MAX);
+}
+
+#[test]
+#[should_panic]
+pub fn read_i32_fail() {
+    assert_i32(vec![0x00, 0x00, 0x00], 0);
+}
+
+#[test]
+pub fn read_u64() {
+    assert_u64(
+        vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01],
+        0x0000000000000001,
+    );
+    assert_u64(
+        vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01],
+        0x0000000000000101,
+    );
+    assert_u64(
+        vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01],
+        0x0000000000010101,
+    );
+    assert_u64(
+        vec![0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01],
+        0x0000000001010101,
+    );
+
+    assert_u64(
+        vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+        u64::MIN,
+    );
+    assert_u64(
+        vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
+        u64::MAX,
+    );
+}
+
+#[test]
+#[should_panic]
+pub fn read_u64_fail() {
+    assert_u64(vec![0; 7], 0);
+}
+
+#[test]
+pub fn read_i64() {
+    assert_u64(
+        vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01],
+        0x0000000000000001,
+    );
+    assert_u64(
+        vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01],
+        0x0000000000000101,
+    );
+    assert_u64(
+        vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01],
+        0x0000000000010101,
+    );
+    assert_u64(
+        vec![0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01],
+        0x0000000001010101,
+    );
+
+    assert_i64(
+        vec![0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+        i64::MIN,
+    );
+    assert_i64(
+        vec![0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
+        i64::MAX,
+    );
+}
+
+#[test]
+#[should_panic]
+pub fn read_i64_fail() {
+    assert_i64(vec![0; 7], 0);
+}
+
+#[test]
+pub fn read_u128() {
+    assert_u128(
+        vec![
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x01,
+        ],
+        0x00000000000000000000000000000001,
+    );
+    assert_u128(
+        vec![
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x01, 0x01,
+        ],
+        0x00000000000000000000000000000101,
+    );
+    assert_u128(
+        vec![
+            0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x01, 0x01,
+        ],
+        0xFF000000000000000000000000000101,
+    );
+
+    assert_u128(
+        vec![
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00,
+        ],
+        u128::MIN,
+    );
+
+    assert_u128(
+        vec![
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF,
+        ],
+        u128::MAX,
+    );
+}
+
+#[test]
+#[should_panic]
+pub fn read_i128_fail() {
+    assert_i128(vec![0; 15], 0);
+}
+
+#[test]
+pub fn read_i128() {
+    assert_i128(
+        vec![
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x01,
+        ],
+        0x00000000000000000000000000000001,
+    );
+    assert_i128(
+        vec![
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x01, 0x01,
+        ],
+        257,
+    );
+    assert_i128(
+        vec![
+            0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x01, 0x01,
+        ],
+        -1329227995784915872903807060280344319,
+    );
+
+    assert_i128(
+        vec![
+            0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00,
+        ],
+        i128::MIN,
+    );
+
+    assert_i128(
+        vec![
+            0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF,
+        ],
+        i128::MAX,
+    );
+}

@@ -1,0 +1,10 @@
+[package]
+name = "derive_commons"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[dependencies]
+syn = "1.0"
+quote = "1.0"
+proc-macro2 = "1.0"
