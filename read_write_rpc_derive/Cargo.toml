@@ -1,0 +1,14 @@
+[package]
+name = "read_write_rpc_derive"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "1.0"
+quote = "1.0"
+proc-macro2 = "1.0"
+derive_commons = { path = "../derive_commons" }

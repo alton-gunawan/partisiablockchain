@@ -1,0 +1,13 @@
+[workspace]
+members = [
+    "create_type_spec_derive",
+    "derive_commons",
+    "pbc_contract_common",
+    "pbc_contract_codegen",
+    "pbc_external",
+    "pbc_traits",
+    "pbc_lib",
+    "read_write_rpc_derive",
+    "read_write_state_derive",
+    "sdk_tests"
+]

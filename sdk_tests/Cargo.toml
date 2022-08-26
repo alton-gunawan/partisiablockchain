@@ -1,0 +1,28 @@
+[package]
+name = "sdk_tests"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+resolver = "1"
+
+[lib]
+
+[dependencies]
+derive_commons = { path = "../derive_commons" }
+pbc_traits = { path = "../pbc_traits" }
+create_type_spec_derive = { path = "../create_type_spec_derive" }
+pbc_contract_common = { path = "../pbc_contract_common" }
+pbc_contract_codegen = { path = "../pbc_contract_codegen" }
+read_write_rpc_derive = { path = "../read_write_rpc_derive" }
+read_write_state_derive = { path = "../read_write_state_derive" }
+pbc_lib = { path = "../pbc_lib" }
+
+[dev-dependencies]
+trybuild = "1.0.55"
+syn = "1.0"
+quote = "1.0"
+proc-macro2 = "1.0"
+
+[features]
+abi = ["pbc_contract_common/abi", "pbc_contract_codegen/abi", "pbc_traits/abi", "create_type_spec_derive/abi", "pbc_lib/abi"]
+zk = ["pbc_contract_common/zk", "pbc_contract_codegen/zk"]

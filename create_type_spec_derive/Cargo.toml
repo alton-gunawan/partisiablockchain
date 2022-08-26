@@ -1,0 +1,19 @@
+[package]
+name = "create_type_spec_derive"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[features]
+abi = []
+
+[lib]
+proc-macro = true
+
+[dependencies]
+derive_commons = { path = "../derive_commons" }
+
+syn = "1.0"
+quote = "1.0"
+proc-macro2 = "1.0"
+uuid = { version = "0.8", features = ["v4"] }

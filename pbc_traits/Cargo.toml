@@ -1,0 +1,11 @@
+[package]
+name = "pbc_traits"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[features]
+abi = []
+
+[dependencies]
+quote = "1.0"
