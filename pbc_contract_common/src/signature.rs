@@ -8,7 +8,7 @@ use read_write_state_derive::ReadWriteState;
 /// # Invariants
 ///
 /// Cannot be manually created; must be retrieved from state.
-#[derive(PartialEq, ReadWriteRPC, ReadWriteState, Debug)]
+#[derive(PartialEq, Eq, ReadWriteRPC, ReadWriteState, Debug, Clone)]
 pub struct Signature {
     /// Id used to recover public key when verifying signature.
     recovery_id: u8,

@@ -99,7 +99,7 @@ mod test_abi_serialization {
     use crate::FunctionName;
 
     fn interesting_shortname_values() -> Vec<(u32, Vec<u8>)> {
-        return vec![
+        vec![
             (0, vec![0x00]),
             (1, vec![0x01]),
             (127, vec![0x7F]),
@@ -107,7 +107,7 @@ mod test_abi_serialization {
             (256, vec![0x80, 0x02]),
             (1000, vec![0xe8, 0x07]),
             (586977299, vec![0x93, 0xA0, 0xF2, 0x97, 0x02]),
-        ];
+        ]
     }
 
     #[test]
