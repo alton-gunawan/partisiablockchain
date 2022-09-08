@@ -16,7 +16,7 @@ use std::io::{Read, Write};
 ///
 /// Cannot be manually created; must be retrieved from state.
 #[repr(transparent)]
-#[derive(PartialEq, ReadWriteRPC, ReadWriteState, Debug, Clone, Copy)]
+#[derive(PartialEq, Eq, ReadWriteRPC, ReadWriteState, Debug, Clone, Copy)]
 #[non_exhaustive]
 pub struct SecretVarId {
     raw_id: u32,
@@ -42,7 +42,7 @@ type SecretInputId = SecretVarId;
 ///
 /// Cannot be manually created; must be retrieved from state.
 #[repr(transparent)]
-#[derive(PartialEq, ReadWriteRPC, Debug, Clone, Copy)]
+#[derive(PartialEq, Eq, ReadWriteRPC, Debug, Clone, Copy)]
 #[non_exhaustive]
 pub struct AttestationId {
     raw_id: u32,
@@ -86,7 +86,7 @@ pub struct DataAttestation {
 ///
 /// Cannot be manually created; must be retrieved from state.
 #[repr(u8)]
-#[derive(Debug, PartialEq, ReadWriteRPC)]
+#[derive(Debug, PartialEq, Eq, ReadWriteRPC)]
 pub enum CalculationStatus {
     /// Nodes are idling, ready for input. Must be manually moved to [`Calculating`](Self::Calculating) with the
     /// [`ZkStateChange::StartComputation`] action.

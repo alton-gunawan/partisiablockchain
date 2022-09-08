@@ -127,7 +127,7 @@ mod serialize_vec {
                 let (prefix, middle, suffix) = vec.align_to::<u8>();
                 assert!(prefix.is_empty());
                 assert!(suffix.is_empty());
-                writer.write_all(&*middle)?;
+                writer.write_all(middle)?;
             }
         }
         Ok(())

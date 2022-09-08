@@ -38,7 +38,7 @@ unsafe fn find_state_index(state_name: String, types: &[TypeAbi]) -> usize {
         state_name
     );
 
-    potential_state_indices.get(0).cloned().unwrap()
+    potential_state_indices.first().cloned().unwrap()
 }
 
 /// Generates the ABI.

@@ -7,6 +7,7 @@ members = [
     "pbc_external",
     "pbc_traits",
     "pbc_lib",
+    "pbc_zk",
     "read_write_rpc_derive",
     "read_write_state_derive",
     "sdk_tests"
