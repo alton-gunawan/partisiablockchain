@@ -1,6 +1,6 @@
 
 use pbc_contract_codegen::init;
-use pbc_traits::ReadWriteRPC;
+use pbc_traits::WriteRPC;
 use pbc_contract_common::context::ContractContext;
 use pbc_contract_common::test_examples::{EXAMPLE_CONTEXT,example_zk_state};
 

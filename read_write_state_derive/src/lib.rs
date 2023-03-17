@@ -7,10 +7,10 @@ extern crate syn;
 
 use proc_macro::TokenStream;
 
-use derive_commons::impl_read_write;
+use derive_commons::{impl_read_write, ReadWriteGenType};
 
-/// Implement `ReadWriteState` for the annotated struct.
-#[proc_macro_derive(ReadWriteState)]
+/// Implement `ReadWriteState` for the annotated struct and enums.
+#[proc_macro_derive(ReadWriteState, attributes(discriminant))]
 pub fn read_write(input: TokenStream) -> TokenStream {
     // Parse the string representation
     let ast = syn::parse(input).unwrap();
@@ -22,6 +22,7 @@ pub fn read_write(input: TokenStream) -> TokenStream {
         format_ident!("state_read_from"),
         format_ident!("state_write_to"),
         Some(make_serialize_by_copy_constant),
+        ReadWriteGenType::Combined,
     );
 
     // Return the generated impl
@@ -43,12 +44,15 @@ fn make_serialize_by_copy_constant(
 ) -> proc_macro2::TokenStream {
     let const_id = format_ident!("SERIALIZABLE_BY_COPY");
     let expression = match supported_kind {
-        derive_commons::SupportedKind::StructWithNamedFields(fields) => {
+        derive_commons::SupportedKind::StructWithNamedFields { fields } => {
             let fieldtypes: Vec<_> = fields.iter().map(derive_commons::field_to_type).collect();
             make_serialize_by_copy_constant_struct(&fieldtypes, trait_name, &const_id)
         }
-        derive_commons::SupportedKind::DiscriminatedCstyleEnum(_discriminant_type, _variants) => {
+        derive_commons::SupportedKind::DiscriminatedCstyleEnum { .. } => {
             quote! { true }
+        }
+        derive_commons::SupportedKind::ItemStructEnum { .. } => {
+            quote! { false }
         }
     };
     quote! {

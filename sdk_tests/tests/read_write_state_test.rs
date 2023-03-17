@@ -208,6 +208,16 @@ enum EnumWithConstantDiscriminants {
     Var2 = DISCR_VAR2,
 }
 
+#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+enum EnumItemStruct {
+    #[discriminant(0)]
+    A { a: u8 },
+    #[discriminant(3)]
+    B { a: u8, b: u8 },
+    #[discriminant(125)]
+    C { a: SimpleStruct },
+}
+
 // Tests
 
 #[test]
@@ -708,6 +718,18 @@ pub fn serialize_enum_with_constant_fields() {
 }
 
 #[test]
+pub fn serialize_enum_item_struct() {
+    let my_enum_a = EnumItemStruct::A { a: 1 };
+    let my_enum_b = EnumItemStruct::B { a: 2, b: 3 };
+    let my_enum_c = EnumItemStruct::C {
+        a: SimpleStruct { a: 0 },
+    };
+    read_write_state_roundtrip_with_eq(&my_enum_a, &[0x00, 0x01]);
+    read_write_state_roundtrip_with_eq(&my_enum_b, &[0x03, 0x02, 0x03]);
+    read_write_state_roundtrip_with_eq(&my_enum_c, &[0x7D, 0x00]);
+}
+
+#[test]
 #[allow(clippy::assertions_on_constants)]
 pub fn derive_serializable_by_copy() {
     assert!(EmptyStruct::SERIALIZABLE_BY_COPY);
@@ -745,4 +767,7 @@ pub fn derive_serializable_by_copy() {
     // Enum StatusEnum
     assert!(StatusEnum::SERIALIZABLE_BY_COPY);
     assert!(EnumWithConstantDiscriminants::SERIALIZABLE_BY_COPY);
+
+    // EnumItemStruct
+    assert!(!EnumItemStruct::SERIALIZABLE_BY_COPY);
 }

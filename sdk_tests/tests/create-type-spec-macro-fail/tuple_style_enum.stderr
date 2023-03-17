@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> tests/create-type-spec-macro-fail/tuple_style_enum.rs:4:10
+  |
+4 | #[derive(CreateTypeSpec)]
+  |          ^^^^^^^^^^^^^^
+  |
+  = help: message: Derive CreateTypeSpec only supports explicitly discriminated enums consisting of struct variants

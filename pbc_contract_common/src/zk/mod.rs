@@ -2,13 +2,17 @@
 //!
 //! These should be used in conjunction with the Zk macros in `pbc_contract_codegen`.
 
+use std::io::{Read, Write};
+
+use create_type_spec_derive::CreateTypeSpecInternal;
+use pbc_traits::WriteInt;
+use pbc_traits::{ReadRPC, ReadWriteState, WriteRPC};
+use read_write_rpc_derive::ReadRPC;
+use read_write_rpc_derive::WriteRPC;
+use read_write_state_derive::ReadWriteState;
+
 use crate::address::Address;
 use crate::signature::Signature;
-use pbc_traits::WriteInt;
-use pbc_traits::{ReadWriteRPC, ReadWriteState};
-use read_write_rpc_derive::ReadWriteRPC;
-use read_write_state_derive::ReadWriteState;
-use std::io::{Read, Write};
 
 /// Identifier for a secret variable.
 ///
@@ -16,7 +20,9 @@ use std::io::{Read, Write};
 ///
 /// Cannot be manually created; must be retrieved from state.
 #[repr(transparent)]
-#[derive(PartialEq, Eq, ReadWriteRPC, ReadWriteState, Debug, Clone, Copy)]
+#[derive(
+    PartialEq, Eq, ReadRPC, WriteRPC, ReadWriteState, Debug, Clone, Copy, CreateTypeSpecInternal,
+)]
 #[non_exhaustive]
 pub struct SecretVarId {
     raw_id: u32,
@@ -42,7 +48,7 @@ type SecretInputId = SecretVarId;
 ///
 /// Cannot be manually created; must be retrieved from state.
 #[repr(transparent)]
-#[derive(PartialEq, Eq, ReadWriteRPC, Debug, Clone, Copy)]
+#[derive(PartialEq, Eq, ReadRPC, WriteRPC, Debug, Clone, Copy)]
 #[non_exhaustive]
 pub struct AttestationId {
     raw_id: u32,
@@ -61,7 +67,7 @@ impl AttestationId {
 /// # Invariants
 ///
 /// Cannot be manually created; must be retrieved from state.
-#[derive(Debug, ReadWriteRPC)]
+#[derive(Debug, ReadRPC, WriteRPC)]
 #[non_exhaustive]
 pub struct DataAttestation {
     /// The id of this data attestation.
@@ -86,7 +92,7 @@ pub struct DataAttestation {
 ///
 /// Cannot be manually created; must be retrieved from state.
 #[repr(u8)]
-#[derive(Debug, PartialEq, Eq, ReadWriteRPC)]
+#[derive(Debug, PartialEq, Eq, ReadRPC, WriteRPC)]
 pub enum CalculationStatus {
     /// Nodes are idling, ready for input. Must be manually moved to [`Calculating`](Self::Calculating) with the
     /// [`ZkStateChange::StartComputation`] action.
@@ -133,7 +139,7 @@ pub struct ZkClosed<MetadataT: ReadWriteState> {
     pub data: Option<Vec<u8>>,
 }
 
-impl<MetadataT: ReadWriteState> ReadWriteRPC for ZkClosed<MetadataT> {
+impl<MetadataT: ReadWriteState> ReadRPC for ZkClosed<MetadataT> {
     fn rpc_read_from<T: Read>(reader: &mut T) -> Self {
         Self {
             variable_id: SecretVarId::rpc_read_from(reader),
@@ -143,7 +149,9 @@ impl<MetadataT: ReadWriteState> ReadWriteRPC for ZkClosed<MetadataT> {
             data: <Option<Vec<u8>>>::rpc_read_from(reader),
         }
     }
+}
 
+impl<MetadataT: ReadWriteState> WriteRPC for ZkClosed<MetadataT> {
     fn rpc_write_to<T: Write>(&self, writer: &mut T) -> std::io::Result<()> {
         self.variable_id.rpc_write_to(writer)?;
         self.owner.rpc_write_to(writer)?;
@@ -157,7 +165,7 @@ impl<MetadataT: ReadWriteState> ReadWriteRPC for ZkClosed<MetadataT> {
 ///
 /// - `<SecretMetadataT>`: Public state stored along with each variable.
 #[repr(C)]
-#[derive(Debug, ReadWriteRPC)]
+#[derive(Debug, ReadRPC, WriteRPC)]
 #[non_exhaustive]
 pub struct ZkState<SecretVarMetadataT: ReadWriteState> {
     /// The MPC's current state.
@@ -224,7 +232,7 @@ pub struct ZkInputDef<MetadataT: ReadWriteState> {
     pub metadata: MetadataT,
 }
 
-impl<MetadataT: ReadWriteState> ReadWriteRPC for ZkInputDef<MetadataT> {
+impl<MetadataT: ReadWriteState> ReadRPC for ZkInputDef<MetadataT> {
     fn rpc_read_from<T: Read>(reader: &mut T) -> Self {
         Self {
             expected_bit_lengths: <_>::rpc_read_from(reader),
@@ -232,7 +240,9 @@ impl<MetadataT: ReadWriteState> ReadWriteRPC for ZkInputDef<MetadataT> {
             metadata: <_>::state_read_from(reader),
         }
     }
+}
 
+impl<MetadataT: ReadWriteState> WriteRPC for ZkInputDef<MetadataT> {
     fn rpc_write_to<T: Write>(&self, writer: &mut T) -> std::io::Result<()> {
         self.expected_bit_lengths.rpc_write_to(writer)?;
         self.seal.rpc_write_to(writer)?;
@@ -256,6 +266,9 @@ pub enum ZkStateChange {
         /// Metadata associated which each output variable. Assumes each piece of metadata have
         /// been serialized manually.
         output_variable_metadata: Vec<Vec<u8>>,
+        /// Public variables to be given to the ZK computation, as function inputs. Assumes each piece of metadata have
+        /// been serialized manually.
+        input_arguments: Vec<Vec<u8>>,
     },
 
     /// Deletes pending input for the current user.
@@ -342,6 +355,26 @@ impl ZkStateChange {
     /// - The argument `output_variable_metadata` must have the same number of elements as is
     ///   outputted by the zk computation.
     pub fn start_computation<T: ReadWriteState>(output_variable_metadata: Vec<T>) -> Self {
+        ZkStateChange::start_computation_with_inputs::<T, bool>(output_variable_metadata, vec![])
+    }
+
+    /// Convenience function for creating instances of [`Self::StartComputation`], automatically
+    /// serializing metadata.
+    ///
+    /// Arguments:
+    /// - `output_variable_metadata`: Vector of pieces of metadata to associate with each output
+    ///   variable.
+    /// - `input_arguments`: Vector of pieces of public input to be given to the ZK computation.
+    ///
+    /// # Invariants
+    /// - The argument `output_variable_metadata` must have the same number of elements as is
+    ///   outputted by the zk computation.
+    /// - The argument `input_arguments` must have the same number of elements as the ZK
+    ///   computation have input arguments, and these must be of the same types.
+    pub fn start_computation_with_inputs<T: ReadWriteState, A: ReadWriteState>(
+        output_variable_metadata: Vec<T>,
+        input_arguments: Vec<A>,
+    ) -> Self {
         let output_variable_metadata: Vec<Vec<u8>> = output_variable_metadata
             .iter()
             .map(|x| {
@@ -350,12 +383,22 @@ impl ZkStateChange {
                 buf
             })
             .collect();
+
+        let input_arguments = input_arguments
+            .iter()
+            .map(|x| {
+                let mut buf = Vec::new();
+                x.state_write_to(&mut buf).unwrap();
+                buf
+            })
+            .collect();
+
         Self::StartComputation {
             output_variable_metadata,
+            input_arguments,
         }
     }
 
-    const DISCRIMINANT_START_COMPUTATION: u8 = 0x00;
     const DISCRIMINANT_DELETE_PENDING_VARIABLE: u8 = 0x01;
     const DISCRIMINANT_TRANSFER_VARIABLE: u8 = 0x02;
     const DISCRIMINANT_DELETE_VARIABLE: u8 = 0x03;
@@ -363,20 +406,19 @@ impl ZkStateChange {
     const DISCRIMINANT_OUTPUT_COMPLETE: u8 = 0x05;
     const DISCRIMINANT_CONTRACT_DONE: u8 = 0x06;
     const DISCRIMINANT_ATTEST: u8 = 0x07;
+    const DISCRIMINANT_START_COMPUTATION_WITH_INPUTS: u8 = 0x08;
 }
 
-impl ReadWriteRPC for ZkStateChange {
-    fn rpc_read_from<T: Read>(_reader: &mut T) -> Self {
-        unimplemented!("Cannot ZkStateChange::rpc_read_from");
-    }
-
+impl WriteRPC for ZkStateChange {
     fn rpc_write_to<T: Write>(&self, writer: &mut T) -> std::io::Result<()> {
         match self {
             Self::StartComputation {
                 output_variable_metadata,
+                input_arguments,
             } => {
-                writer.write_u8(Self::DISCRIMINANT_START_COMPUTATION)?;
-                output_variable_metadata.rpc_write_to(writer)
+                writer.write_u8(Self::DISCRIMINANT_START_COMPUTATION_WITH_INPUTS)?;
+                output_variable_metadata.rpc_write_to(writer)?;
+                input_arguments.rpc_write_to(writer)
             }
             Self::DeletePendingInput { variable } => {
                 writer.write_u8(Self::DISCRIMINANT_DELETE_PENDING_VARIABLE)?;

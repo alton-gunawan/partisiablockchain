@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> tests/create-type-spec-macro-fail/struct_enum_duplicate_discriminant.rs:4:10
+  |
+4 | #[derive(CreateTypeSpec)]
+  |          ^^^^^^^^^^^^^^
+  |
+  = help: message: Duplicate discriminant values

@@ -1,9 +1,10 @@
-use pbc_contract_common::address::AddressType;
-use pbc_contract_common::test_examples;
-use pbc_traits::{ReadWriteRPC, ReadWriteState};
 use std::fmt::Debug;
 
-fn canary_rpc_noeq<T: ReadWriteRPC>(example: &T) -> Vec<u8> {
+use pbc_contract_common::address::AddressType;
+use pbc_contract_common::test_examples;
+use pbc_traits::{ReadRPC, ReadWriteState, WriteRPC};
+
+fn canary_rpc_noeq<T: ReadRPC + WriteRPC>(example: &T) -> Vec<u8> {
     // Check serializable
     let mut buf_rpc_1 = Vec::with_capacity(21);
     example
@@ -24,7 +25,7 @@ fn canary_rpc_noeq<T: ReadWriteRPC>(example: &T) -> Vec<u8> {
     buf_rpc_2
 }
 
-fn canary_rpc<T: ReadWriteRPC + PartialEq + Debug>(example: &T) -> Vec<u8> {
+fn canary_rpc<T: ReadRPC + WriteRPC + PartialEq + Debug>(example: &T) -> Vec<u8> {
     // Check serializable
     let buf_rpc = canary_rpc_noeq(example);
 
@@ -49,7 +50,7 @@ fn canary_state<T: ReadWriteState + PartialEq + Debug>(example: &T) -> Vec<u8> {
     buf_state
 }
 
-fn canary_rpc_state_eq<T: ReadWriteState + ReadWriteRPC + PartialEq + Debug>(example: &T) {
+fn canary_rpc_state_eq<T: ReadWriteState + ReadRPC + WriteRPC + PartialEq + Debug>(example: &T) {
     // Check serializable identically
     let buf_rpc = canary_rpc(example);
     let buf_state = canary_state(example);

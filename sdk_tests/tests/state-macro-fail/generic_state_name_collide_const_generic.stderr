@@ -1,7 +1,0 @@
-error: proc-macro derive panicked
- --> tests/state-macro-fail/generic_state_name_collide_const_generic.rs:4:10
-  |
-4 | #[derive(ReadWriteState)]
-  |          ^^^^^^^^^^^^^^
-  |
-  = help: message: Const generic name ReadSomeState collides with generated type name.

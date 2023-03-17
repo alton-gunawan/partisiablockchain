@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 /// This trait adds the runtime type information needed to generate the [contract PBC ABI files](https://privacyblockchain.gitlab.io/language/rust-contract-sdk/abiv1.html).
 ///
@@ -80,15 +80,34 @@ impl<T: CreateTypeSpec> CreateTypeSpec for Vec<T> {
         format!("Vec<{}>", T::__ty_name())
     }
 
-    /// Ordinal is `0x0e` followed by ordinal of `T`, as defined in [ABI Spec](https://partisiablockchain.gitlab.io/documentation/abiv1.html).
     fn __ty_identifier() -> String {
         format!("Vec<{}>", T::__ty_identifier())
     }
 
+    /// Ordinal is `0x0e` followed by ordinal of `T`, as defined in [ABI Spec](https://partisiablockchain.gitlab.io/documentation/abiv1.html).
     fn __ty_spec_write(w: &mut Vec<u8>, lut: &BTreeMap<String, u8>) {
         // Vector is 0x0e followed by the spec for the parameter type
         w.push(0x0e);
         T::__ty_spec_write(w, lut);
+    }
+}
+
+/// Implementation of the [`CreateTypeSpec`] trait for [`VecDeque<T>`] for any `T` that implements
+/// [`CreateTypeSpec`].
+impl<T: CreateTypeSpec> CreateTypeSpec for VecDeque<T> {
+    /// Type name is constant string `VecDeque<T>`.
+    fn __ty_name() -> String {
+        format!("VecDeque<{}>", T::__ty_name())
+    }
+
+    fn __ty_identifier() -> String {
+        format!("VecDeque<{}>", T::__ty_identifier())
+    }
+
+    /// Ordinal is `0x0e` followed by ordinal of `T`, as defined in [ABI Spec](https://partisiablockchain.gitlab.io/documentation/abiv1.html).
+    fn __ty_spec_write(w: &mut Vec<u8>, lut: &BTreeMap<String, u8>) {
+        // Identical to Vec impl
+        Vec::<T>::__ty_spec_write(w, lut);
     }
 }
 

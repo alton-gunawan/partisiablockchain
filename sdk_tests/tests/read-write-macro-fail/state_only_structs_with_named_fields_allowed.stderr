@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> tests/read-write-macro-fail/state_only_structs_with_named_fields_allowed.rs:4:10
+  |
+4 | #[derive(ReadWriteState)]
+  |          ^^^^^^^^^^^^^^
+  |
+  = help: message: PBC serialization derives currently only supports named fields for structs

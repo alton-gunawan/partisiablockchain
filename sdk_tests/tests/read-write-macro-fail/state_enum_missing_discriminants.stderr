@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> tests/read-write-macro-fail/state_enum_missing_discriminants.rs:4:10
+  |
+4 | #[derive(ReadWriteState)]
+  |          ^^^^^^^^^^^^^^
+  |
+  = help: message: PBC serialization derives only supports explicitly discriminated C-style enums and enums consisting of struct variants

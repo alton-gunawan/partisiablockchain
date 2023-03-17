@@ -4,7 +4,7 @@ mod nonzk {
     use pbc_contract_common::context::ContractContext;
     use pbc_contract_common::events::EventGroup;
     use pbc_contract_common::test_examples::*;
-    use pbc_traits::ReadWriteRPC;
+    use pbc_traits::WriteRPC;
 
     #[init]
     fn initialize_with_zero_args(context: ContractContext) -> (u32, Vec<EventGroup>) {

@@ -1,6 +1,8 @@
 //! Contains data structures and code for handling blockchain signatures.
 
-use read_write_rpc_derive::ReadWriteRPC;
+use create_type_spec_derive::CreateTypeSpecInternal;
+use read_write_rpc_derive::ReadRPC;
+use read_write_rpc_derive::WriteRPC;
 use read_write_state_derive::ReadWriteState;
 
 /// Represents a blockchain signature.
@@ -8,7 +10,9 @@ use read_write_state_derive::ReadWriteState;
 /// # Invariants
 ///
 /// Cannot be manually created; must be retrieved from state.
-#[derive(PartialEq, Eq, ReadWriteRPC, ReadWriteState, Debug, Clone)]
+#[derive(
+    PartialEq, Eq, ReadRPC, WriteRPC, ReadWriteState, Debug, Clone, CreateTypeSpecInternal,
+)]
 pub struct Signature {
     /// Id used to recover public key when verifying signature.
     recovery_id: u8,

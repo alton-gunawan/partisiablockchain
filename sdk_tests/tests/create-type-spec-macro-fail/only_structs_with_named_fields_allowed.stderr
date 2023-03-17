@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> tests/create-type-spec-macro-fail/only_structs_with_named_fields_allowed.rs:4:10
+  |
+4 | #[derive(CreateTypeSpec)]
+  |          ^^^^^^^^^^^^^^
+  |
+  = help: message: Derive CreateTypeSpec only supports named fields for structs

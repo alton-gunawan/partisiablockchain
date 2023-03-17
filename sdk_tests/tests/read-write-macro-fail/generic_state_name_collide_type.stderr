@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> tests/read-write-macro-fail/generic_state_name_collide_type.rs:5:10
+  |
+5 | #[derive(ReadWriteState)]
+  |          ^^^^^^^^^^^^^^
+  |
+  = help: message: Type name ReadSomeState collides with generated type name.
