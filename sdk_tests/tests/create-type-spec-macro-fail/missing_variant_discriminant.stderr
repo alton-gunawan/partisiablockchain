@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> tests/create-type-spec-macro-fail/missing_variant_discriminant.rs:4:10
+  |
+4 | #[derive(CreateTypeSpec)]
+  |          ^^^^^^^^^^^^^^
+  |
+  = help: message: Attribute 'discriminant' is required for struct enum variants

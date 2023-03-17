@@ -24,7 +24,10 @@
 //! possiblity of callbacks (representing "I want a reply".) All interactions in an `EventGroup`
 //! shares gas costs uniformly.
 //!
-//! # Example usage
+//! It is furthermore possible to provide some data to a calling interaction.
+//! To provide said data, see the corresponding example usage down below. <br>
+//! Note: Creating an `EventGroup` holding both a callback and some return data is not allowed and will fail.
+//! # Example usage: Interaction with callback
 //!
 //! ```rust
 //! # use pbc_contract_common::events::*;
@@ -51,9 +54,23 @@
 //!
 //! let event_group: EventGroup = e.build();
 //! ```
+//! # Example usage: Return data
+//! ```rust
+//! # use pbc_contract_common::address::Shortname;
+//! # use pbc_contract_common::events::EventGroup;
+//! let SHORTNAME_RETURN_SOME_DATA: Shortname = Shortname::from_be_bytes(&[0x43]).unwrap();
+//!
+//! let mut e = EventGroup::builder();
+//!
+//! e.return_data("Hello World".to_string());
+//!
+//! let event_group: EventGroup = e.build();
+//! ```
 
-use pbc_traits::ReadWriteRPC;
-use read_write_rpc_derive::ReadWriteRPC;
+use pbc_traits::WriteRPC;
+
+use read_write_rpc_derive::ReadRPC;
+use read_write_rpc_derive::WriteRPC;
 
 use crate::address::{Address, Shortname, ShortnameCallback};
 
@@ -70,7 +87,7 @@ pub type GasCost = u64;
 /// - `cost` - the max cost of the interaction.
 ///
 /// Serialized with the RPC format.
-#[derive(ReadWriteRPC, Eq, PartialEq, Debug)]
+#[derive(ReadRPC, WriteRPC, Eq, PartialEq, Debug)]
 pub struct Interaction {
     dest: Address,
     payload: Vec<u8>,
@@ -85,10 +102,28 @@ pub struct Interaction {
 /// - `cost` - the max cost of the callback. If set to `None` the max cost is automatically set from the remaining gas.
 ///
 /// Serialized with the RPC format.
-#[derive(ReadWriteRPC, Eq, PartialEq, Debug)]
+#[derive(ReadRPC, WriteRPC, Eq, PartialEq, Debug)]
 pub struct Callback {
     payload: Vec<u8>,
     cost: Option<GasCost>,
+}
+
+/// Data to return to either a client or a contract.
+///
+/// - `data` - the raw RPC you want to return
+/// - `cost` - the max cost of the callback. If set to `None` the max cost is automatically set from the remaining gas.
+///
+/// Serialized with the RPC format.
+#[derive(ReadRPC, WriteRPC, Eq, PartialEq, Debug)]
+pub struct ReturnData {
+    data: Vec<u8>,
+}
+
+impl ReturnData {
+    /// Getter for test assertions
+    pub fn data(self) -> Vec<u8> {
+        self.data
+    }
 }
 
 /// The event group is a struct holding a list of events to send to other contracts and
@@ -97,96 +132,33 @@ pub struct Callback {
 /// See docs for `Interaction`.
 ///
 /// Serialized with the RPC format.
-#[derive(ReadWriteRPC, Eq, PartialEq, Debug)]
+#[derive(ReadRPC, WriteRPC, Eq, PartialEq, Debug)]
 pub struct EventGroup {
     callback_payload: Option<Vec<u8>>,
     callback_cost: Option<GasCost>,
     events: Vec<Interaction>,
+    return_data: Option<ReturnData>,
 }
 
 impl Default for EventGroup {
-    #[allow(deprecated)]
     fn default() -> Self {
-        EventGroup::new()
+        EventGroup::builder().build()
     }
 }
 
 impl EventGroup {
-    /// Produce new [`EventGroupBuilder`] with zero interactions.
-    #[deprecated(
-        note = "prefer using builder pattern, as it is more flexible. See EventGroup::builder"
-    )]
-    pub fn new() -> EventGroup {
-        EventGroup {
-            events: Vec::new(),
-            callback_payload: None,
-            callback_cost: None,
-        }
-    }
-
     /// Retrieves new [`EventGroupBuilder`] for constructing an event group, using builder pattern.
     pub fn builder() -> EventGroupBuilder {
         EventGroupBuilder {
             callback: None,
             interactions: vec![],
+            return_data: None,
         }
     }
 
-    /// Send an interaction with this current contract as sender.
-    ///
-    /// Params:
-    /// - `dest`: Address of contract to call.
-    /// - `payload`: Payload for the recipient contract.
-    /// - `cost`: How much gas to dedicate to the callback. If `None` the cost is automatically set
-    ///   from the remaining gas.
-    #[deprecated(
-        note = "prefer using builder pattern, as it is more flexible. See EventGroup::builder, EventGroupBuilder::call"
-    )]
-    pub fn send_from_contract(&mut self, dest: &Address, payload: Vec<u8>, cost: Option<GasCost>) {
-        self.events.push(Interaction {
-            dest: *dest,
-            payload,
-            from_original_sender: false,
-            cost,
-        })
-    }
-
-    /// Send an interaction with the original sender as sender.
-    ///
-    /// Params:
-    /// - `dest`: Address of contract to call.
-    /// - `payload`: Payload for the recipient contract.
-    /// - `cost`: How much gas to dedicate to the callback. If `None` the cost is automatically set
-    ///   from the remaining gas.
-    #[deprecated(
-        note = "prefer using builder pattern, as it is more flexible. See EventGroup::builder, EventGroupBuilder::call"
-    )]
-    pub fn send_from_original_sender(
-        &mut self,
-        dest: &Address,
-        payload: Vec<u8>,
-        cost: Option<GasCost>,
-    ) {
-        self.events.push(Interaction {
-            dest: *dest,
-            payload,
-            from_original_sender: true,
-            cost,
-        })
-    }
-
-    /// Register a callback on this event group.
-    ///
-    /// Params:
-    /// - `payload`: Data to accompany the callback once it occurs.
-    /// - `cost`: How much gas to dedicate to the callback. If `None` the cost is automatically set
-    ///   from the remaining gas.
-    #[deprecated(
-        note = "prefer using builder pattern, as it is more flexible. See EventGroup::builder, EventGroupBuilder::with_callback"
-    )]
-    pub fn register_callback(&mut self, payload: Vec<u8>, cost: Option<GasCost>) {
-        self.callback_payload = Some(payload);
-        self.callback_cost = cost;
+    /// Getter for test assertions
+    pub fn return_data(self) -> Option<ReturnData> {
+        self.return_data
     }
 }
 
@@ -196,6 +168,7 @@ impl EventGroup {
 pub struct EventGroupBuilder {
     callback: Option<Callback>,
     interactions: Vec<Interaction>,
+    return_data: Option<ReturnData>,
 }
 
 /// Builder object for [`Interaction`]; produced by [`EventGroupBuilder::call`].
@@ -204,7 +177,6 @@ pub struct EventGroupBuilder {
 pub struct InteractionBuilder<'a> {
     dest: Address,
     payload: Vec<u8>,
-    from_original_sender: bool,
     cost: Option<GasCost>,
     parent: &'a mut EventGroupBuilder,
 }
@@ -226,10 +198,20 @@ impl EventGroupBuilder {
         InteractionBuilder {
             dest,
             payload: shortname.bytes(),
-            from_original_sender: false,
             cost: None,
             parent: self,
         }
+    }
+
+    /// Register a new call with no payload with this [`EventGroupBuilder`].
+    /// This is used to ping a contract to check if it is alive.
+    pub fn ping(&mut self, dest: Address, cost: Option<GasCost>) {
+        self.interactions.push(Interaction {
+            dest,
+            payload: vec![],
+            from_original_sender: false,
+            cost,
+        })
     }
 
     /// Register new callback with the given event group.
@@ -241,31 +223,55 @@ impl EventGroupBuilder {
         }
     }
 
+    /// Register new return data with the given event group. Only a single type can be returned at a time.
+    /// If called multiple times, overwrites previous return data.
+    pub fn return_data<T: WriteRPC>(&mut self, return_value: T) {
+        let mut buffer: Vec<u8> = vec![];
+        return_value.rpc_write_to(&mut buffer).unwrap();
+        self.return_data = Some(ReturnData { data: buffer });
+    }
+
     /// Build new [`EventGroup`].
     pub fn build(self) -> EventGroup {
         // Determine callback attributes
         let (callback_payload, callback_cost) = match self.callback {
-            Some(x) => (Some(x.payload), x.cost),
+            Some(x) => {
+                if self.interactions.is_empty() {
+                    panic!("Attempted to build EventGroup with callback but no associated interactions")
+                } else {
+                    (Some(x.payload), x.cost)
+                }
+            }
             None => (None, None),
         };
 
-        //
+        let return_data = match self.return_data {
+            Some(data) => {
+                if callback_payload.is_none() && callback_cost.is_none() {
+                    Some(data)
+                } else {
+                    panic!("Attempted to build EventGroup with both callback and return data")
+                }
+            }
+            None => None,
+        };
+
         EventGroup {
             callback_payload,
             callback_cost,
             events: self.interactions,
+            return_data,
         }
     }
 }
 
 impl InteractionBuilder<'_> {
     /// Register that interaction should be treated as coming from the sender of the interaction
-    /// this code is running in.
+    /// this code is running in. This functionality has been removed.
     ///
-    /// Idempotent.
-    pub fn from_original_sender(mut self) -> Self {
-        self.from_original_sender = true;
-        self
+    #[deprecated(note = "Sending events from original sender is not supported.")]
+    pub fn from_original_sender(self) -> Self {
+        panic!("Sending events from original sender is not supported")
     }
 
     /// Register new argument for this interaction. This argument is automatically serialized. It
@@ -273,7 +279,7 @@ impl InteractionBuilder<'_> {
     /// contract's ABI.
     ///
     /// Can be called repeatedly.
-    pub fn argument<T: ReadWriteRPC>(mut self, arg: T) -> Self {
+    pub fn argument<T: WriteRPC>(mut self, arg: T) -> Self {
         arg.rpc_write_to(&mut self.payload).unwrap();
         self
     }
@@ -291,19 +297,19 @@ impl InteractionBuilder<'_> {
         self.parent.interactions.push(Interaction {
             dest: self.dest,
             payload: self.payload,
-            from_original_sender: self.from_original_sender,
+            from_original_sender: false, // disabled
             cost: self.cost,
         })
     }
 }
 
 impl CallbackBuilder<'_> {
-    /// Register new argument for this interaction. This argument is automatically serialized. It
+    /// Register new argument for this callback. This argument is automatically serialized. It
     /// is the programmer's responsibility to check that this type is correct, wrt. target
     /// contract's ABI.
     ///
     /// Can be called repeatedly.
-    pub fn argument<T: ReadWriteRPC>(mut self, arg: T) -> Self {
+    pub fn argument<T: WriteRPC>(mut self, arg: T) -> Self {
         arg.rpc_write_to(&mut self.payload).unwrap();
         self
     }

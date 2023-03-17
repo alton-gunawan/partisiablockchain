@@ -26,7 +26,7 @@ pub(crate) fn handle_state_macro(input: TokenStream) -> TokenStream {
         #stamped_versions
 
         #[repr(C)]
-        #[derive(Clone, InternalDeriveCreateType, InternalDeriveReadWriteState)]
+        #[derive(InternalDeriveCreateType, InternalDeriveReadWriteState)]
         #original_state_struct
 
         #[cfg(feature = "abi")]

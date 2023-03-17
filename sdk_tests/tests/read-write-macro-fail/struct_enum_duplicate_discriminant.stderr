@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> tests/read-write-macro-fail/struct_enum_duplicate_discriminant.rs:4:10
+  |
+4 | #[derive(ReadWriteState)]
+  |          ^^^^^^^^^^^^^^
+  |
+  = help: message: Duplicate discriminant values

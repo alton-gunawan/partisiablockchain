@@ -1,7 +1,7 @@
 error[E0308]: mismatched types
-  --> tests/action/fail/zk/not_real_zkstate.rs:17:1
+  --> tests/action/fail/zk/not_real_zkstate.rs:20:1
    |
-17 | #[action]
+20 | #[action]
    | ^^^^^^^^^
    | |
    | expected struct `pbc_contract_common::zk::ZkState`, found struct `ZkState`
@@ -12,9 +12,9 @@ error[E0308]: mismatched types
    = note: this error originates in the attribute macro `action` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0308]: mismatched types
-  --> tests/action/fail/zk/not_real_zkstate.rs:17:1
+  --> tests/action/fail/zk/not_real_zkstate.rs:20:1
    |
-17 | #[action]
+20 | #[action]
    | ^^^^^^^^^ expected struct `ZkState`, found struct `pbc_contract_common::zk::ZkState`
    |
    = note: expected struct `ZkState`

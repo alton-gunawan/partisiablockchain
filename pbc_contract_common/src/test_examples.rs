@@ -53,9 +53,18 @@ pub fn example_callback_context() -> CallbackContext {
     CallbackContext {
         success: true,
         results: vec![
-            ExecutionResult { succeeded: true },
-            ExecutionResult { succeeded: true },
-            ExecutionResult { succeeded: true },
+            ExecutionResult {
+                succeeded: true,
+                return_data: vec![],
+            },
+            ExecutionResult {
+                succeeded: true,
+                return_data: vec![],
+            },
+            ExecutionResult {
+                succeeded: true,
+                return_data: vec![],
+            },
         ],
     }
 }

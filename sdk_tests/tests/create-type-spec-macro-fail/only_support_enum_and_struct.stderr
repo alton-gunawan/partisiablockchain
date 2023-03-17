@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> tests/create-type-spec-macro-fail/only_support_enum_and_struct.rs:4:10
+  |
+4 | #[derive(CreateTypeSpec)]
+  |          ^^^^^^^^^^^^^^
+  |
+  = help: message: CreateTypeSpec derive does not support Union, currently only structs with named fields and explicitly discriminated enums consisting of struct variants

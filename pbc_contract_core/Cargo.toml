@@ -1,0 +1,17 @@
+[package]
+name = "pbc_contract_core"
+version = "0.5.0"
+edition = "2021"
+
+[features]
+abi = ["pbc_traits/abi"]
+
+[dependencies]
+sha2 = "0.9"
+read_write_state_derive = { path = "../read_write_state_derive" }
+read_write_rpc_derive = { path = "../read_write_rpc_derive" }
+pbc_traits = { path = "../pbc_traits" }
+
+[dev-dependencies]
+file_diff = "1.0.0"
+

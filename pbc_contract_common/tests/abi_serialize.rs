@@ -1,5 +1,5 @@
 #[cfg(feature = "abi")]
-use pbc_contract_common::abi::{AbiSerialize, FnAbi, NamedEntityAbi, TypeAbi};
+use pbc_contract_common::abi::{AbiSerialize, FnAbi, NamedEntityAbi, NamedTypeSpec};
 #[cfg(feature = "abi")]
 use pbc_contract_common::address::Shortname;
 #[cfg(feature = "abi")]
@@ -30,8 +30,10 @@ pub fn serialize_named_entity_0() {
 #[cfg(feature = "abi")]
 #[test]
 pub fn serialize_type_abi_0() {
-    let obj = TypeAbi::new::<u64>("name".to_string(), &BTreeMap::new());
+    let obj =
+        NamedTypeSpec::new_struct("name".to_string(), "some_uid".to_string(), vec![0x00, 0x00]);
     let expected_buf = [
+        1, // It's a struct
         0, 0, 0, 4, // Name Length
         0x6e, 0x61, 0x6d, 0x65, // Name
         0, 0, 0, 0, // Arguments length
@@ -42,13 +44,15 @@ pub fn serialize_type_abi_0() {
 #[cfg(feature = "abi")]
 #[test]
 pub fn serialize_type_abi_1() {
-    let mut obj = TypeAbi::new::<u64>("name".to_string(), &BTreeMap::new());
+    let mut obj =
+        NamedTypeSpec::new_struct("name".to_string(), "some_uid".to_string(), vec![0x00, 0x00]);
 
     let lut = BTreeMap::new();
     let field = NamedEntityAbi::new::<u64>("field".to_string(), &lut);
 
-    obj.field(field);
+    obj.add_field(field);
     let expected_buf = [
+        1, // It's a struct
         0, 0, 0, 4, // Name Length
         0x6e, 0x61, 0x6d, 0x65, // Name
         0, 0, 0, 1, // Arguments length

@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> tests/read-write-macro-fail/read_write_only_support_enum_and_struct.rs:4:10
+  |
+4 | #[derive(ReadWriteState)]
+  |          ^^^^^^^^^^^^^^
+  |
+  = help: message: PBC serialization does not support Union, currently only certain kinds of structs and enums are supported

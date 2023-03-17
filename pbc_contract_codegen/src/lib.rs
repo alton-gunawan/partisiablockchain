@@ -167,7 +167,8 @@ pub fn state(_attrs: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// - `ContractState` must be the type annotated with [`macro@state`], and must have an
 ///   [`pbc_traits::ReadWriteState`] implementation.
-/// - All initialization arguments must have a [`pbc_traits::ReadWriteRPC`] implementation.
+/// - All initialization arguments must have a [`pbc_traits::ReadRPC`]
+///   and a [`pbc_traits::WriteRPC`] implementation.
 ///
 /// Note that there are no previous state when initializing, in contrast to the
 /// [`macro@action`] macro. If the initializer fails the contract will not be created.
@@ -204,7 +205,8 @@ pub fn init(_attrs: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// - `ContractState` must be the type annotated with [`macro@state`], and must have an
 ///   [`pbc_traits::ReadWriteState`] implementation.
-/// - All initialization arguments must have a [`pbc_traits::ReadWriteRPC`] implementation.
+/// - All initialization arguments must have a [`pbc_traits::ReadRPC`]
+///   and a [`pbc_traits::WriteRPC`] implementation.
 ///
 /// The action receives the previous state, along with a context, and the declared
 /// arguments, and must return the new state, along with a vector of
@@ -295,7 +297,8 @@ pub fn action(attrs: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// - `ContractState` must be the type annotated with [`macro@state`], and must have an
 ///   [`pbc_traits::ReadWriteState`] implementation.
-/// - All initialization arguments must have a [`pbc_traits::ReadWriteRPC`] implementation.
+/// - All initialization arguments must have a [`pbc_traits::ReadRPC`]
+///   and a [`pbc_traits::WriteRPC`] implementation.
 ///
 /// The callback receives the previous state, along with two context objects, and the declared
 /// arguments. The [`CallbackContext`](pbc_contract_common::context::CallbackContext) object contains the execution status of all the events
@@ -353,7 +356,8 @@ pub fn callback(attrs: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// - `ContractState` must be the type annotated with [`macro@state`], and must have an
 ///   [`pbc_traits::ReadWriteState`] implementation.
-/// - All RPC arguments must have a [`pbc_traits::ReadWriteRPC`] implementation.
+/// - All initialization arguments must have a [`pbc_traits::ReadRPC`]
+///   and a [`pbc_traits::WriteRPC`] implementation.
 /// - The `Metadata` type given to `ZkState` and `ZkInputDef` must be identical both for individual
 ///   functions, and across the entire contract.
 /// - This function is only available with the `zk` feature enabled.
@@ -430,9 +434,6 @@ pub fn zk_on_secret_input(attrs: TokenStream, input: TokenStream) -> TokenStream
 /// the dashboard, nor from another contract.
 /// Allows the contract to automatically choose some action to take.
 ///
-/// **IMPORTANT NOTE**: The contract must _absolutely not_ panic in this function, as it will leave the
-/// contract in an inconsistent state, and may never recover.
-///
 /// Must have a signature of the following format:
 ///
 /// ```
@@ -492,12 +493,12 @@ pub fn zk_on_secret_input(attrs: TokenStream, input: TokenStream) -> TokenStream
 ///   zk_state: ZkState<Metadata>,
 ///   variable_id: SecretVarId,
 /// ) -> (ContractState, Vec<EventGroup>, Vec<ZkStateChange>) {
-///     let zkStateChanges = if (zk_state.secret_variables.len() > 5) {
+///     let zk_state_changes = if (zk_state.secret_variables.len() > 5) {
 ///         vec![ZkStateChange::start_computation(vec![1, 2, 3])]
 ///     } else {
 ///         vec![]
 ///     };
-///     (state, vec![], zkStateChanges)
+///     (state, vec![], zk_state_changes)
 /// }
 /// ```
 #[cfg(feature = "zk")]
@@ -536,9 +537,6 @@ pub fn zk_on_variable_inputted(attrs: TokenStream, input: TokenStream) -> TokenS
 /// This hook is exclusively called by the blockchain itself, and cannot be called manually from
 /// the dashboard, nor from another contract.
 /// Allows the contract to automatically choose some action to take.
-///
-/// **IMPORTANT NOTE**: The contract must _absolutely not_ panic in this function, as it will leave the
-/// contract in an inconsistent state, and may never recover.
 ///
 /// Must have a signature of the following format:
 ///
@@ -596,9 +594,6 @@ pub fn zk_on_variable_rejected(attrs: TokenStream, input: TokenStream) -> TokenS
 /// This hook is exclusively called by the blockchain itself, and cannot be called manually from
 /// the dashboard, nor from another contract.
 /// Allows the contract to automatically choose some action to take.
-///
-/// **IMPORTANT NOTE**: The contract must _absolutely not_ panic in this function, as it will leave the
-/// contract in an inconsistent state, and may never recover.
 ///
 /// Must have a signature of the following format:
 ///
@@ -694,9 +689,6 @@ pub fn zk_on_compute_complete(attrs: TokenStream, input: TokenStream) -> TokenSt
 /// the dashboard, nor from another contract.
 /// Allows the contract to automatically choose some action to take.
 ///
-/// **IMPORTANT NOTE**: The contract must _absolutely not_ panic in this function, as it will leave the
-/// contract in an inconsistent state, and may never recover.
-///
 /// Annotated function must have a signature of following format:
 ///
 /// ```
@@ -755,9 +747,6 @@ pub fn zk_on_user_variables_opened(attrs: TokenStream, input: TokenStream) -> To
 /// This hook is exclusively called by the blockchain itself, and cannot be called manually from
 /// the dashboard, nor from another contract.
 /// Allows the contract to automatically choose some action to take.
-///
-/// **IMPORTANT NOTE**: The contract must _absolutely not_ panic in this function, as it will leave the
-/// contract in an inconsistent state, and may never recover.
 ///
 /// Annotated function must have a signature of following format:
 ///
@@ -837,9 +826,6 @@ pub fn zk_on_variables_opened(attrs: TokenStream, input: TokenStream) -> TokenSt
 /// exclusively called by the blockchain itself, and cannot be called manually from the dashboard,
 /// nor from another contract.
 /// Allows the contract to automatically choose some action to take.
-///
-/// **IMPORTANT NOTE**: The contract must _absolutely not_ panic in this function, as it will leave the
-/// contract in an inconsistent state, and may never recover.
 ///
 /// Annotated function must have a signature of following format:
 ///
@@ -952,7 +938,7 @@ impl WrappedFunctionKind {
             output_state_and_events: true,
             output_other_types,
             min_allowed_num_results: 1,
-            system_arguments: system_arguments + if cfg!(feature = "zk") { 1 } else { 0 },
+            system_arguments: system_arguments + usize::from(cfg!(feature = "zk")),
             fn_kind,
             allow_rpc_arguments: true,
         }
@@ -1123,10 +1109,10 @@ fn variables_for_inner_call(item: &syn::ItemFn, call_type: CallType) -> Tokenize
         CallType::Init => 1,
         CallType::Action => 2,
         CallType::Callback => 3,
-    } + if require_zk_state { 1 } else { 0 };
+    } + usize::from(require_zk_state);
 
     // Parse
-    let mut item_iterator = item.sig.inputs.iter().peekable();
+    let mut item_iterator = item.sig.inputs.iter();
     assert!(
         item_iterator.len() >= expected_min_arguments,
         "Functions annotated with this macro must have at least {} arguments, but had only {}",
@@ -1167,17 +1153,17 @@ fn variables_for_inner_call(item: &syn::ItemFn, call_type: CallType) -> Tokenize
         None
     };
 
-    fn determine_result_types(t: &syn::Type) -> Vec<syn::Type> {
+    fn determine_result_types(t: &Type) -> Vec<Type> {
         match t {
-            syn::Type::Tuple(syn::TypeTuple { elems, .. }) => elems.iter().cloned().collect(),
-            syn::Type::Paren(syn::TypeParen { elem, .. }) => determine_result_types(elem),
+            Type::Tuple(syn::TypeTuple { elems, .. }) => elems.iter().cloned().collect(),
+            Type::Paren(syn::TypeParen { elem, .. }) => determine_result_types(elem),
             some_type => {
                 vec![some_type.clone()]
             }
         }
     }
 
-    let result_types: Vec<syn::Type> = match &item.sig.output {
+    let result_types: Vec<Type> = match &item.sig.output {
         syn::ReturnType::Default => vec![],
         syn::ReturnType::Type(_, t) => determine_result_types(t),
     };
@@ -1272,12 +1258,12 @@ fn read_arguments_for_instantiation(token: &FnArg, is_state: bool) -> Instantiab
 /// and that said ident represents an instance of std::io::Read.
 ///
 /// * `path` - the AST type to generate an instantiating expression for
-/// * `is_state` - whether we are using [`pbc_traits::ReadWriteState`] or [`pbc_traits::ReadWriteRpc`]
+/// * `is_state` - whether we are using [`pbc_traits::ReadWriteState`] or [`pbc_traits::ReadRPC`]
 fn generate_read_from_path_expression(path: TypePath, is_state: bool) -> TokenStream2 {
     let (trait_type, read_from) = if is_state {
         (quote!(pbc_traits::ReadWriteState), quote!(state_read_from))
     } else {
-        (quote!(pbc_traits::ReadWriteRPC), quote!(rpc_read_from))
+        (quote!(pbc_traits::ReadRPC), quote!(rpc_read_from))
     };
     let type_name = match path.path.get_ident() {
         Some(ident) => quote! {#ident},
@@ -1293,12 +1279,12 @@ fn generate_read_from_path_expression(path: TypePath, is_state: bool) -> TokenSt
 ///
 /// * `reader_ident` - the reader variable/expression
 /// * `path` - the AST type to generate an instantiating expression for
-/// * `is_state` - whether we are using `pbc_traits::ReadWriteState` or `pbc_traits::ReadWriteRpc`
+/// * `is_state` - whether we are using `pbc_traits::ReadWriteState` or `pbc_traits::ReadRPC`
 fn generate_read_from_array_expression(array: TypeArray, is_state: bool) -> TokenStream2 {
     let (trait_type, read_from) = if is_state {
         (quote!(pbc_traits::ReadWriteState), quote!(state_read_from))
     } else {
-        (quote!(pbc_traits::ReadWriteRPC), quote!(rpc_read_from))
+        (quote!(pbc_traits::ReadRPC), quote!(rpc_read_from))
     };
 
     let array_tokens = array.to_token_stream();

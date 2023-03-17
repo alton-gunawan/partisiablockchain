@@ -1,0 +1,7 @@
+error[E0081]: discriminant value `1` already exists
+ --> tests/read-write-macro-fail/state_enum_duplicate_discriminants.rs:9:15
+  |
+8 |     Bad = 1,
+  |           - first use of `1`
+9 |     Neutral = 1,
+  |               ^ enum already has `1`

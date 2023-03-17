@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 use std::io::Cursor;
 
-use pbc_traits::{ReadWriteRPC, ReadWriteState};
+use pbc_traits::{ReadRPC, ReadWriteState, WriteRPC};
 
 fn assert_read_write_raw<T: Eq + Debug>(
     expected: T,
@@ -17,12 +17,8 @@ fn assert_read_write_raw<T: Eq + Debug>(
     assert_eq!(actual, expected)
 }
 
-fn assert_rpc<T: ReadWriteRPC + Eq + Debug + Clone>(expected: T) {
-    assert_read_write_raw(
-        expected,
-        ReadWriteRPC::rpc_write_to,
-        ReadWriteRPC::rpc_read_from,
-    );
+fn assert_rpc<T: ReadRPC + WriteRPC + Eq + Debug + Clone>(expected: T) {
+    assert_read_write_raw(expected, WriteRPC::rpc_write_to, ReadRPC::rpc_read_from);
 }
 
 fn assert_state<T: ReadWriteState + Eq + Debug + Clone>(expected: T) {
@@ -33,7 +29,7 @@ fn assert_state<T: ReadWriteState + Eq + Debug + Clone>(expected: T) {
     );
 }
 
-fn assert_serializes<T: ReadWriteRPC + ReadWriteState + Eq + Debug + Clone>(expected: T) {
+fn assert_serializes<T: ReadRPC + WriteRPC + ReadWriteState + Eq + Debug + Clone>(expected: T) {
     assert_rpc(expected.clone());
     assert_state(expected);
 }

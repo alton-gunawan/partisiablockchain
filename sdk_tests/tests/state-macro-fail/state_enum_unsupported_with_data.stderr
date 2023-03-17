@@ -1,7 +1,0 @@
-error: proc-macro derive panicked
- --> tests/state-macro-fail/state_enum_unsupported_with_data.rs:4:10
-  |
-4 | #[derive(ReadWriteState)]
-  |          ^^^^^^^^^^^^^^
-  |
-  = help: message: not implemented: PBC serialization derives only supports C-style enums with explicit discriminants

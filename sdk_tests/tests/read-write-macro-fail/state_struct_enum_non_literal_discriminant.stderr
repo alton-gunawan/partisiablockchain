@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> tests/read-write-macro-fail/state_struct_enum_non_literal_discriminant.rs:4:10
+  |
+4 | #[derive(ReadWriteState)]
+  |          ^^^^^^^^^^^^^^
+  |
+  = help: message: Discriminant is required to be a literal

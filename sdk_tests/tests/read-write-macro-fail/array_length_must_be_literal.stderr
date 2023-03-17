@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> tests/read-write-macro-fail/array_length_must_be_literal.rs:4:10
+  |
+4 | #[derive(ReadWriteState)]
+  |          ^^^^^^^^^^^^^^
+  |
+  = help: message: The length of an array must be a literal

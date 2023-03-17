@@ -1,6 +1,15 @@
 #[cfg(feature = "abi")]
 use pbc_contract_common::abi::AbiSerialize;
 
+/// Creates a bunch of segment variants, possibly duplicating segments or leaving them out.
+///
+/// For example for segments `[X, Y, Z]`, it will produce variants:
+///
+/// - []
+/// - [X], [Y], [Z]
+/// - [X, X, Y, Z]
+/// - [X, X, Y, Y, Z, Z]
+/// - ....
 fn all_variants(segments: &[&[u8]]) -> Vec<Vec<u8>> {
     let mut variants = vec![];
     let mut variant_idx = 0usize;
@@ -38,7 +47,7 @@ fn test_contract_function_with_variants(
     segments: &[&[u8]],
 ) {
     let mut good_variant = good_variant(segments);
-    let bad_variants = failing_variants(segments);
+    let bad_variants: Vec<Vec<u8>> = failing_variants(segments);
 
     // Good case
     call(good_variant.as_mut_ptr(), good_variant.len());
@@ -57,7 +66,7 @@ fn test_contract_function_with_variants(
     }
 }
 
-fn rpc_self<T: pbc_traits::ReadWriteRPC>(v: T) -> Vec<u8> {
+fn rpc_self<T: pbc_traits::WriteRPC>(v: T) -> Vec<u8> {
     let mut buf = vec![];
     v.rpc_write_to(&mut buf).unwrap();
     buf
@@ -228,7 +237,7 @@ mod zk {
     use pbc_contract_common::test_examples::*;
     use pbc_contract_common::zk::*;
 
-    type ZkMetadata = pbc_contract_common::test_examples::ExampleZkMetadata;
+    type ZkMetadata = ExampleZkMetadata;
 
     #[action(shortname = 0x05)]
     fn do_thing(
@@ -307,8 +316,8 @@ mod zk {
     fn do_zk_on_user_variables_opened(
         _context: ContractContext,
         state: ContractState,
-        _zk_state: zk::ZkState<ZkMetadata>,
-        _opened_variables: Vec<zk::SecretVarId>,
+        _zk_state: ZkState<ZkMetadata>,
+        _opened_variables: Vec<SecretVarId>,
         arg1: u16,
     ) -> ContractState {
         state.wrapping_add(arg1 as ContractState)

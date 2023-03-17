@@ -1,3 +1,5 @@
+extern crate core;
+
 use pbc_contract_common::address::{Address, AddressType, Shortname};
 use pbc_contract_common::events::EventGroup;
 use pbc_contract_common::ContractResultBuffer;
@@ -76,7 +78,7 @@ const ADDRESS_1: Address = Address {
 
 const STATE_AND_EVENTS_SMALL_STATE: SmallState = SmallState { field: 59 };
 
-const STATE_AND_EVENTS_EXPECTED_BYTES: [u8; 64] = [
+const STATE_AND_EVENTS_EXPECTED_BYTES: [u8; 65] = [
     0, 0, 0, 0, // Empty length
     // State
     1, // Section id: State
@@ -84,35 +86,33 @@ const STATE_AND_EVENTS_EXPECTED_BYTES: [u8; 64] = [
     59, // State data
     // Events
     2, // Section id: Events
-    0, 0, 0, 49, // Section len
+    0, 0, 0, 50, // Section len
     0, 0, 0, 1, // #EventGroup
     0, // No callback
     0, // Cost: None
     0, 0, 0, 1, // #Events
     3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, // Event address
     0, 0, 0, 4, 65, 66, 67, 99, // Event payload
-    1,  // From original sender?: yes
+    0,  // From original sender?: no
     1, 0, 0, 0, 0, 0, 0, 0, 0x20, // cost: Some(0x20)
+    0,    // No return data
 ];
 
 #[test]
 #[allow(deprecated)]
-pub fn state_and_events_deprecated() {
-    let mut event = EventGroup::new();
-    event.send_from_original_sender(&ADDRESS_1, vec![65, 66, 67, 99], Some(0x20));
-    let events = vec![event];
-    assert_written(
-        STATE_AND_EVENTS_SMALL_STATE,
-        events,
-        &STATE_AND_EVENTS_EXPECTED_BYTES,
-    )
+#[should_panic(expected = "Sending events from original sender is not supported")]
+pub fn using_from_original_panics() {
+    let mut e = EventGroup::builder();
+
+    let _ = e
+        .call(ADDRESS_1, Shortname::from_be_bytes(&[65]).unwrap())
+        .from_original_sender();
 }
 
 #[test]
 pub fn state_and_events_builder() {
     let mut e = EventGroup::builder();
     e.call(ADDRESS_1, Shortname::from_be_bytes(&[65]).unwrap())
-        .from_original_sender()
         .argument(66u8)
         .argument(67u8)
         .argument(99u8)

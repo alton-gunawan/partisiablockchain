@@ -1,9 +1,9 @@
-use pbc_traits::ReadWriteRPC;
+use pbc_traits::WriteRPC;
 
 use crate::address::{Address, AddressType};
 use crate::events::Interaction;
 
-fn to_bytes<T: ReadWriteRPC>(val: T) -> Vec<u8> {
+fn to_bytes<T: WriteRPC>(val: T) -> Vec<u8> {
     let mut vec = Vec::new();
     val.rpc_write_to(&mut vec).unwrap();
     vec
@@ -46,7 +46,7 @@ pub fn single_interaction_with_no_cost() {
             identifier: TEST_ADDRESS,
         },
         cost: None,
-        from_original_sender: true,
+        from_original_sender: false,
         payload: vec![1, 2, 3, 4, 5, 6, 7, 8],
     };
 
@@ -58,7 +58,7 @@ pub fn single_interaction_with_no_cost() {
             0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, // Address ident
             0, 0, 0, 8, // Payload len
             1, 2, 3, 4, 5, 6, 7, 8, // payload
-            1, // Send from sender
+            0, // Send from contract
             0, // Cost does not exist
         ]
     );
