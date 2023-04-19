@@ -57,6 +57,20 @@ mod version;
 #[cfg(feature = "zk")]
 mod zk_macro;
 
+/// Parses the attributes of a macro into a map from attribute names to a `Literal`.
+///
+/// ### Parameters:
+///
+/// * `args`: [`AttributeArgs`] - the args to be parsed.
+///
+/// * `valid_names`: [Vec<String>] - valid names of attributes. Panics if an attribute name not
+/// in valid_names is present in args.
+///
+/// * `required_names`: [Vec<String>] - required names. Panics if any of the attribute names is
+/// not present in args.
+///
+///  ### Returns
+/// A map from attribute name to their value.
 fn parse_attributes(
     args: AttributeArgs,
     valid_names: Vec<String>,
@@ -84,7 +98,6 @@ fn parse_attributes(
                         valid_names.join(", ")
                     );
                 }
-
                 result.insert(name, pair.lit.clone());
             }
             _ => panic!("Invalid attribute: {}", meta.to_token_stream()),
@@ -94,8 +107,7 @@ fn parse_attributes(
     for required_name in required_names {
         assert!(
             result.get(&required_name).is_some(),
-            "Required attribute '{}' is missing",
-            required_name
+            "Required attribute '{required_name}' is missing",
         );
     }
 
@@ -263,7 +275,8 @@ pub fn init(_attrs: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn action(attrs: TokenStream, input: TokenStream) -> TokenStream {
     let args: AttributeArgs = parse_macro_input!(attrs as AttributeArgs);
-    let shortname_override = parse_shortname_override(args, false);
+    let attributes = parse_attributes(args, vec!["shortname".to_string()], vec![]);
+    let shortname_override = parse_shortname_override(attributes);
     action_macro::handle_action_macro(input, shortname_override)
 }
 
@@ -315,7 +328,12 @@ pub fn action(attrs: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn callback(attrs: TokenStream, input: TokenStream) -> TokenStream {
     let args: AttributeArgs = parse_macro_input!(attrs as AttributeArgs);
-    let shortname_override = parse_shortname_override(args, true);
+    let attributes = parse_attributes(
+        args,
+        vec!["shortname".to_string()],
+        vec!["shortname".to_string()],
+    );
+    let shortname_override = parse_shortname_override(attributes);
     callback_macro::handle_callback_macro(input, shortname_override)
 }
 
@@ -402,7 +420,13 @@ pub fn callback(attrs: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn zk_on_secret_input(attrs: TokenStream, input: TokenStream) -> TokenStream {
     let args: AttributeArgs = parse_macro_input!(attrs as AttributeArgs);
-    let shortname_override = parse_shortname_override(args, true);
+    let attributes = parse_attributes(
+        args,
+        vec!["shortname".to_string(), "secret_type".to_string()],
+        vec!["shortname".to_string()],
+    );
+    let shortname_override = parse_shortname_override(attributes.clone());
+    let secret_type_input = parse_secret_type_input(attributes);
 
     let function_kind = WrappedFunctionKind {
         output_state_and_events: true,
@@ -412,7 +436,7 @@ pub fn zk_on_secret_input(attrs: TokenStream, input: TokenStream) -> TokenStream
             format_ident!("write_zk_input_def_result"),
         )],
         system_arguments: 3,
-        fn_kind: FunctionKind::ZkSecretInput,
+        fn_kind: FunctionKind::ZkSecretInputWithExplicitType,
         allow_rpc_arguments: true,
     };
     zk_macro::handle_zk_macro(
@@ -421,6 +445,7 @@ pub fn zk_on_secret_input(attrs: TokenStream, input: TokenStream) -> TokenStream
         "zk_on_secret_input",
         &function_kind,
         true,
+        secret_type_input,
     )
 }
 
@@ -525,6 +550,7 @@ pub fn zk_on_variable_inputted(attrs: TokenStream, input: TokenStream) -> TokenS
         "zk_on_variable_inputted",
         &function_kind,
         false,
+        SecretInput::None,
     )
 }
 
@@ -580,6 +606,7 @@ pub fn zk_on_variable_rejected(attrs: TokenStream, input: TokenStream) -> TokenS
         "zk_on_variable_rejected",
         &function_kind,
         false,
+        SecretInput::None,
     )
 }
 
@@ -675,7 +702,14 @@ pub fn zk_on_compute_complete(attrs: TokenStream, input: TokenStream) -> TokenSt
         fn_kind: FunctionKind::ZkComputeComplete,
         allow_rpc_arguments: false,
     };
-    zk_macro::handle_zk_macro(input, None, "zk_on_compute_complete", &function_kind, false)
+    zk_macro::handle_zk_macro(
+        input,
+        None,
+        "zk_on_compute_complete",
+        &function_kind,
+        false,
+        SecretInput::None,
+    )
 }
 
 /// Secret user variable opened zero-knowledge contract annotation
@@ -733,6 +767,7 @@ pub fn zk_on_user_variables_opened(attrs: TokenStream, input: TokenStream) -> To
         "zk_on_user_variables_opened",
         &function_kind,
         false,
+        SecretInput::None,
     )
 }
 
@@ -812,7 +847,14 @@ pub fn zk_on_variables_opened(attrs: TokenStream, input: TokenStream) -> TokenSt
         fn_kind: FunctionKind::ZkVarOpened,
         allow_rpc_arguments: false,
     };
-    zk_macro::handle_zk_macro(input, None, "zk_on_variables_opened", &function_kind, false)
+    zk_macro::handle_zk_macro(
+        input,
+        None,
+        "zk_on_variables_opened",
+        &function_kind,
+        false,
+        SecretInput::None,
+    )
 }
 
 /// Data-attestation complete zero-knowledge contract annotation
@@ -871,20 +913,21 @@ pub fn zk_on_attestation_complete(attrs: TokenStream, input: TokenStream) -> Tok
         "zk_on_attestation_complete",
         &function_kind,
         false,
+        SecretInput::None,
     )
 }
 
-fn parse_shortname_override(args: AttributeArgs, required: bool) -> Option<Shortname> {
-    let required_names = if required {
-        vec!["shortname".to_string()]
-    } else {
-        vec![]
-    };
-
-    let map: HashMap<String, Lit> =
-        parse_attributes(args, vec!["shortname".to_string()], required_names);
-
-    map.get("shortname").map(|lit: &Lit| match lit {
+/// Gets the shortname attribute of the arguments and if present parses it into a `Shortname`.
+/// Panics if the attribute is not a valid shortname literal.
+///
+/// ### Parameters:
+///
+/// * `args`: [HashMap<String, Lit>] - parsed attributes of a macro.
+///
+/// ### Returns
+/// Some of the parsed shortname if present in args, None if it is not present.
+fn parse_shortname_override(args: HashMap<String, Lit>) -> Option<Shortname> {
+    args.get("shortname").map(|lit: &Lit| match lit {
         Lit::Int(lit_int) if is_hex_literal(lit_int) => {
             let x: u64 = lit_int
                 .base10_parse()
@@ -896,6 +939,34 @@ fn parse_shortname_override(args: AttributeArgs, required: bool) -> Option<Short
             lit.to_token_stream()
         ),
     })
+}
+
+/// Gets the secret_type attribute of and parses it into a `SecretInput` enum containing the
+/// secret input type.
+/// Panics if the attribute is not a string literal.
+///
+/// ### Parameters:
+///
+/// * `args`: [HashMap<String, Lit>] - parsed attributes of a macro.
+///
+/// ### Returns
+/// Some of the secret input type if present in args. Default Sbi32 if not present.
+#[cfg(feature = "zk")]
+fn parse_secret_type_input(args: HashMap<String, Lit>) -> SecretInput {
+    match args.get("secret_type") {
+        None => SecretInput::Default,
+        Some(Lit::Str(lit_str)) => SecretInput::Some(lit_str.value()),
+        Some(err) => panic!(
+            "Invalid type, expecting a string literal, but got: {}",
+            err.to_token_stream()
+        ),
+    }
+}
+
+pub(crate) enum SecretInput {
+    None,
+    Default,
+    Some(String),
 }
 
 fn is_hex_literal(lit: &syn::LitInt) -> bool {

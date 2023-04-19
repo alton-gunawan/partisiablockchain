@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use pbc_contract_common::address::AddressType;
-use pbc_contract_common::test_examples;
+use pbc_contract_common::{test_examples, U256};
 use pbc_traits::{ReadRPC, ReadWriteState, WriteRPC};
 
 fn canary_rpc_noeq<T: ReadRPC + WriteRPC>(example: &T) -> Vec<u8> {
@@ -74,6 +74,40 @@ fn canary_address_type() {
 fn canary_address() {
     canary_rpc_state_eq(&test_examples::EXAMPLE_ADDRESS_1);
     canary_rpc_state_eq(&test_examples::EXAMPLE_ADDRESS_2);
+}
+
+#[test]
+fn canary_u256() {
+    // Canary rpc
+    let example_u256 = test_examples::EXAMPLE_U256;
+    let mut buf = Vec::with_capacity(example_u256.bytes.len());
+    example_u256
+        .rpc_write_to(&mut buf)
+        .expect("Write entire value");
+    let read_example_u256 = U256::rpc_read_from(&mut buf.as_slice());
+    assert_eq!(read_example_u256, example_u256);
+    canary_state(&test_examples::EXAMPLE_U256);
+}
+
+#[test]
+fn canary_hash() {
+    canary_rpc_state_eq(&test_examples::EXAMPLE_HASH_1);
+    canary_rpc_state_eq(&test_examples::EXAMPLE_HASH_2);
+}
+
+#[test]
+fn canary_public_key() {
+    canary_rpc_state_eq(&test_examples::EXAMPLE_PUBLIC_KEY);
+}
+
+#[test]
+fn canary_bls_public_key() {
+    canary_rpc_state_eq(&test_examples::EXAMPLE_BLS_PUBLIC_KEY);
+}
+
+#[test]
+fn canary_bls_signature() {
+    canary_rpc_state_eq(&test_examples::EXAMPLE_BLS_SIGNATURE);
 }
 
 #[test]

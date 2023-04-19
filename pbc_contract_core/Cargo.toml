@@ -11,6 +11,7 @@ sha2 = "0.9"
 read_write_state_derive = { path = "../read_write_state_derive" }
 read_write_rpc_derive = { path = "../read_write_rpc_derive" }
 pbc_traits = { path = "../pbc_traits" }
+pbc_zk = { path = "../pbc_zk" }
 
 [dev-dependencies]
 file_diff = "1.0.0"

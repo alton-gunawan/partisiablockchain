@@ -16,7 +16,17 @@ error[E0308]: mismatched types
   |
 5 | #[init]
   | ^^^^^^^ expected `u64`, found struct `ZkState`
+6 | fn init(
+  |    ---- arguments to this function are incorrect
   |
   = note: expected type `u64`
            found struct `ZkState<_>`
+note: function defined here
+ --> tests/action/fail/zk/arg_instead_of_zk_state_init.rs:6:4
+  |
+6 | fn init(
+  |    ^^^^
+7 |     _context: pbc_contract_common::context::ContractContext,
+8 |     arg1: u64,
+  |     ---------
   = note: this error originates in the attribute macro `init` (in Nightly builds, run with -Z macro-backtrace for more info)

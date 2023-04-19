@@ -8,7 +8,7 @@ use crate::context::{CallbackContext, ContractContext, ExecutionResult};
 use crate::signature::Signature;
 #[cfg(any(feature = "zk", doc))]
 use crate::zk;
-use crate::Hash;
+use crate::{BlsPublicKey, BlsSignature, Hash, PublicKey, U256};
 
 /// Example address
 pub const EXAMPLE_ADDRESS_1: Address = Address {
@@ -27,16 +27,54 @@ pub const EXAMPLE_ADDRESS_2: Address = Address {
 };
 
 /// Example Hash
-pub const EXAMPLE_HASH_1: Hash = [
-    0, 1, 23, 213, 124, 23, 3, 1, 23, 12, 31, 23, 123, 24, 3, 2, 2, 3, 2, 3, 2, 32, 32, 3, 23, 2,
-    3, 23, 2, 3, 23, 2,
-];
+pub const EXAMPLE_HASH_1: Hash = Hash {
+    bytes: [
+        0, 1, 23, 213, 124, 23, 3, 1, 23, 12, 31, 23, 123, 24, 3, 2, 2, 3, 2, 3, 2, 32, 32, 3, 23,
+        2, 3, 23, 2, 3, 23, 2,
+    ],
+};
 
 /// Example Hash
-pub const EXAMPLE_HASH_2: Hash = [
-    124, 25, 3, 1, 23, 12, 31, 23, 123, 26, 13, 3, 123, 32, 3, 2, 2, 3, 2, 3, 2, 32, 32, 3, 23, 2,
-    3, 23, 2, 3, 23, 2,
-];
+pub const EXAMPLE_HASH_2: Hash = Hash {
+    bytes: [
+        124, 25, 3, 1, 23, 12, 31, 23, 123, 26, 13, 3, 123, 32, 3, 2, 2, 3, 2, 3, 2, 32, 32, 3, 23,
+        2, 3, 23, 2, 3, 23, 2,
+    ],
+};
+
+/// Example U256
+pub const EXAMPLE_U256: U256 = U256 {
+    bytes: [
+        124, 25, 3, 1, 23, 12, 31, 23, 123, 26, 13, 3, 123, 32, 3, 2, 2, 3, 2, 3, 2, 32, 32, 3, 23,
+        2, 3, 23, 2, 3, 23, 42,
+    ],
+};
+
+/// Example PublicKey
+pub const EXAMPLE_PUBLIC_KEY: PublicKey = PublicKey {
+    bytes: [
+        124, 25, 3, 1, 23, 12, 31, 23, 123, 26, 13, 3, 123, 32, 3, 2, 2, 3, 2, 3, 2, 32, 32, 3, 23,
+        2, 3, 23, 2, 3, 23, 2, 42,
+    ],
+};
+
+/// Example BlsPublicKey
+pub const EXAMPLE_BLS_PUBLIC_KEY: BlsPublicKey = BlsPublicKey {
+    bytes: [
+        124, 25, 3, 1, 23, 12, 31, 23, 123, 26, 13, 3, 123, 32, 3, 2, 2, 3, 2, 3, 2, 32, 32, 3, 23,
+        2, 3, 23, 2, 3, 23, 42, 124, 25, 3, 1, 23, 12, 31, 23, 123, 26, 13, 3, 123, 32, 3, 2, 2, 3,
+        2, 3, 2, 32, 32, 3, 23, 2, 3, 23, 2, 3, 23, 42, 124, 25, 3, 1, 23, 12, 31, 23, 123, 26, 13,
+        3, 123, 32, 3, 2, 2, 3, 2, 3, 2, 32, 32, 3, 23, 2, 3, 23, 2, 3, 23, 42,
+    ],
+};
+
+/// Example BlsSignature
+pub const EXAMPLE_BLS_SIGNATURE: BlsSignature = BlsSignature {
+    bytes: [
+        124, 25, 3, 1, 23, 12, 31, 23, 123, 26, 13, 3, 123, 32, 3, 2, 2, 3, 2, 3, 2, 32, 32, 3, 23,
+        2, 3, 23, 2, 3, 23, 2, 42, 2, 3, 2, 32, 32, 3, 23, 2, 3, 23, 2, 3, 23, 2, 42,
+    ],
+};
 
 /// Example contract context
 pub const EXAMPLE_CONTEXT: ContractContext = ContractContext {
@@ -137,7 +175,11 @@ pub fn zk_input_def(seed: u32) -> zk::ZkInputDef<ExampleZkMetadata> {
 
 /// Generator of Signatures examples
 fn example_signature(rng: &mut Rng) -> Signature {
-    Signature::new(rng.get_u8(), rng.get_bytearray(), rng.get_bytearray())
+    Signature {
+        recovery_id: rng.get_u8(),
+        value_r: rng.get_bytearray(),
+        value_s: rng.get_bytearray(),
+    }
 }
 
 /// Generator of example data attestations.

@@ -1,9 +1,10 @@
 use std::io::Write;
 
 use crate::abi::enum_variant::EnumVariant;
+use crate::abi::NamedEntityAbi;
 use pbc_traits::{WriteInt, WriteRPC};
 
-use super::{abi_serialize_slice, AbiSerialize, NamedEntityAbi};
+use super::{abi_serialize_slice, AbiSerialize};
 
 /// A struct representing the ABI for a Rust type.
 ///

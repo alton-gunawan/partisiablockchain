@@ -1,25 +1,34 @@
 use syn::{Ident, ItemFn};
 
-use crate::{read_arguments_names_and_types, TokenStream2};
+use crate::{read_arguments_names_and_types, SecretInput, TokenStream2};
 use pbc_contract_common::FunctionKind;
 
 fn fn_kind_snippet(fn_kind: FunctionKind) -> TokenStream2 {
-    let fn_kind_name = format_ident!("{}", format!("{:?}", fn_kind));
+    let fn_kind_name = format_ident!("{}", format!("{fn_kind:?}"));
     quote! {
         pbc_contract_common::FunctionKind::#fn_kind_name
     }
 }
 
-pub fn make_hook_abi_fn(
+pub(crate) fn make_hook_abi_fn(
     fn_ast: &ItemFn,
     abi_fn_name: &Ident,
     fn_kind: FunctionKind,
     rpc_pos: usize,
     shortname_ident: TokenStream2,
+    secret_type_input: SecretInput,
 ) -> TokenStream2 {
     let fn_name = &fn_ast.sig.ident.to_string();
     let (params, types) = read_arguments_names_and_types(fn_ast, rpc_pos).convert_to_tuple();
     let fn_kind_snippet = fn_kind_snippet(fn_kind);
+    let add_secret_argument = match secret_type_input {
+        SecretInput::None => quote! {},
+        SecretInput::Default => quote! { fn_abi.default_secret_argument(&lut); },
+        SecretInput::Some(secret_type) => {
+            let secret_type: TokenStream2 = secret_type.parse().unwrap();
+            quote! { fn_abi.secret_argument::<#secret_type>(&lut); }
+        }
+    };
     quote! {
         #[cfg(feature = "abi")]
         #[doc=concat!("ABI: Create ABI for [`", #fn_name, "`]")]
@@ -27,6 +36,7 @@ pub fn make_hook_abi_fn(
         fn #abi_fn_name(lut: &std::collections::BTreeMap<String, u8>) -> pbc_contract_common::abi::FnAbi {
             let mut fn_abi = pbc_contract_common::abi::FnAbi::new(#fn_name.to_string(), #shortname_ident, #fn_kind_snippet);
             #(fn_abi.argument::<#types>(#params.to_string(), &lut);)*
+            #add_secret_argument
             fn_abi
         }
     }
