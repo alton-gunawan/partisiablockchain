@@ -9,7 +9,7 @@ pub struct Something {
 #[allow(clippy::unit_cmp)]
 pub fn smoke_test_versions() {
     #[cfg(feature = "zk")]
-    assert_eq!(__PBC_VERSION_BINDER_9_2_0, ());
+    assert_eq!(__PBC_VERSION_BINDER_9_3_0, ());
     #[cfg(not(feature = "zk"))]
     assert_eq!(__PBC_VERSION_BINDER_9_0_0, ());
     assert_eq!(__PBC_VERSION_CLIENT_5_2_0, ());
