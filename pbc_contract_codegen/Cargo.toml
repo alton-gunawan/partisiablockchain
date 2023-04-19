@@ -20,6 +20,8 @@ pbc_contract_common = { path = "../pbc_contract_common" }
 pbc_traits = {path = "../pbc_traits"}
 pbc_external = { path = "../pbc_external" }
 pbc_lib = { path = "../pbc_lib"}
+pbc_zk = { path = "../pbc_zk" }
+create_type_spec_derive = { path = "../create_type_spec_derive" }
 
 [dev-dependencies]
 pbc_contract_common = { path = "../pbc_contract_common", features = ["test_examples"] }

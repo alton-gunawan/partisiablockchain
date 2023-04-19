@@ -295,7 +295,7 @@ pub enum ZkStateChange {
         new_owner: Address,
     },
 
-    /// Deletes variable for the current user.
+    /// Deletes given contract variable.
     ///
     /// # Invariants
     /// - Variable must not be open.
@@ -311,26 +311,24 @@ pub enum ZkStateChange {
     /// # Invariants
     /// - Variables must not be open.
     /// - Variables must be owned by contract caller.
-    /// - Must only occur when [`ZkState::calculation_state`] is [`CalculationStatus::Output`]
+    /// - Must only occur when [`ZkState::calculation_state`] is [`CalculationStatus::Output`].
     /// - There must be no pending inputs.
     OpenVariables {
         /// Variables that should be opened
         variables: Vec<SecretVarId>,
     },
 
-    /// Opens variables for the current user.
+    /// Changes [`ZkState::calculation_state`](ZkState) back to [`CalculationStatus::Waiting`], deleting any given variables.
     ///
     /// # Invariants
-    /// - Variables must not be open.
-    /// - Variable must be owned by contract caller.
+    /// - All variables are allowed, including user variables and contract variables.
     /// - Must only occur when [`ZkState::calculation_state`] is [`CalculationStatus::Output`]
-    /// - There must be no pending inputs.
     OutputComplete {
         /// Variables that should be deleted
         variables_to_delete: Vec<SecretVarId>,
     },
 
-    /// Closes ZK computation; no futher zero-knowledge can be done.
+    /// Closes ZK computation; no further zero-knowledge can be done.
     ///
     /// # Invariants
     /// Must only occur when [`ZkState::calculation_state`] is [`CalculationStatus::Output`].

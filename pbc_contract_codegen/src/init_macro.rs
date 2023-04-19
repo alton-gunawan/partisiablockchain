@@ -2,8 +2,8 @@ use proc_macro::TokenStream;
 
 use crate::macro_abi::{make_hook_abi_fn, make_hook_abi_fn_delegator};
 use crate::{
-    determine_names, variables_for_inner_call, wrap_function_for_export, CallType, TokenStream2,
-    WrappedFunctionKind,
+    determine_names, variables_for_inner_call, wrap_function_for_export, CallType, SecretInput,
+    TokenStream2, WrappedFunctionKind,
 };
 
 pub fn handle_init_macro(input: TokenStream) -> TokenStream {
@@ -39,6 +39,7 @@ pub fn handle_init_macro(input: TokenStream) -> TokenStream {
             kind.fn_kind,
             rpc_pos,
             shortname_ident,
+            SecretInput::None,
         )
     };
 

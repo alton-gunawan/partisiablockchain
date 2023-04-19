@@ -4,8 +4,8 @@ use crate::macro_abi::{make_hook_abi_fn, make_hook_abi_fn_delegator};
 use pbc_contract_common::address::Shortname;
 
 use crate::{
-    determine_names, variables_for_inner_call, wrap_function_for_export, CallType, TokenStream2,
-    WrappedFunctionKind,
+    determine_names, variables_for_inner_call, wrap_function_for_export, CallType, SecretInput,
+    TokenStream2, WrappedFunctionKind,
 };
 
 pub fn handle_action_macro(
@@ -45,6 +45,7 @@ pub fn handle_action_macro(
             kind.fn_kind,
             rpc_pos,
             shortname_ident,
+            SecretInput::None,
         )
     };
 

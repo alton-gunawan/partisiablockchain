@@ -1,4 +1,4 @@
-image: registry.gitlab.com/partisia/dockerimages/rust:1.60
+image: registry.gitlab.com/partisia/dockerimages/rust:1.67
 
 stages:
 - build

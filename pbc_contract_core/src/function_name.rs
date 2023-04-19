@@ -64,6 +64,7 @@ pub enum FunctionKind {
     /// Kind for `callback` hook.
     Callback = 0x03,
     /// Kind for `zk_on_secret_input` hook.
+    #[deprecated(note = "Use ZkSecretInputWithExplicitType instead")]
     ZkSecretInput = 0x10,
     /// Kind for `zk_on_variable_inputted` hook.
     ZkVarInputted = 0x11,
@@ -77,6 +78,8 @@ pub enum FunctionKind {
     ZkUserVarOpened = 0x15,
     /// Kind for `zk_on_attestation_complete` hook.
     ZkAttestationComplete = 0x16,
+    /// Kind for `zk_on_secret_input` hook.
+    ZkSecretInputWithExplicitType = 0x17,
 }
 
 #[cfg(feature = "abi")]

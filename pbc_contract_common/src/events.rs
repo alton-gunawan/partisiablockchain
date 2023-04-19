@@ -245,16 +245,13 @@ impl EventGroupBuilder {
             None => (None, None),
         };
 
-        let return_data = match self.return_data {
-            Some(data) => {
-                if callback_payload.is_none() && callback_cost.is_none() {
-                    Some(data)
-                } else {
-                    panic!("Attempted to build EventGroup with both callback and return data")
-                }
+        let return_data = self.return_data.and_then(|data| {
+            if callback_payload.is_none() && callback_cost.is_none() {
+                Some(data)
+            } else {
+                panic!("Attempted to build EventGroup with both callback and return data")
             }
-            None => None,
-        };
+        });
 
         EventGroup {
             callback_payload,

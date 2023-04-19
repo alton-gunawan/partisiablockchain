@@ -87,10 +87,7 @@ pub fn impl_read_write(
 
     for generated_type_name in [&type_read, &type_write] {
         if let Some(kind) = names.get(generated_type_name) {
-            panic!(
-                "{} name {} collides with generated type name.",
-                kind, generated_type_name
-            );
+            panic!("{kind} name {generated_type_name} collides with generated type name.");
         }
     }
 

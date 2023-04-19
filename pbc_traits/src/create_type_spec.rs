@@ -1,3 +1,4 @@
+use pbc_zk::{Sbi128, Sbi16, Sbi32, Sbi64, Sbi8};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 /// This trait adds the runtime type information needed to generate the [contract PBC ABI files](https://privacyblockchain.gitlab.io/language/rust-contract-sdk/abiv1.html).
@@ -57,6 +58,7 @@ macro_rules! impl_for_type {
 // Implement the [`CreateTypeSpec`] trait for simple types.
 //
 // Byte values are taken from the [ABI spec](https://privacyblockchain.gitlab.io/language/rust-contract-sdk/abiv1.html). Due to macro_rules restrictions they can't be used as named constant.
+// Sbi types are mapped to their public counterparts.
 impl_for_type!(
     u8,     0x01
     u16,    0x02
@@ -70,6 +72,11 @@ impl_for_type!(
     i128,   0x0a
     String, 0x0b
     bool,   0x0c
+    Sbi8,   0x06
+    Sbi16,  0x07
+    Sbi32,  0x08
+    Sbi64,  0x09
+    Sbi128, 0x0a
 );
 
 /// Implementation of the [`CreateTypeSpec`] trait for [`Vec<T>`] for any `T` that implements
@@ -181,7 +188,7 @@ impl<T: CreateTypeSpec> CreateTypeSpec for Option<T> {
 impl<const LEN: usize> CreateTypeSpec for [u8; LEN] {
     /// Type name is `[u8; LEN]`.
     fn __ty_name() -> String {
-        format!("[u8; {}]", LEN)
+        format!("[u8; {LEN}]")
     }
 
     fn __ty_identifier() -> String {

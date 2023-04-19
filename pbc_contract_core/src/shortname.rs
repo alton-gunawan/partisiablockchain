@@ -113,7 +113,7 @@ fn actual_checked_shl(lhs: u32, rhs: u32) -> Option<u32> {
 impl std::fmt::Display for Shortname {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for byte in &self.bytes() {
-            write!(f, "{:02x}", byte)?;
+            write!(f, "{byte:02x}")?;
         }
         Ok(())
     }

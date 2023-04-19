@@ -60,8 +60,7 @@ fn test_contract_function_with_variants(
         });
         assert!(
             result.is_err(),
-            "Succeeded for input bytes, when it should fail: {:?}",
-            variant
+            "Succeeded for input bytes, when it should fail: {variant:?}",
         );
     }
 }
@@ -403,15 +402,18 @@ mod zk {
         assert_abi_serializable(
             __abi_fn_do_zk_on_secret_input,
             [
-                0x10, // Function kind: ZkSecretInput
+                0x17, // Function kind: ZkSecretInputWithExplicitType
                 0, 0, 0, 21, // Name length
                 100, 111, 95, 122, 107, 95, 111, 110, 95, 115, 101, 99, 114, 101, 116, 95, 105,
                 110, 112, 117, 116,  // Name
                 0x04, // Shortname
                 0, 0, 0, 1, // Number arguments
-                0, 0, 0, 4, // Argument 0 Name Length
-                97, 114, 103, 49,   // Argument 0 Name
+                0, 0, 0, 4, // Argument Name Length
+                97, 114, 103, 49,   // Argument Name
                 0x02, // Field 0 type ordinal: u16
+                0, 0, 0, 12, // Secret Argument name length
+                115, 101, 99, 114, 101, 116, 95, 105, 110, 112, 117, 116,
+                8, // Secret Argument name
             ],
         );
     }

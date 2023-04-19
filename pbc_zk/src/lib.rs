@@ -74,6 +74,8 @@ pub type Sbi16 = Sbi<i16>;
 pub type Sbi32 = Sbi<i32>;
 /// A secret-shared [`i64`] value. See [`Sbi`].
 pub type Sbi64 = Sbi<i64>;
+/// A secret-shared [`i128`] value. See [`Sbi`].
+pub type Sbi128 = Sbi<i128>;
 
 /// A secret-shared value.
 pub trait SecretBinary {}
