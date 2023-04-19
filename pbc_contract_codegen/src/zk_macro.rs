@@ -4,8 +4,8 @@ use crate::macro_abi::{make_hook_abi_fn, make_hook_abi_fn_delegator};
 use pbc_contract_common::address::Shortname;
 
 use crate::{
-    determine_names, variables_for_inner_call, wrap_function_for_export, CallType, TokenStream2,
-    WrappedFunctionKind,
+    determine_names, variables_for_inner_call, wrap_function_for_export, CallType, SecretInput,
+    TokenStream2, WrappedFunctionKind,
 };
 
 pub(crate) fn handle_zk_macro(
@@ -14,6 +14,7 @@ pub(crate) fn handle_zk_macro(
     export_symbol_base: &str,
     kind: &WrappedFunctionKind,
     shortname_in_export: bool,
+    secret_type_input: SecretInput,
 ) -> TokenStream {
     let fn_ast: syn::ItemFn = syn::parse(input.clone()).unwrap();
     let names = determine_names(
@@ -42,12 +43,14 @@ pub(crate) fn handle_zk_macro(
         let shortname_u32 = names.function_name.shortname().as_u32();
         let shortname_ident =
             quote! {Some(pbc_contract_common::address::Shortname::from_u32(#shortname_u32))};
+
         make_hook_abi_fn(
             &fn_ast,
             &abi_fn_name,
             kind.fn_kind,
             rpc_pos,
             shortname_ident,
+            secret_type_input,
         )
     };
 

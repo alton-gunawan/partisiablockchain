@@ -1,9 +1,11 @@
-use read_write_rpc_derive::ReadRPC;
-use read_write_rpc_derive::WriteRPC;
-use read_write_state_derive::ReadWriteState;
+#[cfg(feature = "abi")]
+use crate::type_spec_default_impl;
 
 #[cfg(feature = "abi")]
 use pbc_traits::CreateTypeSpec;
+use read_write_rpc_derive::ReadRPC;
+use read_write_rpc_derive::WriteRPC;
+use read_write_state_derive::ReadWriteState;
 
 /// An address identifier is a 20 byte array derived from the hash of the public key of
 /// an account.
@@ -11,17 +13,7 @@ pub type Identifier = [u8; 20];
 
 #[cfg(feature = "abi")]
 impl CreateTypeSpec for Address {
-    fn __ty_name() -> String {
-        "Address".to_string()
-    }
-
-    fn __ty_identifier() -> String {
-        Self::__ty_name()
-    }
-
-    fn __ty_spec_write(w: &mut Vec<u8>, _lut: &std::collections::BTreeMap<String, u8>) {
-        w.push(0x0d)
-    }
+    type_spec_default_impl!("Address", 0x0d);
 }
 
 /// Represents the type of a blockchain address.

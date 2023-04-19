@@ -36,8 +36,7 @@ unsafe fn find_state_index(state_name: String, types: &[NamedTypeSpec]) -> usize
     assert_eq!(
         potential_state_indices.len(),
         1,
-        "More than one type named {}",
-        state_name
+        "More than one type named {state_name}",
     );
 
     potential_state_indices.first().cloned().unwrap()
