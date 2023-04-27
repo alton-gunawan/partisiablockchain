@@ -3,7 +3,7 @@ use proc_macro2::{Ident, TokenStream};
 static CLIENT_ABI_VERSION: [u8; 3] = [5, 2, 0];
 /// Binder version for private contracts.
 #[cfg(feature = "zk")]
-static BINDER_ABI_VERSION: [u8; 3] = [9, 2, 0];
+static BINDER_ABI_VERSION: [u8; 3] = [9, 3, 0];
 /// Binder version for public contract.
 #[cfg(not(feature = "zk"))]
 static BINDER_ABI_VERSION: [u8; 3] = [9, 0, 0];
