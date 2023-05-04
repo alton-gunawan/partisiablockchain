@@ -168,18 +168,25 @@ struct AddressTuple {
 
 #[derive(Eq, PartialEq, ReadWriteState, Debug)]
 #[repr(C)]
-struct Tuple1<T: ReadWriteState> {
+struct Tuple1<T> {
     v: T,
 }
 
 #[derive(Eq, PartialEq, ReadWriteState, Debug)]
 #[repr(C)]
-struct Tuple2<V1: ReadWriteState, V2>
-where
-    V2: ReadWriteState,
-{
+struct Tuple2<V1, V2> {
     v1: V1,
     v2: V2,
+}
+
+#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[repr(C)]
+struct Range<T: ReadWriteState>
+where
+    T: Ord,
+{
+    low: T,
+    high: T,
 }
 
 #[derive(Eq, PartialEq, ReadWriteState, Debug)]

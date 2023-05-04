@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 use std::fmt::Debug;
 use std::io::Cursor;
 
@@ -132,19 +132,4 @@ pub fn btree_set_n_not_mod_2() {
     }
 
     assert_state(simple.clone());
-}
-
-#[test]
-pub fn btree_map() {
-    let mut simple: BTreeMap<u64, u64> = BTreeMap::new();
-    simple.insert(1u64, 2u64);
-    simple.insert(21u64, 42u64);
-
-    assert_state(simple.clone());
-
-    let mut complex: BTreeMap<u64, BTreeMap<u64, u64>> = BTreeMap::new();
-    complex.insert(2, simple.clone());
-    complex.insert(3, simple.clone());
-
-    assert_state(complex);
 }

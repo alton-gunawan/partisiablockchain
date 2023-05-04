@@ -126,7 +126,7 @@ pub enum CalculationStatus {
 #[repr(C)]
 #[derive(Debug)]
 #[non_exhaustive]
-pub struct ZkClosed<MetadataT: ReadWriteState> {
+pub struct ZkClosed<MetadataT> {
     /// Id of the secret variable
     pub variable_id: SecretVarId,
     /// Which address owns the variable
@@ -165,9 +165,9 @@ impl<MetadataT: ReadWriteState> WriteRPC for ZkClosed<MetadataT> {
 ///
 /// - `<SecretMetadataT>`: Public state stored along with each variable.
 #[repr(C)]
-#[derive(Debug, ReadRPC, WriteRPC)]
+#[derive(Debug)]
 #[non_exhaustive]
-pub struct ZkState<SecretVarMetadataT: ReadWriteState> {
+pub struct ZkState<SecretVarMetadataT> {
     /// The MPC's current state.
     pub calculation_state: CalculationStatus,
     /// Variables that are in the process of being input.
@@ -182,7 +182,31 @@ pub struct ZkState<SecretVarMetadataT: ReadWriteState> {
     pub reserved_2: u32,
 }
 
-impl<SecretVarMetadataT: ReadWriteState> ZkState<SecretVarMetadataT> {
+impl<MetadataT: ReadWriteState> ReadRPC for ZkState<MetadataT> {
+    fn rpc_read_from<T: Read>(reader: &mut T) -> Self {
+        Self {
+            calculation_state: CalculationStatus::rpc_read_from(reader),
+            pending_inputs: <_>::rpc_read_from(reader),
+            secret_variables: <_>::rpc_read_from(reader),
+            data_attestations: <_>::rpc_read_from(reader),
+            reserved_1: u32::rpc_read_from(reader),
+            reserved_2: u32::rpc_read_from(reader),
+        }
+    }
+}
+
+impl<MetadataT: ReadWriteState> WriteRPC for ZkState<MetadataT> {
+    fn rpc_write_to<T: Write>(&self, writer: &mut T) -> std::io::Result<()> {
+        self.calculation_state.rpc_write_to(writer)?;
+        self.pending_inputs.rpc_write_to(writer)?;
+        self.secret_variables.rpc_write_to(writer)?;
+        self.data_attestations.rpc_write_to(writer)?;
+        self.reserved_1.rpc_write_to(writer)?;
+        self.reserved_2.rpc_write_to(writer)
+    }
+}
+
+impl<SecretVarMetadataT> ZkState<SecretVarMetadataT> {
     /// Utility method for finding pending input with given id
     pub fn get_pending_input(&self, id: SecretInputId) -> Option<&ZkClosed<SecretVarMetadataT>> {
         self.pending_inputs.iter().find(|x| x.variable_id == id)
@@ -223,7 +247,7 @@ impl<SecretVarMetadataT: ReadWriteState> ZkState<SecretVarMetadataT> {
 /// `<MetadataT>` is the type of the piece of public information associated with the variable.
 #[repr(C)]
 #[derive(Debug)]
-pub struct ZkInputDef<MetadataT: ReadWriteState> {
+pub struct ZkInputDef<MetadataT> {
     /// The bit lengths expected of the variable, and the number of subvariables wanted.
     pub expected_bit_lengths: Vec<u32>,
     /// Whether or not the variable should be sealed.

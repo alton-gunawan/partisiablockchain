@@ -111,6 +111,28 @@ fn canary_bls_signature() {
 }
 
 #[test]
+fn canary_sorted_vec_map() {
+    let buffer = canary_state(&test_examples::example_vec_map());
+    let expected: Vec<u8> = vec![
+        2, 0, 0, 0, // length of the map
+        1, // key
+        3, 0, 0, 0, // Length of vec
+        2, 0, 0, 0, // String length
+        b'm', b'y', // "my"
+        4, 0, 0, 0, // String length
+        b'n', b'a', b'm', b'e', // "name"
+        2, 0, 0, 0, // String length
+        b'i', b's', // "is"
+        2,    // key
+        1, 0, 0, 0, // Length of vec
+        4, 0, 0, 0, // String length
+        b'w', b'h', b'a', b't', // "what"
+    ];
+
+    assert_eq!(buffer, expected);
+}
+
+#[test]
 fn canary_context() {
     canary_rpc(&test_examples::EXAMPLE_CONTEXT);
 }

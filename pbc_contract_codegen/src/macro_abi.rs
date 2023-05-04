@@ -23,7 +23,9 @@ pub(crate) fn make_hook_abi_fn(
     let fn_kind_snippet = fn_kind_snippet(fn_kind);
     let add_secret_argument = match secret_type_input {
         SecretInput::None => quote! {},
+        #[cfg(feature = "zk")]
         SecretInput::Default => quote! { fn_abi.default_secret_argument(&lut); },
+        #[cfg(feature = "zk")]
         SecretInput::Some(secret_type) => {
             let secret_type: TokenStream2 = secret_type.parse().unwrap();
             quote! { fn_abi.secret_argument::<#secret_type>(&lut); }

@@ -118,31 +118,6 @@ impl<T: CreateTypeSpec> CreateTypeSpec for VecDeque<T> {
     }
 }
 
-/// Implementation of the [`CreateTypeSpec`] trait for for [`BTreeMap<K, V>`]
-/// for any K, V that implement [`CreateTypeSpec`].
-impl<K: CreateTypeSpec, V: CreateTypeSpec> CreateTypeSpec for BTreeMap<K, V> {
-    /// Type name is `BTreeMap<T>`.
-    fn __ty_name() -> String {
-        format!("BTreeMap<{}, {}>", K::__ty_name(), V::__ty_name())
-    }
-
-    /// Ordinal is `0x0f` followed by ordinals of `K` and `V`, as defined in [ABI Spec](https://partisiablockchain.gitlab.io/documentation/abiv1.html).
-    fn __ty_identifier() -> String {
-        format!(
-            "BTreeMap<{}, {}>",
-            K::__ty_identifier(),
-            V::__ty_identifier()
-        )
-    }
-
-    fn __ty_spec_write(w: &mut Vec<u8>, lut: &BTreeMap<String, u8>) {
-        // BTreeMap is 0x0f followed by the spec for key type and then the value type
-        w.push(0x0f);
-        K::__ty_spec_write(w, lut);
-        V::__ty_spec_write(w, lut);
-    }
-}
-
 /// Implementation of the [`CreateTypeSpec`] trait for [`BTreeSet<T>`]
 /// for any `T` that implements [`CreateTypeSpec`]
 impl<V: CreateTypeSpec> CreateTypeSpec for BTreeSet<V> {

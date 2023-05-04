@@ -1,21 +1,16 @@
-#[cfg(feature = "abi")]
+#![cfg(feature = "abi")]
 use std::collections::BTreeMap;
-#[cfg(feature = "abi")]
 use std::collections::BTreeSet;
 
-#[cfg(feature = "abi")]
 use create_type_spec_derive::CreateTypeSpec;
-#[cfg(feature = "abi")]
 use pbc_contract_common::abi::generate::{generate_types, LookupTable};
-#[cfg(feature = "abi")]
 use pbc_contract_common::abi::AbiSerialize;
-#[cfg(feature = "abi")]
 use pbc_contract_common::abi::NamedTypeSpec;
-#[cfg(feature = "abi")]
+use pbc_contract_common::sorted_vec_map::SortedVecMap;
 use pbc_traits::CreateTypeSpec;
+use read_write_state_derive::ReadWriteState;
 
 #[allow(dead_code)]
-#[cfg(feature = "abi")]
 #[derive(CreateTypeSpec)]
 struct DeriveAbiForMe {
     a: String,
@@ -25,14 +20,12 @@ struct DeriveAbiForMe {
 }
 
 #[allow(dead_code)]
-#[cfg(feature = "abi")]
 #[derive(CreateTypeSpec)]
 struct Nested {
     derived: DeriveAbiForMe,
 }
 
 #[test]
-#[cfg(feature = "abi")]
 fn implemented_create_type_spec_trait() {
     assert_eq!(DeriveAbiForMe::__ty_name(), "DeriveAbiForMe".to_string());
 
@@ -42,7 +35,6 @@ fn implemented_create_type_spec_trait() {
 }
 
 #[test]
-#[cfg(feature = "abi")]
 fn derived_for_struct() {
     let lut: BTreeMap<String, u8> = BTreeMap::new();
 
@@ -77,7 +69,6 @@ fn derived_for_struct() {
 }
 
 #[test]
-#[cfg(feature = "abi")]
 fn nested_structs() {
     let mut lut: BTreeMap<String, u8> = BTreeMap::new();
     lut.insert(DeriveAbiForMe::__ty_identifier(), 42);
@@ -99,62 +90,53 @@ fn nested_structs() {
     assert_abi(&abi, expected);
 }
 
-#[cfg(feature = "abi")]
-#[derive(Ord, PartialOrd, Eq, PartialEq, Clone, CreateTypeSpec)]
+#[derive(Ord, PartialOrd, Eq, PartialEq, Clone, CreateTypeSpec, ReadWriteState)]
 struct Inner {
     x: u8,
 }
 
-#[cfg(feature = "abi")]
 #[derive(Clone, CreateTypeSpec)]
 struct Outer {
     #[allow(dead_code)]
     inner: Inner,
 }
 
-#[cfg(feature = "abi")]
 #[derive(Clone, CreateTypeSpec)]
-struct OuterBTreeMapKey {
+struct OuterMapKey {
     #[allow(dead_code)]
-    inner: BTreeMap<Inner, String>,
+    inner: SortedVecMap<Inner, String>,
 }
 
-#[cfg(feature = "abi")]
 #[derive(Clone, CreateTypeSpec)]
-struct OuterBTreeMapValue {
+struct OuterMapValue {
     #[allow(dead_code)]
-    inner: BTreeMap<String, Inner>,
+    inner: SortedVecMap<String, Inner>,
 }
 
-#[cfg(feature = "abi")]
 #[derive(Clone, CreateTypeSpec)]
 struct OuterVec {
     #[allow(dead_code)]
     inner: Vec<Inner>,
 }
 
-#[cfg(feature = "abi")]
 #[derive(Clone, CreateTypeSpec)]
 struct OuterBTreeSet {
     #[allow(dead_code)]
     inner: BTreeSet<Inner>,
 }
 
-#[cfg(feature = "abi")]
 #[derive(Clone, CreateTypeSpec)]
 struct OuterComposite {
     #[allow(dead_code)]
-    inner: Vec<BTreeSet<Vec<BTreeMap<Inner, String>>>>,
+    inner: Vec<BTreeSet<Vec<SortedVecMap<Inner, String>>>>,
 }
 
-#[cfg(feature = "abi")]
 #[derive(Clone, CreateTypeSpec)]
 struct WithArray {
     #[allow(dead_code)]
     inner: [u8; 50],
 }
 
-#[cfg(feature = "abi")]
 #[test]
 fn serialize_inner() {
     let mut lut: BTreeMap<String, u8> = BTreeMap::new();
@@ -174,7 +156,6 @@ fn serialize_inner() {
     assert_abi(&a, result);
 }
 
-#[cfg(feature = "abi")]
 #[test]
 fn serialize_outer_with_inner_struct() {
     // Look up table for types
@@ -196,57 +177,50 @@ fn serialize_outer_with_inner_struct() {
     assert_abi(&result, expected);
 }
 
-#[cfg(feature = "abi")]
 #[test]
-fn serialize_inner_as_key_in_btreemap() {
+fn serialize_inner_as_key_in_map() {
     let mut lut: BTreeMap<String, u8> = BTreeMap::new();
 
     lut.insert(Inner::__ty_identifier(), 2);
-    lut.insert(OuterBTreeMapKey::__ty_identifier(), 1);
+    lut.insert(OuterMapKey::__ty_identifier(), 1);
 
-    let result: NamedTypeSpec = __abi_for_type_outerbtreemapkey(&lut)
+    let result: NamedTypeSpec = __abi_for_type_outermapkey(&lut).into_iter().next().unwrap();
+    let expected = vec![
+        0x01, // It's a struct
+        0x00, 0x00, 0x00, 11, // Length of name = 11
+        79, 117, 116, 101, 114, 77, 97, 112, 75, 101, 121, // The string "OuterMapKey"
+        0, 0, 0, 1, // 1 field
+        0, 0, 0, 5, // field name length, length = 5
+        0x69, 0x6e, 0x6e, 0x65, 0x72, // "inner"
+        0x0f, 0, 2, 0x0b, // SortedVecMap<Struct at index = 2, String>
+    ];
+    assert_abi(&result, expected);
+}
+
+#[test]
+fn serialize_inner_as_value_in_map() {
+    let mut lut: BTreeMap<String, u8> = BTreeMap::new();
+
+    lut.insert(Inner::__ty_identifier(), 2);
+    lut.insert(OuterMapValue::__ty_identifier(), 1);
+
+    let result: NamedTypeSpec = __abi_for_type_outermapvalue(&lut)
         .into_iter()
         .next()
         .unwrap();
     let expected = vec![
         0x01, // It's a struct
-        0x00, 0x00, 0x00, 16, // Length of name = 16
-        79, 117, 116, 101, 114, 66, 84, 114, 101, 101, 77, 97, 112, 75, 101,
-        121, // The string "OuterBTreeMapKey"
+        0x00, 0x00, 0x00, 13, // Length of name = 13
+        0x4f, 0x75, 0x74, 0x65, 0x72, 0x4d, 0x61, 0x70, 0x56, 0x61, 0x6c, 0x75,
+        0x65, // The string "OuterMapValue"
         0, 0, 0, 1, // 1 field
         0, 0, 0, 5, // field name length, length = 5
         0x69, 0x6e, 0x6e, 0x65, 0x72, // "inner"
-        0x0f, 0, 2, 0x0b, // BTreeMap<Struct at index = 2, String>
+        0x0f, 0x0b, 0, 2, // SortedVecMap<String, Struct at index = 2>
     ];
     assert_abi(&result, expected);
 }
 
-#[cfg(feature = "abi")]
-#[test]
-fn serialize_inner_as_value_in_btreemap() {
-    let mut lut: BTreeMap<String, u8> = BTreeMap::new();
-
-    lut.insert(Inner::__ty_identifier(), 2);
-    lut.insert(OuterBTreeMapValue::__ty_identifier(), 1);
-
-    let result: NamedTypeSpec = __abi_for_type_outerbtreemapvalue(&lut)
-        .into_iter()
-        .next()
-        .unwrap();
-    let expected = vec![
-        0x01, // It's a struct
-        0x00, 0x00, 0x00, 18, // Length of name = 18
-        0x4f, 0x75, 0x74, 0x65, 0x72, 0x42, 0x54, 0x72, 0x65, 0x65, 0x4d, 0x61, 0x70, 0x56, 0x61,
-        0x6c, 0x75, 0x65, // The string "OuterBTreeMapValue"
-        0, 0, 0, 1, // 1 field
-        0, 0, 0, 5, // field name length, length = 5
-        0x69, 0x6e, 0x6e, 0x65, 0x72, // "inner"
-        0x0f, 0x0b, 0, 2, // BtreeMap<String, Struct at index = 2>
-    ];
-    assert_abi(&result, expected);
-}
-
-#[cfg(feature = "abi")]
 #[test]
 fn serialize_inner_in_btreeset() {
     let mut lut: BTreeMap<String, u8> = BTreeMap::new();
@@ -271,7 +245,6 @@ fn serialize_inner_in_btreeset() {
     assert_abi(&result, expected);
 }
 
-#[cfg(feature = "abi")]
 #[test]
 fn serialize_inner_in_vec() {
     let mut lut: BTreeMap<String, u8> = BTreeMap::new();
@@ -292,7 +265,6 @@ fn serialize_inner_in_vec() {
     assert_abi(&result, expected);
 }
 
-#[cfg(feature = "abi")]
 #[test]
 fn serialize_inner_in_composite() {
     let mut lut: BTreeMap<String, u8> = BTreeMap::new();
@@ -313,12 +285,11 @@ fn serialize_inner_in_composite() {
         0, 0, 0, 5, // field name length, len 5
         0x69, 0x6e, 0x6e, 0x65, 0x72, // "inner"
         0x0e, 0x10, 0x0e, 0x0f, 0x00, 0x02,
-        0x0b, // Vec<BTreeSet<Vec<BTreeMap<Inner, with index = 2, String>>>>
+        0x0b, // Vec<BTreeSet<Vec<SortedVecMap<Inner, with index = 2, String>>>>
     ];
     assert_abi(&result, expected);
 }
 
-#[cfg(feature = "abi")]
 #[test]
 fn serialize_struct_with_array() {
     let mut lut: BTreeMap<String, u8> = BTreeMap::new();
@@ -339,7 +310,6 @@ fn serialize_struct_with_array() {
 }
 
 #[allow(dead_code)]
-#[cfg(feature = "abi")]
 #[derive(CreateTypeSpec)]
 enum EnumItemStruct {
     #[discriminant(0)]
@@ -350,7 +320,6 @@ enum EnumItemStruct {
     C { a: Inner },
 }
 
-#[cfg(feature = "abi")]
 #[test]
 fn serialize_enum() {
     let functions: Vec<LookupTable<Vec<NamedTypeSpec>>> =
@@ -375,7 +344,6 @@ fn serialize_enum() {
     assert_abi(&enum_type_spec, expected);
 }
 
-#[cfg(feature = "abi")]
 #[test]
 fn serialize_enum_variants() {
     let functions: Vec<LookupTable<Vec<NamedTypeSpec>>> =
@@ -423,14 +391,12 @@ fn serialize_enum_variants() {
 }
 
 #[allow(dead_code)]
-#[cfg(feature = "abi")]
 #[derive(CreateTypeSpec)]
 enum NestedEnum {
     #[discriminant(9)]
     One { a: EnumItemStruct },
 }
 
-#[cfg(feature = "abi")]
 #[test]
 fn serialize_nested_enum() {
     let functions: Vec<LookupTable<Vec<NamedTypeSpec>>> = vec![
@@ -467,7 +433,6 @@ fn serialize_nested_enum() {
     assert_eq!(types.get(2).unwrap().name, "EnumItemStruct");
 }
 
-#[cfg(feature = "abi")]
 fn assert_abi<T: AbiSerialize>(obj: &T, expected: Vec<u8>) {
     let mut actual = Vec::new();
     obj.serialize_abi(&mut actual).unwrap();
