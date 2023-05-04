@@ -33,13 +33,50 @@ pub fn field_to_name(field: &syn::Field) -> Ident {
 type SerializableByCopyConstFieldCreator = fn(&SupportedKind, &Ident) -> TokenStream;
 
 /// Which methods to generate: read, write or both at the same time.
-pub enum ReadWriteGenType {
+pub struct ReadWriteGenType {
+    /// Whether read implementation should be implemented
+    read: bool,
+    /// Whether write implementation should be implemented
+    write: bool,
+}
+
+impl ReadWriteGenType {
     /// Only generate read functions
-    Read,
+    pub const READ: ReadWriteGenType = ReadWriteGenType {
+        read: true,
+        write: false,
+    };
     /// Only generate write functions
-    Write,
+    pub const WRITE: ReadWriteGenType = ReadWriteGenType {
+        read: false,
+        write: true,
+    };
     /// Generate both read and write functions
-    Combined,
+    pub const COMBINED: ReadWriteGenType = ReadWriteGenType {
+        read: true,
+        write: true,
+    };
+}
+
+/// Modifies the given generics to add `T : Trait` for each generic `T`.
+///
+/// # Arguments
+/// * `generics` - Generics AST element to modify.
+/// * `trait_name` - Name of the trait.
+fn extend_generic_bounds_with_trait(generics: &mut syn::Generics, trait_name: syn::Path) {
+    // This method operates on syn directly, instead of emitting syntax directly, as this domain is
+    // complex, and we want to minimize the risk of accidentally producing wrong syntax.
+
+    let bound = syn::TraitBound {
+        paren_token: None,
+        modifier: syn::TraitBoundModifier::None,
+        lifetimes: None,
+        path: trait_name,
+    };
+
+    for type_param in generics.type_params_mut() {
+        type_param.bounds.push(bound.clone().into());
+    }
 }
 
 /// Implement a named trait that has read and a write methods.
@@ -62,27 +99,27 @@ pub fn impl_read_write(
     // Extract basic data
     let name = &ast.ident;
 
-    let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
+    let mut generics = ast.generics.clone();
+
+    // Determine additional where clause for type parameters.
+    extend_generic_bounds_with_trait(&mut generics, trait_name.clone().into());
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     // Select (somewhat hygienic) names for internal types
     let type_read = format_ident!("Read{}", name);
     let type_write = format_ident!("Write{}", name);
 
     // Check that our choice was actually hygienic
-    let names: std::collections::HashMap<&Ident, &'static str> = ast
-        .generics
+    let names: std::collections::HashMap<&Ident, &'static str> = generics
         .type_params()
         .map(|x| (&x.ident, "Type"))
         .chain(
-            ast.generics
+            generics
                 .lifetimes()
                 .map(|x| (&x.lifetime.ident, "Lifetime")),
         )
-        .chain(
-            ast.generics
-                .const_params()
-                .map(|x| (&x.ident, "Const generic")),
-        )
+        .chain(generics.const_params().map(|x| (&x.ident, "Const generic")))
         .collect();
 
     for generated_type_name in [&type_read, &type_write] {
@@ -173,50 +210,33 @@ pub fn impl_read_write(
         None => quote! {},
     };
 
-    let read_block = quote! {
-        #joined_const_field
-        fn #read_method<#type_read: std::io::Read>(reader: &mut #type_read) -> Self {
-            #read_logic
+    let read_block = if generation_type.read {
+        quote! {
+            #joined_const_field
+            fn #read_method<#type_read: std::io::Read>(reader: &mut #type_read) -> Self {
+                #read_logic
+            }
         }
+    } else {
+        quote! {}
     };
 
-    let write_block = quote! {
-        fn #write_method<#type_write: std::io::Write>(&self, writer: &mut #type_write) -> std::io::Result<()> {
-            #write_logic
+    let write_block = if generation_type.write {
+        quote! {
+            fn #write_method<#type_write: std::io::Write>(&self, writer: &mut #type_write) -> std::io::Result<()> {
+                #write_logic
+            }
         }
+    } else {
+        quote! {}
     };
 
-    match generation_type {
-        ReadWriteGenType::Read => {
-            // Collect to a beautiful implementation.
-            quote! {
-                #[automatically_derived]
-                impl #impl_generics pbc_traits::#trait_name for #name #ty_generics #where_clause {
-                    #read_block
-                }
+    quote! {
+            #[automatically_derived]
+            impl #impl_generics pbc_traits::#trait_name for #name #ty_generics #where_clause {
+                #read_block
+                #write_block
             }
-        }
-
-        ReadWriteGenType::Write => {
-            // Collect to a beautiful implementation.
-            quote! {
-                #[automatically_derived]
-                impl #impl_generics pbc_traits::#trait_name for #name #ty_generics #where_clause {
-                    #write_block
-                }
-            }
-        }
-
-        ReadWriteGenType::Combined => {
-            // Collect to a beautiful implementation.
-            quote! {
-                #[automatically_derived]
-                impl #impl_generics pbc_traits::#trait_name for #name #ty_generics #where_clause {
-                    #read_block
-                    #write_block
-                }
-            }
-        }
     }
 }
 

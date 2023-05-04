@@ -6,6 +6,7 @@
 use crate::address::{Address, AddressType};
 use crate::context::{CallbackContext, ContractContext, ExecutionResult};
 use crate::signature::Signature;
+use crate::sorted_vec_map::SortedVecMap;
 #[cfg(any(feature = "zk", doc))]
 use crate::zk;
 use crate::{BlsPublicKey, BlsSignature, Hash, PublicKey, U256};
@@ -75,6 +76,17 @@ pub const EXAMPLE_BLS_SIGNATURE: BlsSignature = BlsSignature {
         2, 3, 23, 2, 3, 23, 2, 42, 2, 3, 2, 32, 32, 3, 23, 2, 3, 23, 2, 3, 23, 2, 42,
     ],
 };
+
+/// Generator of example sorted vec map
+pub fn example_vec_map() -> SortedVecMap<u8, Vec<String>> {
+    let mut map: SortedVecMap<u8, Vec<String>> = SortedVecMap::new();
+    map.insert(
+        1,
+        vec!["my".to_string(), "name".to_string(), "is".to_string()],
+    );
+    map.insert(2, vec!["what".to_string()]);
+    map
+}
 
 /// Example contract context
 pub const EXAMPLE_CONTEXT: ContractContext = ContractContext {

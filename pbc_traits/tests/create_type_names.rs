@@ -1,11 +1,9 @@
-#[cfg(feature = "abi")]
+#![cfg(feature = "abi")]
 use std::collections::{BTreeMap, BTreeSet};
 
-#[cfg(feature = "abi")]
 use pbc_traits::CreateTypeSpec;
 
 #[test]
-#[cfg(feature = "abi")]
 pub fn ty_names_simple_types() {
     assert_eq!(u8::__ty_name(), "u8");
     assert_eq!(i8::__ty_name(), "i8");
@@ -22,20 +20,17 @@ pub fn ty_names_simple_types() {
 }
 
 #[test]
-#[cfg(feature = "abi")]
 pub fn ty_names_complex_types() {
-    assert_eq!(<BTreeMap<u8, i8>>::__ty_name(), "BTreeMap<u8, i8>");
     assert_eq!(<BTreeSet<String>>::__ty_name(), "BTreeSet<String>");
     assert_eq!(<Vec<String>>::__ty_name(), "Vec<String>");
 
     assert_eq!(
-        <Vec<Vec<Vec<BTreeSet<BTreeMap<i128, Vec<BTreeSet<String>>>>>>>>::__ty_name(),
-        "Vec<Vec<Vec<BTreeSet<BTreeMap<i128, Vec<BTreeSet<String>>>>>>>"
+        <Vec<Vec<Vec<BTreeSet<BTreeSet<Vec<BTreeSet<String>>>>>>>>::__ty_name(),
+        "Vec<Vec<Vec<BTreeSet<BTreeSet<Vec<BTreeSet<String>>>>>>>"
     );
 }
 
 #[test]
-#[cfg(feature = "abi")]
 pub fn ty_names_arrays() {
     assert_eq!(<[u8; 1]>::__ty_name(), "[u8; 1]");
     assert_eq!(<[u8; 2]>::__ty_name(), "[u8; 2]");
@@ -72,7 +67,6 @@ pub fn ty_names_arrays() {
     assert_eq!(<[u8; 101]>::__ty_name(), "[u8; 101]");
 }
 
-#[cfg(feature = "abi")]
 fn assert_ty<T: CreateTypeSpec>(ord: &[u8]) {
     let mut vec = Vec::new();
     T::__ty_spec_write(&mut vec, &BTreeMap::new());
@@ -80,7 +74,6 @@ fn assert_ty<T: CreateTypeSpec>(ord: &[u8]) {
 }
 
 #[test]
-#[cfg(feature = "abi")]
 pub fn ty_ordinals_simple_types() {
     assert_ty::<u8>(&[0x01]);
     assert_ty::<u16>(&[0x02]);
@@ -99,7 +92,6 @@ pub fn ty_ordinals_simple_types() {
 }
 
 #[test]
-#[cfg(feature = "abi")]
 pub fn ty_ordinals_complex_types() {
     assert_ty::<Vec<u8>>(&[0x0e, 0x01]);
     assert_ty::<Vec<u16>>(&[0x0e, 0x02]);
@@ -114,15 +106,11 @@ pub fn ty_ordinals_complex_types() {
     assert_ty::<Vec<i128>>(&[0x0e, 0x0a]);
 
     assert_ty::<BTreeSet<i128>>(&[0x10, 0x0a]);
-    assert_ty::<BTreeMap<i128, u128>>(&[0x0f, 0x0a, 0x05]);
 
-    assert_ty::<BTreeMap<Vec<BTreeMap<Vec<Vec<String>>, BTreeSet<BTreeMap<u32, u64>>>>, u128>>(&[
-        0x0f, 0x0e, 0x0f, 0x0e, 0x0e, 0x0b, 0x10, 0x0f, 0x03, 0x04, 0x05,
-    ]);
+    assert_ty::<BTreeSet<Vec<BTreeSet<Vec<Vec<String>>>>>>(&[0x10, 0x0e, 0x10, 0x0e, 0x0e, 0x0b]);
 }
 
 #[test]
-#[cfg(feature = "abi")]
 pub fn ty_ordinals_arrays() {
     assert_ty::<[u8; 1]>(&[0x11, 0x1]);
     assert_ty::<[u8; 2]>(&[0x11, 0x2]);

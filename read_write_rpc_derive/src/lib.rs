@@ -22,7 +22,7 @@ pub fn implement_read_rpc(input: TokenStream) -> TokenStream {
         format_ident!("rpc_read_from"),
         format_ident!("rpc_write_to"),
         None,
-        ReadWriteGenType::Read,
+        ReadWriteGenType::READ,
     );
 
     // Return the generated impl
@@ -42,7 +42,7 @@ pub fn implement_write_rpc(input: TokenStream) -> TokenStream {
         format_ident!("rpc_read_from"),
         format_ident!("rpc_write_to"),
         None,
-        ReadWriteGenType::Write,
+        ReadWriteGenType::WRITE,
     );
 
     // Return the generated impl

@@ -1,7 +1,7 @@
 use super::ReadWriteState;
 use crate::read_int::ReadInt;
 use crate::write_int::WriteInt;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 use std::io::{Read, Write};
 
 /// Implementation of the [`ReadWriteState`] trait for [`Option<T>`] for any `T` that
@@ -26,37 +26,6 @@ impl<T: ReadWriteState> ReadWriteState for Option<T> {
                 value.state_write_to(writer)
             }
         }
-    }
-}
-
-/// Implementation of the [`ReadWriteState`] trait for [`BTreeMap<K, V>`].
-/// for any `K`, `V` that implement [`ReadWriteState`]
-impl<K: ReadWriteState + Ord, V: ReadWriteState> ReadWriteState for BTreeMap<K, V> {
-    /// Not supported, due to internal pointers.
-    const SERIALIZABLE_BY_COPY: bool = false;
-
-    fn state_read_from<R: Read>(reader: &mut R) -> Self {
-        let mut result = BTreeMap::new();
-        let len = reader.read_u32_le();
-
-        for _ in 0..len {
-            let key = K::state_read_from(reader);
-            let value = V::state_read_from(reader);
-            if result.insert(key, value).is_some() {
-                panic!("Duplicate key added");
-            }
-        }
-
-        result
-    }
-
-    fn state_write_to<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
-        writer.write_u32_le(self.len() as u32)?;
-        for (key, value) in self.iter() {
-            key.state_write_to(writer)?;
-            value.state_write_to(writer)?;
-        }
-        Ok(())
     }
 }
 

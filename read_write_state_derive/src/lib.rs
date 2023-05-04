@@ -22,7 +22,7 @@ pub fn read_write(input: TokenStream) -> TokenStream {
         format_ident!("state_read_from"),
         format_ident!("state_write_to"),
         Some(make_serialize_by_copy_constant),
-        ReadWriteGenType::Combined,
+        ReadWriteGenType::COMBINED,
     );
 
     // Return the generated impl

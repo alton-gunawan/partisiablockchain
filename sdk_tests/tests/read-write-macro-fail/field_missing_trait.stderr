@@ -1,0 +1,45 @@
+error[E0277]: the trait bound `Wheel: ReadWriteState` is not satisfied
+ --> tests/read-write-macro-fail/field_missing_trait.rs:8:10
+  |
+8 | #[derive(ReadWriteState)]
+  |          ^^^^^^^^^^^^^^ the trait `ReadWriteState` is not implemented for `Wheel`
+  |
+  = help: the following other types implement trait `ReadWriteState`:
+            BTreeSet<T>
+            Car
+            Option<T>
+            String
+            Vec<T>
+            VecDeque<T>
+            [u8; LEN]
+            bool
+          and $N others
+  = note: this error originates in the derive macro `ReadWriteState` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no function or associated item named `state_read_from` found for struct `Wheel` in the current scope
+ --> tests/read-write-macro-fail/field_missing_trait.rs:8:10
+  |
+4 | struct Wheel {
+  | ------------ function or associated item `state_read_from` not found for this struct
+...
+8 | #[derive(ReadWriteState)]
+  |          ^^^^^^^^^^^^^^ function or associated item not found in `Wheel`
+  |
+  = help: items from traits can only be used if the trait is implemented and in scope
+  = note: the following trait defines an item `state_read_from`, perhaps you need to implement it:
+          candidate #1: `ReadWriteState`
+  = note: this error originates in the derive macro `ReadWriteState` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no function or associated item named `state_write_to` found for struct `Wheel` in the current scope
+ --> tests/read-write-macro-fail/field_missing_trait.rs:8:10
+  |
+4 | struct Wheel {
+  | ------------ function or associated item `state_write_to` not found for this struct
+...
+8 | #[derive(ReadWriteState)]
+  |          ^^^^^^^^^^^^^^ function or associated item not found in `Wheel`
+  |
+  = help: items from traits can only be used if the trait is implemented and in scope
+  = note: the following trait defines an item `state_write_to`, perhaps you need to implement it:
+          candidate #1: `ReadWriteState`
+  = note: this error originates in the derive macro `ReadWriteState` (in Nightly builds, run with -Z macro-backtrace for more info)

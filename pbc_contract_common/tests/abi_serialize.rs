@@ -1,20 +1,15 @@
-#[cfg(feature = "abi")]
+#![cfg(feature = "abi")]
 use pbc_contract_common::abi::{AbiSerialize, FnAbi, NamedEntityAbi, NamedTypeSpec};
-#[cfg(feature = "abi")]
 use pbc_contract_common::address::Shortname;
-#[cfg(feature = "abi")]
 use pbc_contract_common::{FunctionKind, FunctionName};
-#[cfg(feature = "abi")]
 use std::collections::BTreeMap;
 
-#[cfg(feature = "abi")]
 fn assert_serialized_to<T: AbiSerialize>(e: &T, expected_buf: &[u8]) {
     let mut gotten_buf = Vec::<u8>::new();
     e.serialize_abi(&mut gotten_buf).unwrap();
     assert_eq!(gotten_buf.as_slice(), expected_buf);
 }
 
-#[cfg(feature = "abi")]
 #[test]
 pub fn serialize_named_entity_0() {
     let lut = BTreeMap::new();
@@ -27,7 +22,6 @@ pub fn serialize_named_entity_0() {
     assert_serialized_to(&obj, &expected_buf);
 }
 
-#[cfg(feature = "abi")]
 #[test]
 pub fn serialize_type_abi_0() {
     let obj =
@@ -41,7 +35,6 @@ pub fn serialize_type_abi_0() {
     assert_serialized_to(&obj, &expected_buf);
 }
 
-#[cfg(feature = "abi")]
 #[test]
 pub fn serialize_type_abi_1() {
     let mut obj =
@@ -63,7 +56,6 @@ pub fn serialize_type_abi_1() {
     assert_serialized_to(&obj, &expected_buf);
 }
 
-#[cfg(feature = "abi")]
 #[test]
 pub fn serialize_fn_abi_0() {
     let obj = FnAbi::new("name".to_string(), None, FunctionKind::Action);
@@ -77,7 +69,6 @@ pub fn serialize_fn_abi_0() {
     assert_serialized_to(&obj, &expected_buf);
 }
 
-#[cfg(feature = "abi")]
 #[test]
 fn serialize_function_name_0() {
     let obj = FunctionName::new("my_name".to_string(), None);
@@ -90,7 +81,6 @@ fn serialize_function_name_0() {
     assert_serialized_to(&obj, &expected_buf);
 }
 
-#[cfg(feature = "abi")]
 #[test]
 fn serialize_function_name_defined_name() {
     let obj = FunctionName::new("my_name".to_string(), Some(Shortname::from_u32(42)));

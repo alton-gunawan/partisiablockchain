@@ -19,6 +19,8 @@ pub mod context;
 pub mod events;
 pub mod signature;
 
+pub mod sorted_vec_map;
+
 #[cfg(any(feature = "zk", doc))]
 pub mod zk;
 

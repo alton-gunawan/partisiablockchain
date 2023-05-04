@@ -127,12 +127,12 @@ fn parse_attributes(
 /// ```ignore
 /// # use pbc_contract_common::address::Address;
 /// # use pbc_contract_codegen::state;
-/// # use std::collections::BTreeMap;
+/// # use pbc_contract_common::sorted_vec_map::SortedVecMap;
 /// #[state]
 /// pub struct VotingContractState {
 ///     proposal_id: u64,
 ///     mp_addresses: Vec<Address>,
-///     votes: BTreeMap<Address, u8>,
+///     votes: SortedVecMap<Address, u8>,
 ///     closed: u8,
 /// }
 /// ```
@@ -143,7 +143,7 @@ fn parse_attributes(
 ///
 /// Furthermore, note that state serialization speeds are heavily affected by the types contained
 /// in the state struct. Types with dynamic sizes ([`Option<T>`], [`String`]) and/or global
-/// invariants ([`BTreeSet<T>`](std::collections::BTreeSet), [`BTreeMap<K,V>`](std::collections::BTreeMap))
+/// invariants ([`BTreeSet<T>`](std::collections::BTreeSet))
 /// are especially slow. For more background, see
 /// [`ReadWriteState::SERIALIZABLE_BY_COPY`](pbc_traits::ReadWriteState::SERIALIZABLE_BY_COPY)
 #[proc_macro_attribute]
@@ -231,8 +231,8 @@ pub fn init(_attrs: TokenStream, input: TokenStream) -> TokenStream {
 /// # use pbc_contract_common::context::*;
 /// # use pbc_contract_common::events::*;
 /// # use pbc_contract_common::address::*;
-/// # use std::collections::BTreeMap;
-/// type VotingContractState = BTreeMap<Address, bool>;
+/// # use pbc_contract_common::map::sorted_vec_map::SortedVecMap;
+/// type VotingContractState = SortedVecMap<Address, bool>;
 /// # type Metadata = u32;
 ///
 /// #[action]
@@ -965,7 +965,9 @@ fn parse_secret_type_input(args: HashMap<String, Lit>) -> SecretInput {
 
 pub(crate) enum SecretInput {
     None,
+    #[cfg(feature = "zk")]
     Default,
+    #[cfg(feature = "zk")]
     Some(String),
 }
 
