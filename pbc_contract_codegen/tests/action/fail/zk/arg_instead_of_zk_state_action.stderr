@@ -1,29 +1,29 @@
 error[E0308]: mismatched types
- --> tests/action/fail/zk/arg_instead_of_zk_state_action.rs:5:1
-  |
-5 | #[action]
-  | ^^^^^^^^^
-  | |
-  | expected struct `ZkState`, found `u32`
-  | expected due to this
-  |
-  = note: expected struct `ZkState<_>`
-               found type `u32`
-  = note: this error originates in the attribute macro `action` (in Nightly builds, run with -Z macro-backtrace for more info)
+  --> tests/action/fail/zk/arg_instead_of_zk_state_action.rs:14:1
+   |
+14 | #[action(zk = true)]
+   | ^^^^^^^^^^^^^^^^^^^^
+   | |
+   | expected struct `ZkState`, found `u32`
+   | expected due to this
+   |
+   = note: expected struct `ZkState<_>`
+                found type `u32`
+   = note: this error originates in the attribute macro `action` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0308]: mismatched types
- --> tests/action/fail/zk/arg_instead_of_zk_state_action.rs:5:1
-  |
-5 | #[action]
-  | ^^^^^^^^^ expected `u32`, found struct `ZkState`
-6 | fn action(_context: pbc_contract_common::context::ContractContext, state: u32, arg1: u32) -> u32 {
-  |    ------ arguments to this function are incorrect
-  |
-  = note: expected type `u32`
-           found struct `ZkState<_>`
+  --> tests/action/fail/zk/arg_instead_of_zk_state_action.rs:14:1
+   |
+14 | #[action(zk = true)]
+   | ^^^^^^^^^^^^^^^^^^^^ expected `u32`, found struct `ZkState`
+15 | fn action(_context: pbc_contract_common::context::ContractContext, state: u32, arg1: u32) -> u32 {
+   |    ------ arguments to this function are incorrect
+   |
+   = note: expected type `u32`
+            found struct `ZkState<_>`
 note: function defined here
- --> tests/action/fail/zk/arg_instead_of_zk_state_action.rs:6:4
-  |
-6 | fn action(_context: pbc_contract_common::context::ContractContext, state: u32, arg1: u32) -> u32 {
-  |    ^^^^^^                                                                      ---------
-  = note: this error originates in the attribute macro `action` (in Nightly builds, run with -Z macro-backtrace for more info)
+  --> tests/action/fail/zk/arg_instead_of_zk_state_action.rs:15:4
+   |
+15 | fn action(_context: pbc_contract_common::context::ContractContext, state: u32, arg1: u32) -> u32 {
+   |    ^^^^^^                                                                      ---------
+   = note: this error originates in the attribute macro `action` (in Nightly builds, run with -Z macro-backtrace for more info)

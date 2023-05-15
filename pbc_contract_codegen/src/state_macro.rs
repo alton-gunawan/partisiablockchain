@@ -15,15 +15,13 @@ pub(crate) fn handle_state_macro(input: TokenStream) -> TokenStream {
         _ => unimplemented!("The state attribute is only valid for structs."),
     };
 
-    let stamped_versions = crate::version::create_version_numbers();
     let version_client_token = crate::version::create_abi_version_client();
     let version_binder_token = crate::version::create_abi_version_binder();
+    let version_binder_zk_token = crate::version::create_abi_version_binder_zk();
 
     let result: TokenStream2 = quote! {
         use create_type_spec_derive::CreateTypeSpec as InternalDeriveCreateType;
         use read_write_state_derive::ReadWriteState as InternalDeriveReadWriteState;
-
-        #stamped_versions
 
         #[repr(C)]
         #[derive(InternalDeriveCreateType, InternalDeriveReadWriteState)]
@@ -38,7 +36,11 @@ pub(crate) fn handle_state_macro(input: TokenStream) -> TokenStream {
             ty_len: u32, ty_list_ptr: *const u32) -> u64 {
 
             let version_client = #version_client_token;
-            let version_binder = #version_binder_token;
+            let version_binder = if __PBC_IS_ZK_CONTRACT {
+                #version_binder_zk_token
+            } else {
+                #version_binder_token
+            };
             let state_name = #state_struct_name.to_string();
 
             pbc_contract_common::abi::generate::generate_abi(version_binder, version_client, state_name, fn_len, fn_list_ptr, ty_len, ty_list_ptr)

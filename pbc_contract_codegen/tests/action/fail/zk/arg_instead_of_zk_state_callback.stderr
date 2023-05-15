@@ -1,32 +1,32 @@
 error[E0308]: mismatched types
- --> tests/action/fail/zk/arg_instead_of_zk_state_callback.rs:5:1
-  |
-5 | #[callback(shortname = 0x02)]
-  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  | |
-  | expected struct `ZkState`, found `u64`
-  | expected due to this
-  |
-  = note: expected struct `ZkState<_>`
-               found type `u64`
-  = note: this error originates in the attribute macro `callback` (in Nightly builds, run with -Z macro-backtrace for more info)
+  --> tests/action/fail/zk/arg_instead_of_zk_state_callback.rs:14:1
+   |
+14 | #[callback(shortname = 0x02, zk = true)]
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | |
+   | expected struct `ZkState`, found `u64`
+   | expected due to this
+   |
+   = note: expected struct `ZkState<_>`
+                found type `u64`
+   = note: this error originates in the attribute macro `callback` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0308]: mismatched types
-  --> tests/action/fail/zk/arg_instead_of_zk_state_callback.rs:5:1
+  --> tests/action/fail/zk/arg_instead_of_zk_state_callback.rs:14:1
    |
-5  | #[callback(shortname = 0x02)]
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `u64`, found struct `ZkState`
-6  | fn callback(
+14 | #[callback(shortname = 0x02, zk = true)]
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `u64`, found struct `ZkState`
+15 | fn callback(
    |    -------- arguments to this function are incorrect
    |
    = note: expected type `u64`
             found struct `ZkState<_>`
 note: function defined here
-  --> tests/action/fail/zk/arg_instead_of_zk_state_callback.rs:6:4
+  --> tests/action/fail/zk/arg_instead_of_zk_state_callback.rs:15:4
    |
-6  | fn callback(
+15 | fn callback(
    |    ^^^^^^^^
 ...
-10 |     arg1: u64,
+19 |     arg1: u64,
    |     ---------
    = note: this error originates in the attribute macro `callback` (in Nightly builds, run with -Z macro-backtrace for more info)

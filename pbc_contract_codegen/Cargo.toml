@@ -5,7 +5,6 @@ edition = "2021"
 resolver = "1"
 
 [features]
-zk = ["pbc_contract_common/zk"]
 abi = ["pbc_contract_common/abi", "pbc_traits/abi", "pbc_lib/abi"]
 
 [lib]

@@ -143,7 +143,6 @@ fn canary_callback_context() {
 }
 
 #[test]
-#[cfg(feature = "zk")]
 fn canary_secret_var() {
     let examples = vec![
         test_examples::SECRET_VAR_ID_4,
@@ -158,7 +157,6 @@ fn canary_secret_var() {
 }
 
 #[test]
-#[cfg(feature = "zk")]
 fn canary_zk_input_def() {
     let examples = vec![
         test_examples::zk_input_def(1),
@@ -171,7 +169,6 @@ fn canary_zk_input_def() {
 }
 
 #[test]
-#[cfg(feature = "zk")]
 fn canary_zk_closed() {
     canary_rpc_noeq(&test_examples::ZK_CLOSED_1);
     canary_rpc_noeq(&test_examples::ZK_CLOSED_2);
@@ -179,7 +176,6 @@ fn canary_zk_closed() {
 }
 
 #[test]
-#[cfg(feature = "zk")]
 fn canary_zk_state() {
     canary_rpc_noeq(&test_examples::example_zk_state());
 }

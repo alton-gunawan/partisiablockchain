@@ -2,15 +2,13 @@ use proc_macro2::{Ident, TokenStream};
 
 static CLIENT_ABI_VERSION: [u8; 3] = [5, 2, 0];
 /// Binder version for private contracts.
-#[cfg(feature = "zk")]
-static BINDER_ABI_VERSION: [u8; 3] = [9, 3, 0];
+static BINDER_ABI_VERSION_ZK: [u8; 3] = [9, 3, 0];
 /// Binder version for public contract.
-#[cfg(not(feature = "zk"))]
-static BINDER_ABI_VERSION: [u8; 3] = [9, 0, 0];
+static BINDER_ABI_VERSION_PUB: [u8; 3] = [9, 0, 0];
 
-pub(crate) fn create_version_numbers() -> TokenStream {
+pub(crate) fn create_version_numbers(zk: bool) -> TokenStream {
     let mut result = create_static_version_client();
-    result.extend(create_static_version_binder());
+    result.extend(create_static_version_binder(zk));
     result
 }
 
@@ -24,8 +22,20 @@ fn create_static_version_client() -> TokenStream {
     }
 }
 
-fn create_static_version_binder() -> TokenStream {
-    let name = version_name("BINDER", BINDER_ABI_VERSION);
+/// Creates a token stream consisting of `pub static __PBC_VERSION_BINDER_x_x_x: () = ();`
+/// If `zk`
+///
+/// ### Parameters:
+/// `zk`: [bool], if true uses `BINDER_ABI_VERSION_ZK` otherwise uses `BINDER_ABI_VERSION_PUB`.
+///
+/// ### Returns:
+/// The [TokenStream] with the static binder version.
+fn create_static_version_binder(zk: bool) -> TokenStream {
+    let name = if zk {
+        version_name("BINDER", BINDER_ABI_VERSION_ZK)
+    } else {
+        version_name("BINDER", BINDER_ABI_VERSION_PUB)
+    };
     quote! {
         #[doc = "PBC Version of the binary format used by the PBC WASM binder."]
         #[doc = "This versions the format of the binary data that the PBC WASM binder reads when handling smart contracts."]
@@ -53,7 +63,11 @@ pub(crate) fn create_abi_version_client() -> TokenStream {
 }
 
 pub(crate) fn create_abi_version_binder() -> TokenStream {
-    convert_to_expression(BINDER_ABI_VERSION)
+    convert_to_expression(BINDER_ABI_VERSION_PUB)
+}
+
+pub(crate) fn create_abi_version_binder_zk() -> TokenStream {
+    convert_to_expression(BINDER_ABI_VERSION_ZK)
 }
 
 /// Convert the given 3-byte slice into an expression that can be assigned to a variable.

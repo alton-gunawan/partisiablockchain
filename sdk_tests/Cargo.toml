@@ -24,5 +24,5 @@ quote = "1.0"
 proc-macro2 = "1.0"
 
 [features]
+test_lib = []
 abi = ["pbc_contract_common/abi", "pbc_contract_codegen/abi", "pbc_traits/abi", "create_type_spec_derive/abi", "pbc_lib/abi"]
-zk = ["pbc_contract_common/zk", "pbc_contract_codegen/zk"]

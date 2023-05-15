@@ -54,7 +54,6 @@ mod macro_abi;
 mod state_macro;
 mod tokenized;
 mod version;
-#[cfg(feature = "zk")]
 mod zk_macro;
 
 /// Parses the attributes of a macro into a map from attribute names to a `Literal`.
@@ -185,8 +184,11 @@ pub fn state(_attrs: TokenStream, input: TokenStream) -> TokenStream {
 /// Note that there are no previous state when initializing, in contrast to the
 /// [`macro@action`] macro. If the initializer fails the contract will not be created.
 #[proc_macro_attribute]
-pub fn init(_attrs: TokenStream, input: TokenStream) -> TokenStream {
-    init_macro::handle_init_macro(input)
+pub fn init(attrs: TokenStream, input: TokenStream) -> TokenStream {
+    let args: AttributeArgs = parse_macro_input!(attrs as AttributeArgs);
+    let attributes = parse_attributes(args, vec!["zk".to_string()], vec![]);
+    let zk = parse_zk_argument(&attributes);
+    init_macro::handle_init_macro(input, zk)
 }
 
 /// Public action contract annotation
@@ -275,9 +277,14 @@ pub fn init(_attrs: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn action(attrs: TokenStream, input: TokenStream) -> TokenStream {
     let args: AttributeArgs = parse_macro_input!(attrs as AttributeArgs);
-    let attributes = parse_attributes(args, vec!["shortname".to_string()], vec![]);
-    let shortname_override = parse_shortname_override(attributes);
-    action_macro::handle_action_macro(input, shortname_override)
+    let attributes = parse_attributes(
+        args,
+        vec!["shortname".to_string(), "zk".to_string()],
+        vec![],
+    );
+    let shortname_override = parse_shortname_override(&attributes);
+    let zk = parse_zk_argument(&attributes);
+    action_macro::handle_action_macro(input, shortname_override, zk)
 }
 
 /// Public callback contract annotation
@@ -330,11 +337,12 @@ pub fn callback(attrs: TokenStream, input: TokenStream) -> TokenStream {
     let args: AttributeArgs = parse_macro_input!(attrs as AttributeArgs);
     let attributes = parse_attributes(
         args,
-        vec!["shortname".to_string()],
+        vec!["shortname".to_string(), "zk".to_string()],
         vec!["shortname".to_string()],
     );
-    let shortname_override = parse_shortname_override(attributes);
-    callback_macro::handle_callback_macro(input, shortname_override)
+    let shortname_override = parse_shortname_override(&attributes);
+    let zk = parse_zk_argument(&attributes);
+    callback_macro::handle_callback_macro(input, shortname_override, zk)
 }
 
 /// Secret input/action contract annotation
@@ -353,7 +361,7 @@ pub fn callback(attrs: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// Must have a signature of the following format:
 ///
-/// ```
+/// ```ignore
 /// # use pbc_contract_codegen::zk_on_secret_input;
 /// # use pbc_contract_common::context::*;
 /// # use pbc_contract_common::zk::*;
@@ -394,7 +402,7 @@ pub fn callback(attrs: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// # use pbc_contract_codegen::zk_on_secret_input;
 /// # use pbc_contract_common::context::*;
 /// # use pbc_contract_common::zk::*;
@@ -416,7 +424,6 @@ pub fn callback(attrs: TokenStream, input: TokenStream) -> TokenStream {
 ///     (state, vec![], def)
 /// }
 /// ```
-#[cfg(feature = "zk")]
 #[proc_macro_attribute]
 pub fn zk_on_secret_input(attrs: TokenStream, input: TokenStream) -> TokenStream {
     let args: AttributeArgs = parse_macro_input!(attrs as AttributeArgs);
@@ -425,7 +432,7 @@ pub fn zk_on_secret_input(attrs: TokenStream, input: TokenStream) -> TokenStream
         vec!["shortname".to_string(), "secret_type".to_string()],
         vec!["shortname".to_string()],
     );
-    let shortname_override = parse_shortname_override(attributes.clone());
+    let shortname_override = parse_shortname_override(&attributes);
     let secret_type_input = parse_secret_type_input(attributes);
 
     let function_kind = WrappedFunctionKind {
@@ -461,7 +468,7 @@ pub fn zk_on_secret_input(attrs: TokenStream, input: TokenStream) -> TokenStream
 ///
 /// Must have a signature of the following format:
 ///
-/// ```
+/// ```ignore
 /// # use pbc_contract_codegen::zk_on_variable_inputted;
 /// # use pbc_contract_common::context::*;
 /// # use pbc_contract_common::zk::*;
@@ -503,7 +510,7 @@ pub fn zk_on_secret_input(attrs: TokenStream, input: TokenStream) -> TokenStream
 /// This hook is commonly used to start the computation when enough inputs have been given, as
 /// demonstrated in the following example:
 ///
-/// ```
+/// ```ignore
 /// # use pbc_contract_codegen::zk_on_variable_inputted;
 /// # use pbc_contract_common::context::*;
 /// # use pbc_contract_common::zk::*;
@@ -526,7 +533,6 @@ pub fn zk_on_secret_input(attrs: TokenStream, input: TokenStream) -> TokenStream
 ///     (state, vec![], zk_state_changes)
 /// }
 /// ```
-#[cfg(feature = "zk")]
 #[proc_macro_attribute]
 pub fn zk_on_variable_inputted(attrs: TokenStream, input: TokenStream) -> TokenStream {
     assert!(
@@ -566,7 +572,7 @@ pub fn zk_on_variable_inputted(attrs: TokenStream, input: TokenStream) -> TokenS
 ///
 /// Must have a signature of the following format:
 ///
-/// ```
+/// ```ignore
 /// # use pbc_contract_codegen::zk_on_variable_rejected;
 /// # use pbc_contract_common::context::*;
 /// # use pbc_contract_common::zk::*;
@@ -582,7 +588,6 @@ pub fn zk_on_variable_inputted(attrs: TokenStream, input: TokenStream) -> TokenS
 /// ) -> (ContractState, Vec<EventGroup>, Vec<ZkStateChange>)
 /// # { (state, vec![], vec![]) }
 /// ```
-#[cfg(feature = "zk")]
 #[proc_macro_attribute]
 pub fn zk_on_variable_rejected(attrs: TokenStream, input: TokenStream) -> TokenStream {
     assert!(
@@ -624,7 +629,7 @@ pub fn zk_on_variable_rejected(attrs: TokenStream, input: TokenStream) -> TokenS
 ///
 /// Must have a signature of the following format:
 ///
-/// ```
+/// ```ignore
 /// # use pbc_contract_codegen::zk_on_compute_complete;
 /// # use pbc_contract_common::context::*;
 /// # use pbc_contract_common::zk::*;
@@ -666,7 +671,7 @@ pub fn zk_on_variable_rejected(attrs: TokenStream, input: TokenStream) -> TokenS
 /// A commonly used pattern is to open the output variables given to `zk_on_compute_complete`, as
 /// demonstrated in the following example:
 ///
-/// ```
+/// ```ignore
 /// # use pbc_contract_codegen::zk_on_compute_complete;
 /// # use pbc_contract_common::context::*;
 /// # use pbc_contract_common::zk::*;
@@ -684,7 +689,6 @@ pub fn zk_on_variable_rejected(attrs: TokenStream, input: TokenStream) -> TokenS
 ///     (state, vec![], vec![ZkStateChange::OpenVariables { variables: created_variables }])
 /// }
 /// ```
-#[cfg(feature = "zk")]
 #[proc_macro_attribute]
 pub fn zk_on_compute_complete(attrs: TokenStream, input: TokenStream) -> TokenStream {
     assert!(
@@ -725,7 +729,7 @@ pub fn zk_on_compute_complete(attrs: TokenStream, input: TokenStream) -> TokenSt
 ///
 /// Annotated function must have a signature of following format:
 ///
-/// ```
+/// ```ignore
 /// # use pbc_contract_codegen::zk_on_user_variables_opened;
 /// # use pbc_contract_common::context::*;
 /// # use pbc_contract_common::zk::*;
@@ -743,7 +747,6 @@ pub fn zk_on_compute_complete(attrs: TokenStream, input: TokenStream) -> TokenSt
 /// ```
 ///
 /// Where `opened_variables` is a [`Vec`] of the opened variables.
-#[cfg(feature = "zk")]
 #[proc_macro_attribute]
 pub fn zk_on_user_variables_opened(attrs: TokenStream, input: TokenStream) -> TokenStream {
     assert!(
@@ -785,7 +788,7 @@ pub fn zk_on_user_variables_opened(attrs: TokenStream, input: TokenStream) -> To
 ///
 /// Annotated function must have a signature of following format:
 ///
-/// ```
+/// ```ignore
 /// # use pbc_contract_codegen::zk_on_variables_opened;
 /// # use pbc_contract_common::context::*;
 /// # use pbc_contract_common::zk::*;
@@ -808,7 +811,7 @@ pub fn zk_on_user_variables_opened(attrs: TokenStream, input: TokenStream) -> To
 ///
 /// Common usages include post-processing of computation results; for example
 ///
-/// ```
+/// ```ignore
 /// # use pbc_contract_codegen::zk_on_variables_opened;
 /// # use pbc_contract_common::context::*;
 /// # use pbc_contract_common::zk::*;
@@ -829,7 +832,6 @@ pub fn zk_on_user_variables_opened(attrs: TokenStream, input: TokenStream) -> To
 ///     (state, vec![], vec![])
 /// }
 /// ```
-#[cfg(feature = "zk")]
 #[proc_macro_attribute]
 pub fn zk_on_variables_opened(attrs: TokenStream, input: TokenStream) -> TokenStream {
     assert!(
@@ -871,7 +873,7 @@ pub fn zk_on_variables_opened(attrs: TokenStream, input: TokenStream) -> TokenSt
 ///
 /// Annotated function must have a signature of following format:
 ///
-/// ```
+/// ```ignore
 /// # use pbc_contract_codegen::zk_on_attestation_complete;
 /// # use pbc_contract_common::context::*;
 /// # use pbc_contract_common::zk::*;
@@ -889,7 +891,6 @@ pub fn zk_on_variables_opened(attrs: TokenStream, input: TokenStream) -> TokenSt
 /// ```
 ///
 /// Where `ZkState` can be further accessed to determine signatures, etc.
-#[cfg(feature = "zk")]
 #[proc_macro_attribute]
 pub fn zk_on_attestation_complete(attrs: TokenStream, input: TokenStream) -> TokenStream {
     assert!(
@@ -922,11 +923,11 @@ pub fn zk_on_attestation_complete(attrs: TokenStream, input: TokenStream) -> Tok
 ///
 /// ### Parameters:
 ///
-/// * `args`: [HashMap<String, Lit>] - parsed attributes of a macro.
+/// * `args`: &[HashMap<String, Lit>] - parsed attributes of a macro.
 ///
 /// ### Returns
 /// Some of the parsed shortname if present in args, None if it is not present.
-fn parse_shortname_override(args: HashMap<String, Lit>) -> Option<Shortname> {
+fn parse_shortname_override(args: &HashMap<String, Lit>) -> Option<Shortname> {
     args.get("shortname").map(|lit: &Lit| match lit {
         Lit::Int(lit_int) if is_hex_literal(lit_int) => {
             let x: u64 = lit_int
@@ -941,6 +942,26 @@ fn parse_shortname_override(args: HashMap<String, Lit>) -> Option<Shortname> {
     })
 }
 
+/// Gets the zk attribute of the arguments and if present parses it into a `bool`.
+/// Panics if the attribute is not a valid boolean literal.
+///
+/// ### Parameters:
+///
+/// * `args`: &[HashMap<String, Lit>] - parsed attributes of a macro.
+///
+/// ### Returns
+/// `true` if the zk attribute is present and set to true, `false` otherwise.
+fn parse_zk_argument(args: &HashMap<String, Lit>) -> bool {
+    let zk = args.get("zk").map(|lit: &Lit| match lit {
+        Lit::Bool(lit_bool) => lit_bool.value,
+        _ => panic!(
+            "Invalid zk attribute, expecting a boolean literal, but got: {}",
+            lit.to_token_stream()
+        ),
+    });
+    zk.unwrap_or(false)
+}
+
 /// Gets the secret_type attribute of and parses it into a `SecretInput` enum containing the
 /// secret input type.
 /// Panics if the attribute is not a string literal.
@@ -951,7 +972,6 @@ fn parse_shortname_override(args: HashMap<String, Lit>) -> Option<Shortname> {
 ///
 /// ### Returns
 /// Some of the secret input type if present in args. Default Sbi32 if not present.
-#[cfg(feature = "zk")]
 fn parse_secret_type_input(args: HashMap<String, Lit>) -> SecretInput {
     match args.get("secret_type") {
         None => SecretInput::Default,
@@ -965,9 +985,7 @@ fn parse_secret_type_input(args: HashMap<String, Lit>) -> SecretInput {
 
 pub(crate) enum SecretInput {
     None,
-    #[cfg(feature = "zk")]
     Default,
-    #[cfg(feature = "zk")]
     Some(String),
 }
 
@@ -995,23 +1013,26 @@ struct WrappedFunctionKind {
 }
 
 impl WrappedFunctionKind {
-    fn public_contract_hook_kind(system_arguments: usize, fn_kind: FunctionKind) -> Self {
-        // Without Zk we only need state, events optional.
-        #[cfg(not(feature = "zk"))]
-        let output_other_types = vec![];
-
-        // With Zk we only need state, events optional, and ZkStateChange optional.
-        #[cfg(feature = "zk")]
-        let output_other_types = vec![(
-            quote! { Vec<pbc_contract_common::zk::ZkStateChange> },
-            format_ident!("write_zk_state_change"),
-        )];
-
+    fn public_contract_hook_kind(
+        system_arguments: usize,
+        fn_kind: FunctionKind,
+        zk_state_allowed: bool,
+    ) -> Self {
+        let output_other_types = if zk_state_allowed {
+            // With Zk we only need state, events optional, and ZkStateChange optional.
+            vec![(
+                quote! { Vec<pbc_contract_common::zk::ZkStateChange> },
+                format_ident!("write_zk_state_change"),
+            )]
+        } else {
+            // Without Zk we only need state, events optional.
+            vec![]
+        };
         Self {
             output_state_and_events: true,
             output_other_types,
             min_allowed_num_results: 1,
-            system_arguments: system_arguments + usize::from(cfg!(feature = "zk")),
+            system_arguments: system_arguments + usize::from(zk_state_allowed),
             fn_kind,
             allow_rpc_arguments: true,
         }
@@ -1042,6 +1063,21 @@ impl WrappedFunctionKind {
     }
 }
 
+/// Generate an exported function for reading the rpc and call the wrapped function. The result
+/// is then written to a [ContractResultBuffer] placed as is expected by the blockchain,
+/// and produces a value so the blockchain can locate the buffer result.
+///
+/// ### Parameters:
+/// * `fn_identifier`: &[Ident], The identifier for the function to wrap.
+/// * `export_symbol`: [Ident], The identifier for the wrapper function.
+/// * `docs`: &[str], The documentation to insert above the wrapper function.
+/// * `arguments`: [TokenizedInvocation], The arguments for the wrapped function.
+/// * `function_kind`: &[WrappedFunctionKind], The function kind, e.g. action or callback.
+/// * `check_zk_contract`: Option<[bool]>, If `Some(true)` asserts that the contract is a zk-contract.
+///     if `Some(false)` asserts that the contract is a public contract, otherwise no check is performed.
+///
+/// ### Returns:
+/// The [TokenStream2] for the wrapper function.
 #[allow(clippy::too_many_arguments)]
 fn wrap_function_for_export(
     fn_identifier: &Ident,
@@ -1049,6 +1085,7 @@ fn wrap_function_for_export(
     docs: &str,
     arguments: TokenizedInvocation,
     function_kind: &WrappedFunctionKind,
+    check_zk_contract: Option<bool>,
 ) -> TokenStream2 {
     // Check that function is well-formed
     if arguments.num_params() > function_kind.system_arguments && !function_kind.allow_rpc_arguments
@@ -1058,6 +1095,18 @@ fn wrap_function_for_export(
             function_kind.system_arguments,
         );
     }
+    let fn_ident = fn_identifier.to_string();
+    let kind = format!("{:?}", function_kind.fn_kind).to_lowercase();
+    let zk_check_stream = if let Some(zk_argument) = check_zk_contract {
+        let error_message = if zk_argument {
+            format!("{fn_ident} cannot be zk if the init function is not zk. Consider using #[init(zk = true)]")
+        } else {
+            format!("{fn_ident} cannot be non-zk if the init function is zk. Consider using #[{kind}(zk = true)]")
+        };
+        check_valid_zk_contract(zk_argument, error_message)
+    } else {
+        TokenStream2::new()
+    };
 
     let reader = format_ident!("input_reader");
     let rpc_read = &arguments.param_instantiation_expr();
@@ -1123,6 +1172,7 @@ fn wrap_function_for_export(
         ) -> u64 {
             #[cfg(all(not(feature = "abi"), any(target_arch = "wasm32", doc)))]
             pbc_lib::exit::override_panic();
+            #zk_check_stream
             let mut #reader = unsafe { std::slice::from_raw_parts(input_buf_ptr, input_buf_len) };
             let context = #ctx_expression;
             #(let #invoke_vars = #invoke_read_expr;)*
@@ -1174,9 +1224,11 @@ pub(crate) fn determine_names(
     }
 }
 
-fn variables_for_inner_call(item: &syn::ItemFn, call_type: CallType) -> TokenizedInvocation {
-    let require_zk_state = cfg!(feature = "zk");
-
+fn variables_for_inner_call(
+    item: &syn::ItemFn,
+    call_type: CallType,
+    require_zk_state: bool,
+) -> TokenizedInvocation {
     // Constants by CallType
     let expected_min_arguments = match call_type {
         CallType::Init => 1,
@@ -1364,18 +1416,21 @@ fn generate_read_from_array_expression(array: TypeArray, is_state: bool) -> Toke
     quote! { <#array_tokens as #trait_type>::#read_from(&mut input_reader); }
 }
 
+fn check_valid_zk_contract(zk_argument: bool, error_message: String) -> TokenStream2 {
+    quote! {
+        const _ : () = assert!(#zk_argument == __PBC_IS_ZK_CONTRACT, #error_message);
+    }
+}
+
 #[cfg(test)]
 mod test {
+
     #[test]
     fn failing_actions() {
         let t = trybuild::TestCases::new();
-        #[cfg(not(feature = "zk"))]
         t.compile_fail("tests/action/fail/*.rs");
-        #[cfg(feature = "zk")]
         t.compile_fail("tests/action/fail/zk/*.rs");
-        #[cfg(not(feature = "zk"))]
         t.pass("tests/action/success/*.rs");
-        #[cfg(feature = "zk")]
         t.pass("tests/action/success/zk/*.rs");
     }
 }

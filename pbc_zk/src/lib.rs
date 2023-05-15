@@ -17,11 +17,11 @@
 //! Simple example of a computation summing all input variables:
 //!
 //! ```
-//! # use pbc_zk::{Sbi32, num_secret_variables, load_sbi};
+//! # use pbc_zk::{Sbi32, load_sbi, secret_variable_ids};
 //!
 //! pub fn sum_all_variables() -> Sbi32 {
 //!     let mut sum: Sbi32 = Sbi32::from(0);
-//!     for variable_id in 1..(num_secret_variables() + 1) {
+//!     for variable_id in secret_variable_ids() {
 //!         sum = sum + load_sbi::<Sbi32>(variable_id);
 //!     }
 //!     sum
@@ -31,7 +31,7 @@
 //! # Example of loading struct
 //!
 //! ```
-//! # use pbc_zk::{Sbi1, Sbi32, num_secret_variables, load_sbi, Secret};
+//! # use pbc_zk::{Sbi1, Sbi32, secret_variable_ids, load_sbi, Secret};
 //!
 //! # #[derive(Clone)]
 //! struct MyStruct {
@@ -43,7 +43,7 @@
 //!
 //! pub fn sum_all_variables() -> Sbi32 {
 //!     let mut sum: Sbi32 = Sbi32::from(0);
-//!     for variable_id in 1..(num_secret_variables() + 1) {
+//!     for variable_id in secret_variable_ids() {
 //!         let value = load_sbi::<MyStruct>(variable_id);
 //!         if value.include_in_sum {
 //!             sum = sum + value.value;
@@ -162,8 +162,18 @@ pub mod api {
 /// ### Returns:
 ///
 /// The number of secret variables.
+#[deprecated(note = "use secret_variable_ids() instead when iterating over secret variables.")]
 pub fn num_secret_variables() -> i32 {
     unsafe { api::SECRETS.len() as i32 }
+}
+
+/// Creates an iterator for secret variable ids.
+///
+/// ### Returns:
+///
+/// Iterator over the ids of secret variables.
+pub fn secret_variable_ids() -> impl Iterator<Item = i32> {
+    unsafe { 1..(api::SECRETS.len() as i32 + 1) }
 }
 
 /// Conversion from [`i32`] to [`Sbi32`]. Use [`Sbi32::from`] instead.

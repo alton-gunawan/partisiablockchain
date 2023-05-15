@@ -2,7 +2,6 @@ use crate::events::EventGroup;
 use pbc_traits::WriteInt;
 use pbc_traits::{ReadWriteState, WriteRPC};
 
-#[cfg(any(feature = "zk", doc))]
 use crate::zk;
 
 fn write_u32_be_at_idx(buffer: &mut [u8], idx: usize, value: u32) -> std::io::Result<()> {
@@ -15,10 +14,7 @@ fn write_u32_be_at_idx(buffer: &mut [u8], idx: usize, value: u32) -> std::io::Re
 mod result_section_type_id {
     pub const STATE: u8 = 0x01;
     pub const EVENTS: u8 = 0x02;
-
-    #[cfg(feature = "zk")]
     pub const ZK_STATE_CHANGE: u8 = 0x11;
-    #[cfg(feature = "zk")]
     pub const ZK_INPUT_DEF: u8 = 0x12;
 }
 
@@ -148,7 +144,6 @@ impl ContractResultBuffer {
     }
 
     /// Writes an instance of [`zk::ZkInputDef`] to the output buffer.
-    #[cfg(any(feature = "zk", doc))]
     pub fn write_zk_input_def_result<MetadataT: ReadWriteState>(
         &mut self,
         declaration: zk::ZkInputDef<MetadataT>,
@@ -160,7 +155,6 @@ impl ContractResultBuffer {
     }
 
     /// Writes a vector of [`zk::ZkStateChange`] to the output buffer.
-    #[cfg(any(feature = "zk", doc))]
     pub fn write_zk_state_change(&mut self, changes: Vec<zk::ZkStateChange>) {
         self.write_section(result_section_type_id::ZK_STATE_CHANGE, |buf| {
             changes.rpc_write_to(buf)
