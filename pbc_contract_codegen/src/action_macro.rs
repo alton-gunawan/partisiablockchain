@@ -11,6 +11,7 @@ use crate::{
 pub fn handle_action_macro(
     input: TokenStream,
     shortname_override: Option<Shortname>,
+    zk_argument: bool,
 ) -> TokenStream {
     let fn_ast: syn::ItemFn = syn::parse(input.clone()).unwrap();
     let names = determine_names(shortname_override, &fn_ast, "action", true);
@@ -22,15 +23,18 @@ pub fn handle_action_macro(
     let kind = WrappedFunctionKind::public_contract_hook_kind(
         2,
         pbc_contract_common::FunctionKind::Action,
+        zk_argument,
     );
 
-    let invocation = variables_for_inner_call(&fn_ast, CallType::Action);
+    let invocation = variables_for_inner_call(&fn_ast, CallType::Action, zk_argument);
+
     let mut result = wrap_function_for_export(
         &names.fn_identifier,
         names.export_symbol,
         &docs,
         invocation,
         &kind,
+        Some(zk_argument),
     );
 
     let abi_fn_name = format_ident!("__abi_fn_{}", &names.fn_identifier);

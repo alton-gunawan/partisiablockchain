@@ -1,3 +1,4 @@
+use pbc_contract_codegen::init;
 use pbc_contract_codegen::zk_on_secret_input;
 use create_type_spec_derive::CreateTypeSpec;
 
@@ -7,6 +8,14 @@ pub fn main() {}
 struct SecretStruct {
     v1: i32,
     v2: i8,
+}
+
+#[init(zk = true)]
+fn init(
+    _context: pbc_contract_common::context::ContractContext,
+    _zk_state: pbc_contract_common::zk::ZkState<u64>,
+) -> u64 {
+    0
 }
 
 #[zk_on_secret_input(shortname = 0x04, secret_type = "SecretStruct")]

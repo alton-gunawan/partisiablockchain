@@ -1,4 +1,3 @@
-#[cfg(not(feature = "zk"))]
 mod nonzk {
     use pbc_contract_codegen::init;
     use pbc_contract_common::context::ContractContext;

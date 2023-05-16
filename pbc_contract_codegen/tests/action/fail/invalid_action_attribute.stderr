@@ -4,7 +4,7 @@ error: custom attribute panicked
 8 | #[action(cakes = "galore")]
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
   |
-  = help: message: Invalid attribute found, valid attributes are: shortname
+  = help: message: Invalid attribute found, valid attributes are: shortname, zk
 
 warning: unused import: `pbc_contract_common::context::ContractContext`
  --> tests/action/fail/invalid_action_attribute.rs:4:5

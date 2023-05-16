@@ -28,13 +28,14 @@ pub(crate) fn handle_zk_macro(
         names.fn_identifier
     );
 
-    let invocation = variables_for_inner_call(&fn_ast, CallType::Action);
+    let invocation = variables_for_inner_call(&fn_ast, CallType::Action, true);
     let mut result = wrap_function_for_export(
         &names.fn_identifier,
         names.export_symbol,
         &docs,
         invocation,
         kind,
+        Some(true),
     );
 
     let abi_fn_name = format_ident!("__abi_fn_{}", &names.fn_identifier);

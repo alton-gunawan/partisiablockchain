@@ -5,7 +5,6 @@ edition = "2021"
 
 [features]
 abi = ["pbc_traits/abi", "pbc_contract_core/abi"]
-zk = []
 test_examples = []
 
 [dependencies]

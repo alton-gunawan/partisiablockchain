@@ -14,7 +14,7 @@ impl pbc_traits::ReadWriteState for ContractState {
     fn state_write_to<T: std::io::Write>(&self, _writer: &mut T) -> std::io::Result<()> { std::io::Result::Ok(()) }
 }
 
-#[init]
+#[init(zk = true)]
 fn do_zk_init(
     _context: ContractContext,
     _zk_state: pbc_contract_common::zk::ZkState<u32>,

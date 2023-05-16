@@ -7,7 +7,6 @@ use crate::address::{Address, AddressType};
 use crate::context::{CallbackContext, ContractContext, ExecutionResult};
 use crate::signature::Signature;
 use crate::sorted_vec_map::SortedVecMap;
-#[cfg(any(feature = "zk", doc))]
 use crate::zk;
 use crate::{BlsPublicKey, BlsSignature, Hash, PublicKey, U256};
 
@@ -123,21 +122,17 @@ pub fn example_callback_context() -> CallbackContext {
 pub type ExampleZkMetadata = u32;
 
 /// Example secret variable id
-#[cfg(any(feature = "zk", doc))]
 pub const SECRET_VAR_ID_31: zk::SecretVarId = zk::SecretVarId::new(31);
 
 /// Example secret variable id
-#[cfg(any(feature = "zk", doc))]
 pub const SECRET_VAR_ID_30: zk::SecretVarId = zk::SecretVarId::new(30);
 
 /// Example secret variable id
-#[cfg(any(feature = "zk", doc))]
 pub const SECRET_VAR_ID_4: zk::SecretVarId = zk::SecretVarId::new(4);
 
 /// Example ZkClosed 1
 ///
 /// Metadata is explicitly NOT palindromic wrt. endianess.
-#[cfg(any(feature = "zk", doc))]
 pub const ZK_CLOSED_1: zk::ZkClosed<ExampleZkMetadata> = zk::ZkClosed {
     variable_id: SECRET_VAR_ID_31,
     owner: EXAMPLE_ADDRESS_1,
@@ -149,7 +144,6 @@ pub const ZK_CLOSED_1: zk::ZkClosed<ExampleZkMetadata> = zk::ZkClosed {
 /// Example ZkClosed 2
 ///
 /// Metadata is explicitly NOT palindromic wrt. endianess.
-#[cfg(any(feature = "zk", doc))]
 pub const ZK_CLOSED_2: zk::ZkClosed<ExampleZkMetadata> = zk::ZkClosed {
     variable_id: SECRET_VAR_ID_30,
     owner: EXAMPLE_ADDRESS_2,
@@ -161,7 +155,6 @@ pub const ZK_CLOSED_2: zk::ZkClosed<ExampleZkMetadata> = zk::ZkClosed {
 /// Generator of open example ZkClosed
 ///
 /// Metadata and data is explicitly NOT palindromic wrt. endianess.
-#[cfg(any(feature = "zk", doc))]
 pub fn zk_closed_open() -> zk::ZkClosed<ExampleZkMetadata> {
     zk::ZkClosed {
         variable_id: SECRET_VAR_ID_4,
@@ -175,7 +168,6 @@ pub fn zk_closed_open() -> zk::ZkClosed<ExampleZkMetadata> {
 /// Generator of ZkInputDef examples
 ///
 /// Metadata is explicitly NOT palindromic wrt. endianess.
-#[cfg(any(feature = "zk", doc))]
 pub fn zk_input_def(seed: u32) -> zk::ZkInputDef<ExampleZkMetadata> {
     assert_ne!(seed, u32::from_be(seed));
     zk::ZkInputDef {
@@ -195,7 +187,6 @@ fn example_signature(rng: &mut Rng) -> Signature {
 }
 
 /// Generator of example data attestations.
-#[cfg(any(feature = "zk", doc))]
 pub fn example_data_attestation() -> zk::DataAttestation {
     let mut rng = Rng::new(312);
     zk::DataAttestation {
@@ -211,7 +202,6 @@ pub fn example_data_attestation() -> zk::DataAttestation {
 }
 
 /// Generator of example callback contexts
-#[cfg(any(feature = "zk", doc))]
 pub fn example_zk_state() -> zk::ZkState<ExampleZkMetadata> {
     zk::ZkState {
         calculation_state: zk::CalculationStatus::Waiting,

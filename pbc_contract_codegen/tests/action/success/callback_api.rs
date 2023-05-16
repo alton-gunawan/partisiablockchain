@@ -14,7 +14,7 @@ fn dos(
     state: MyState,
 ) -> (MyState, Vec<EventGroup>) {
     let mut e = EventGroup::builder();
-    e.with_callback(SHORTNAME_TRES).argument(9u32);
+    e.with_callback(SHORTNAME_TRES).argument(9u32).done();
     (state, vec![e.build()])
 }
 

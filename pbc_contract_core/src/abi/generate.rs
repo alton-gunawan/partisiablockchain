@@ -47,6 +47,7 @@ unsafe fn find_state_index(state_name: String, types: &[NamedTypeSpec]) -> usize
 /// # Safety
 ///
 /// This should only be run by the ABI generation tool.
+#[allow(clippy::too_many_arguments)]
 pub unsafe fn generate_abi(
     version_binder: [u8; 3],
     version_client: [u8; 3],
@@ -74,11 +75,10 @@ pub unsafe fn generate_abi(
     let mut contract = ContractAbi::new(state_type.type_spec.to_vec());
     contract.actions(actions);
     contract.types(types);
+    let abi_header_buffer = abi_header_bytes(version_binder, version_client);
 
     let mut output: Vec<u8> = Vec::new();
-    output
-        .write_all(&abi_header_bytes(version_binder, version_client))
-        .unwrap();
+    output.write_all(&abi_header_buffer).unwrap();
     contract.serialize_abi(&mut output).unwrap();
 
     let length = output.len() as u64;

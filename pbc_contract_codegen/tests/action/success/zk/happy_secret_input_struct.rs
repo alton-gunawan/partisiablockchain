@@ -1,8 +1,17 @@
+use pbc_contract_codegen::init;
 use pbc_contract_codegen::zk_on_secret_input;
 use create_type_spec_derive::CreateTypeSpec;
 use pbc_zk::{Sbi32, Sbi8, SecretBinary};
 
 pub fn main() {}
+
+#[init(zk = true)]
+fn init(
+    _context: pbc_contract_common::context::ContractContext,
+    _zk_state: pbc_contract_common::zk::ZkState<u64>,
+) -> u64 {
+    0
+}
 
 #[derive(CreateTypeSpec, SecretBinary)]
 struct SecretStruct {

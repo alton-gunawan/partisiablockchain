@@ -1,11 +1,20 @@
-#![cfg(not(feature = "zk"))]
 mod nonzk {
 
-    use pbc_contract_codegen::{action, callback};
+    use pbc_contract_codegen::{action, callback, init, state};
     use pbc_contract_common::context::ContractContext;
     use pbc_contract_common::events::EventGroup;
     use pbc_contract_common::{address::Address, context::CallbackContext};
     use read_write_state_derive::ReadWriteState;
+
+    #[state]
+    pub struct Something {
+        num: u8,
+    }
+
+    #[init]
+    pub fn initialize(_ctx: ContractContext) -> Something {
+        Something { num: 0 }
+    }
 
     #[action]
     pub fn action_with_vec(
