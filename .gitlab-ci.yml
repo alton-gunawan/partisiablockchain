@@ -28,7 +28,7 @@ run-test:
   except:
   - main
   script:
-  - CARGO_INCREMENTAL=0 cargo test -- --nocapture
+  - CARGO_INCREMENTAL=0 cargo test --all-features -- --nocapture
 
 docs:
   stage: build
