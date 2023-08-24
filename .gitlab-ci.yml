@@ -6,10 +6,10 @@ variables:
 include:
 - project: 'secata-public/pom/shared-ci'
   file: 'rust-lib.yml'
-  ref: 'par-8738_improve_rust_pipelines'
+  ref: 'par-8738_update-CI-to-2.10.0'
 - project: 'secata-public/pom/shared-ci'
   file: 'rust-docs.yml'
-  ref: 'par-8738_improve_rust_pipelines'
+  ref: 'par-8738_update-CI-to-2.10.0'
 - project: 'secata-public/pom/shared-ci'
   file: 'rust-coverage.yml'
-  ref: 'par-8738_improve_rust_pipelines'
+  ref: 'par-8738_update-CI-to-2.10.0'
