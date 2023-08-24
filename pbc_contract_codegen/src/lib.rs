@@ -1426,6 +1426,7 @@ fn check_valid_zk_contract(zk_argument: bool, error_message: String) -> TokenStr
 mod test {
 
     #[test]
+    #[cfg(feature = "abi")]
     fn failing_actions() {
         let t = trybuild::TestCases::new();
         t.compile_fail("tests/action/fail/*.rs");

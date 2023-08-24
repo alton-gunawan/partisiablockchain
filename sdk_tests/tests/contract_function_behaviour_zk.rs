@@ -6,10 +6,9 @@ use pbc_contract_common::context::{CallbackContext, ContractContext};
 use pbc_contract_common::events::EventGroup;
 use pbc_contract_common::test_examples::*;
 use pbc_contract_common::zk::*;
-use sdk_tests::test_contract_behaviour::{
-    assert_abi_serializable, rpc_self, test_contract_function_with_variants,
-    EXPECTED_DO_THING_ABI_BYTES,
-};
+#[cfg(feature = "abi")]
+use sdk_tests::test_contract_behaviour::{assert_abi_serializable, EXPECTED_DO_THING_ABI_BYTES};
+use sdk_tests::test_contract_behaviour::{rpc_self, test_contract_function_with_variants};
 
 type ContractState = u64;
 
