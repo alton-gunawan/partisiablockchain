@@ -13,7 +13,7 @@ error[E0277]: the trait bound `Wheel: ReadWriteState` is not satisfied
             VecDeque<T>
             [u8; LEN]
             bool
-          and $N others
+          and 10 others
   = note: this error originates in the derive macro `ReadWriteState` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0599]: no function or associated item named `state_read_from` found for struct `Wheel` in the current scope

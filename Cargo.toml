@@ -4,7 +4,6 @@ members = [
     "derive_commons",
     "pbc_contract_common",
     "pbc_contract_codegen",
-    "pbc_external",
     "pbc_traits",
     "pbc_lib",
     "pbc_zk",

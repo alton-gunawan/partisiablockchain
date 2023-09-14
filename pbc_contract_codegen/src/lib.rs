@@ -24,7 +24,6 @@
 //! correctly with the blockchain.
 
 #![recursion_limit = "128"]
-extern crate pbc_external;
 extern crate proc_macro;
 extern crate proc_macro2;
 #[macro_use]
@@ -526,7 +525,7 @@ pub fn zk_on_secret_input(attrs: TokenStream, input: TokenStream) -> TokenStream
 ///   variable_id: SecretVarId,
 /// ) -> (ContractState, Vec<EventGroup>, Vec<ZkStateChange>) {
 ///     let zk_state_changes = if (zk_state.secret_variables.len() > 5) {
-///         vec![ZkStateChange::start_computation(vec![1, 2, 3])]
+///         vec![ZkStateChange::start_computation(0, vec![1, 2, 3])]
 ///     } else {
 ///         vec![]
 ///     };

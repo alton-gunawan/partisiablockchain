@@ -60,7 +60,7 @@ mod sbi;
 pub mod sbi;
 
 extern crate pbc_zk_macros;
-pub use pbc_zk_macros::SecretBinary;
+pub use pbc_zk_macros::{zk_compute, SecretBinary};
 
 use sbi::*;
 

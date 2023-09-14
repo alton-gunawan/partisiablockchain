@@ -2,13 +2,13 @@
 name = "pbc_contract_common"
 version = "0.5.0"
 edition = "2021"
+license = "MIT"
 
 [features]
 abi = ["pbc_traits/abi", "pbc_contract_core/abi"]
 test_examples = []
 
 [dependencies]
-pbc_external = { path = "../pbc_external" }
 read_write_state_derive = { path = "../read_write_state_derive" }
 read_write_rpc_derive = { path = "../read_write_rpc_derive" }
 create_type_spec_derive = { path = "../create_type_spec_derive" }

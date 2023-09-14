@@ -736,45 +736,69 @@ pub fn serialize_enum_item_struct() {
     read_write_state_roundtrip_with_eq(&my_enum_c, &[0x7D, 0x00]);
 }
 
-#[test]
-#[allow(clippy::assertions_on_constants)]
-pub fn derive_serializable_by_copy() {
-    assert!(EmptyStruct::SERIALIZABLE_BY_COPY);
-    assert!(SimpleStruct::SERIALIZABLE_BY_COPY);
-    assert!(StructWithSizeLargerThanAlignment::SERIALIZABLE_BY_COPY);
-    assert!(!StructWithSizeSmallerThanAlignment::SERIALIZABLE_BY_COPY);
-    assert!(ComplexStruct::SERIALIZABLE_BY_COPY);
-    assert!(!StructWithVec::SERIALIZABLE_BY_COPY);
-    assert!(!StructWithEmptyStructVec::SERIALIZABLE_BY_COPY);
-    assert!(!StructWithPadding::SERIALIZABLE_BY_COPY);
-    assert!(!VecStructWithPadding::SERIALIZABLE_BY_COPY);
-    assert!(!StructWithAlignment::SERIALIZABLE_BY_COPY);
-    assert!(!VecStructWithAlignment::SERIALIZABLE_BY_COPY);
-    assert!(!StructWithOption::SERIALIZABLE_BY_COPY);
-    assert!(StructWithByteArray::SERIALIZABLE_BY_COPY);
-    assert!(!VecWithByteArray::SERIALIZABLE_BY_COPY);
-    assert!(NestedStruct::SERIALIZABLE_BY_COPY);
-    assert!(!VecNestedStruct::SERIALIZABLE_BY_COPY);
-
-    // Address support
-    assert!(AddressType::SERIALIZABLE_BY_COPY);
-    assert!(Address::SERIALIZABLE_BY_COPY);
-    assert!(!VecWithAddresses::SERIALIZABLE_BY_COPY);
-    assert!(AddressTuple::SERIALIZABLE_BY_COPY);
-
-    // Structs with generics
-    assert!(<Tuple1<u8> as ReadWriteState>::SERIALIZABLE_BY_COPY);
-    assert!(<Tuple1<Tuple1<u8>> as ReadWriteState>::SERIALIZABLE_BY_COPY);
-    assert!(<Tuple1<u64> as ReadWriteState>::SERIALIZABLE_BY_COPY);
-    assert!(<Tuple2<u8, u8> as ReadWriteState>::SERIALIZABLE_BY_COPY);
-    assert!(<Tuple2<u8, Tuple2<u8, u8>> as ReadWriteState>::SERIALIZABLE_BY_COPY);
-    assert!(<Tuple2<[u8; 3], Tuple2<[u8; 3], [u8; 2]>> as ReadWriteState>::SERIALIZABLE_BY_COPY);
-    assert!(<Tuple2<u64, u64> as ReadWriteState>::SERIALIZABLE_BY_COPY);
-
-    // Enum StatusEnum
-    assert!(StatusEnum::SERIALIZABLE_BY_COPY);
-    assert!(EnumWithConstantDiscriminants::SERIALIZABLE_BY_COPY);
-
-    // EnumItemStruct
-    assert!(!EnumItemStruct::SERIALIZABLE_BY_COPY);
+macro_rules! assert_serializable_by_copy{
+    ($($type:ty)*) => {
+        $(
+            #[allow(dead_code)]
+            const _: () = if !< $type as ReadWriteState > ::SERIALIZABLE_BY_COPY {
+                panic!(concat!(stringify!($type), " was not SERIALIZABLE_BY_COPY as was otherwise expected!"));
+            };
+        )*
+    }
 }
+
+macro_rules! assert_serializable_by_copy_not{
+    ($($type:ty)*) => {
+        $(
+            #[allow(dead_code)]
+            const _: () = if < $type as ReadWriteState > ::SERIALIZABLE_BY_COPY {
+                panic!(concat!(stringify!($type), " was SERIALIZABLE_BY_COPY, but this was unexpected!"));
+            };
+        )*
+    }
+}
+
+assert_serializable_by_copy!(EmptyStruct);
+assert_serializable_by_copy!(SimpleStruct);
+assert_serializable_by_copy!(StructWithSizeLargerThanAlignment);
+assert_serializable_by_copy!(ComplexStruct);
+assert_serializable_by_copy!(StructWithByteArray);
+assert_serializable_by_copy!(NestedStruct);
+
+// Address support
+assert_serializable_by_copy!(AddressType);
+assert_serializable_by_copy!(Address);
+assert_serializable_by_copy!(AddressTuple);
+
+// Structs with generics
+assert_serializable_by_copy!(Tuple1<u8>);
+assert_serializable_by_copy!(Tuple1<Tuple1<u8>>);
+assert_serializable_by_copy!(Tuple1<u64>);
+assert_serializable_by_copy!(Tuple2<u8, u8>);
+assert_serializable_by_copy!(Tuple2<u8, Tuple2<u8, u8>>);
+assert_serializable_by_copy!(Tuple2<[u8; 3], Tuple2<[u8; 3], [u8; 2]>>);
+assert_serializable_by_copy!(Tuple2<u64, u64>);
+
+// Map entry
+assert_serializable_by_copy!(pbc_contract_common::sorted_vec_map::entry::Entry<Address, u8>);
+
+// Enum StatusEnum
+assert_serializable_by_copy!(StatusEnum);
+assert_serializable_by_copy!(EnumWithConstantDiscriminants);
+
+assert_serializable_by_copy_not!(StructWithSizeSmallerThanAlignment);
+assert_serializable_by_copy_not!(StructWithVec);
+assert_serializable_by_copy_not!(StructWithEmptyStructVec);
+assert_serializable_by_copy_not!(StructWithPadding);
+assert_serializable_by_copy_not!(VecStructWithPadding);
+assert_serializable_by_copy_not!(StructWithAlignment);
+assert_serializable_by_copy_not!(VecStructWithAlignment);
+assert_serializable_by_copy_not!(StructWithOption);
+assert_serializable_by_copy_not!(VecWithByteArray);
+assert_serializable_by_copy_not!(VecNestedStruct);
+
+// Address support
+assert_serializable_by_copy_not!(VecWithAddresses);
+
+// EnumItemStruct
+assert_serializable_by_copy_not!(EnumItemStruct);

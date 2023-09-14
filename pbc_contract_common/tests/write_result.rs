@@ -78,7 +78,7 @@ const ADDRESS_1: Address = Address {
 
 const STATE_AND_EVENTS_SMALL_STATE: SmallState = SmallState { field: 59 };
 
-const STATE_AND_EVENTS_EXPECTED_BYTES: [u8; 65] = [
+const STATE_AND_EVENTS_EXPECTED_BYTES: [u8; 66] = [
     0, 0, 0, 0, // Empty length
     // State
     1, // Section id: State
@@ -86,7 +86,7 @@ const STATE_AND_EVENTS_EXPECTED_BYTES: [u8; 65] = [
     59, // State data
     // Events
     2, // Section id: Events
-    0, 0, 0, 50, // Section len
+    0, 0, 0, 51, // Section len
     0, 0, 0, 1, // #EventGroup
     0, // No callback
     0, // Cost: None
@@ -95,6 +95,7 @@ const STATE_AND_EVENTS_EXPECTED_BYTES: [u8; 65] = [
     0, 0, 0, 4, 65, 66, 67, 99, // Event payload
     0,  // From original sender?: no
     1, 0, 0, 0, 0, 0, 0, 0, 0x20, // cost: Some(0x20)
+    0,    // Cost from user
     0,    // No return data
 ];
 
@@ -125,4 +126,21 @@ pub fn state_and_events_builder() {
         events,
         &STATE_AND_EVENTS_EXPECTED_BYTES,
     )
+}
+
+#[test]
+pub fn state_and_events_builder_cost_from_contract() {
+    let mut e = EventGroup::builder();
+    e.call(ADDRESS_1, Shortname::from_be_bytes(&[65]).unwrap())
+        .argument(66u8)
+        .argument(67u8)
+        .argument(99u8)
+        .with_cost_from_contract(0x20)
+        .done();
+
+    let events = vec![e.build()];
+    let mut expected = STATE_AND_EVENTS_EXPECTED_BYTES;
+    expected[64] = 1; // Cost from contract
+
+    assert_written(STATE_AND_EVENTS_SMALL_STATE, events, &expected)
 }

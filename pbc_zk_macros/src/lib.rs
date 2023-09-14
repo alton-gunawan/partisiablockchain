@@ -52,3 +52,10 @@ fn implement_secret(input: TokenStream) -> TokenStream {
 pub fn derive_secret_binary(input: TokenStream) -> TokenStream {
     implement_secret(input)
 }
+
+/// Marks the given function as a ZK computation entry point, with the given shortname.
+#[proc_macro_attribute]
+pub fn zk_compute(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    // Currently implemented only for compatibility.
+    item
+}

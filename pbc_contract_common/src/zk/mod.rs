@@ -12,6 +12,7 @@ use read_write_rpc_derive::WriteRPC;
 use read_write_state_derive::ReadWriteState;
 
 use crate::address::Address;
+use crate::shortname::ShortnameZkComputation;
 use crate::signature::Signature;
 
 /// Identifier for a secret variable.
@@ -287,6 +288,8 @@ pub enum ZkStateChange {
     /// - Only one [`StartComputation`](Self::StartComputation) is allowed per transaction.
     #[non_exhaustive]
     StartComputation {
+        /// Id of the Zk function to call initially. Function must be declared as `pub`.
+        function_shortname: ShortnameZkComputation,
         /// Metadata associated which each output variable. Assumes each piece of metadata have
         /// been serialized manually.
         output_variable_metadata: Vec<Vec<u8>>,
@@ -376,8 +379,15 @@ impl ZkStateChange {
     /// # Invariants
     /// - The argument `output_variable_metadata` must have the same number of elements as is
     ///   outputted by the zk computation.
-    pub fn start_computation<T: ReadWriteState>(output_variable_metadata: Vec<T>) -> Self {
-        ZkStateChange::start_computation_with_inputs::<T, bool>(output_variable_metadata, vec![])
+    pub fn start_computation<T: ReadWriteState>(
+        function_shortname: ShortnameZkComputation,
+        output_variable_metadata: Vec<T>,
+    ) -> Self {
+        ZkStateChange::start_computation_with_inputs::<T, bool>(
+            function_shortname,
+            output_variable_metadata,
+            vec![],
+        )
     }
 
     /// Convenience function for creating instances of [`Self::StartComputation`], automatically
@@ -394,6 +404,7 @@ impl ZkStateChange {
     /// - The argument `input_arguments` must have the same number of elements as the ZK
     ///   computation have input arguments, and these must be of the same types.
     pub fn start_computation_with_inputs<T: ReadWriteState, A: ReadWriteState>(
+        function_shortname: ShortnameZkComputation,
         output_variable_metadata: Vec<T>,
         input_arguments: Vec<A>,
     ) -> Self {
@@ -416,6 +427,7 @@ impl ZkStateChange {
             .collect();
 
         Self::StartComputation {
+            function_shortname,
             output_variable_metadata,
             input_arguments,
         }
@@ -428,17 +440,19 @@ impl ZkStateChange {
     const DISCRIMINANT_OUTPUT_COMPLETE: u8 = 0x05;
     const DISCRIMINANT_CONTRACT_DONE: u8 = 0x06;
     const DISCRIMINANT_ATTEST: u8 = 0x07;
-    const DISCRIMINANT_START_COMPUTATION_WITH_INPUTS: u8 = 0x08;
+    const DISCRIMINANT_START_3: u8 = 0x09;
 }
 
 impl WriteRPC for ZkStateChange {
     fn rpc_write_to<T: Write>(&self, writer: &mut T) -> std::io::Result<()> {
         match self {
             Self::StartComputation {
+                function_shortname,
                 output_variable_metadata,
                 input_arguments,
             } => {
-                writer.write_u8(Self::DISCRIMINANT_START_COMPUTATION_WITH_INPUTS)?;
+                writer.write_u8(Self::DISCRIMINANT_START_3)?;
+                u32::rpc_write_to(&function_shortname.shortname.as_u32(), writer)?;
                 output_variable_metadata.rpc_write_to(writer)?;
                 input_arguments.rpc_write_to(writer)
             }
@@ -475,4 +489,24 @@ impl WriteRPC for ZkStateChange {
             }
         }
     }
+}
+
+#[test]
+fn serialize_start_computation() {
+    let change = ZkStateChange::StartComputation {
+        function_shortname: ShortnameZkComputation::from_u32(61),
+        output_variable_metadata: vec![],
+        input_arguments: vec![],
+    };
+
+    let expected = vec![
+        9, // Start computation
+        0, 0, 0, 61, // Shortname as u32
+        0, 0, 0, 0, // No metadata
+        0, 0, 0, 0, // No inputs
+    ];
+
+    let mut buffer = vec![];
+    change.rpc_write_to(&mut buffer).unwrap();
+    assert_eq!(buffer, expected);
 }
