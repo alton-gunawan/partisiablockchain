@@ -1,26 +1,26 @@
-//! Shortname utility.
+//! Exposes [`Shortname`] and similar identifiers.
 
 use pbc_traits::ReadRPC;
 use pbc_traits::WriteRPC;
 
 use super::leb128;
 
-/// Container for a LEB128-encoded shortname.
+/// LEB128-encoded [`Shortname`].
 ///
 /// Instances of this type is always valid LEB128-encoded.
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub struct Shortname {
-    /// Value
+    /// Raw ID value
     value: u32,
 }
 
 impl Shortname {
-    /// Create Shortname from an u32
+    /// Create [`Shortname`] from an [`u32`].
     pub const fn from_u32(value: u32) -> Self {
         Self { value }
     }
 
-    /// Create Shortname from a slice of bytes. Slice must be valid LEB128-encoded.
+    /// Create [`Shortname`] from a slice of bytes. Slice must be valid LEB128-encoded.
     pub fn from_be_bytes(bytes: &[u8]) -> Result<Self, String> {
         // Errors for last byte
         match bytes.last() {
@@ -60,7 +60,7 @@ impl Shortname {
         })
     }
 
-    /// Gets the shortname as it's u32 representation.
+    /// Gets the [`Shortname`] as its [`u32`] representation.
     ///
     /// Note invariant:
     ///
@@ -73,7 +73,7 @@ impl Shortname {
         self.value
     }
 
-    /// Gets the shortname as it's bytes representation.
+    /// Gets the [`Shortname`] as its bytes representation.
     ///
     /// Invariants:
     /// - At least one byte long.
@@ -84,25 +84,47 @@ impl Shortname {
     }
 }
 
-/// Container for a LEB128-encoded shortname, guaranteed to be a callback.
+/// LEB128-encoded callback-oriented [`Shortname`].
 #[non_exhaustive]
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub struct ShortnameCallback {
-    /// Internal shortname
+    /// Internal [`Shortname`].
     pub shortname: Shortname,
 }
 
 impl ShortnameCallback {
-    /// Create Shortname from an u32
+    /// Create [`ShortnameCallback`] from an [`u32`].
     pub const fn from_u32(value: u32) -> Self {
         Self {
             shortname: Shortname::from_u32(value),
         }
     }
 
-    /// Create new ShortNameCallback from `shortname`
-    pub fn new(shortname: Shortname) -> ShortnameCallback {
+    /// Create new [`ShortnameCallback`] from [`Shortname`]
+    pub fn new(shortname: Shortname) -> Self {
         ShortnameCallback { shortname }
+    }
+}
+
+/// LEB128-encoded ZK computation/function-oriented [`Shortname`].
+#[non_exhaustive]
+#[derive(Eq, PartialEq, Debug, Clone, Copy)]
+pub struct ShortnameZkComputation {
+    /// Internal shortname
+    pub shortname: Shortname,
+}
+
+impl ShortnameZkComputation {
+    /// Create [`ShortnameZkComputation`] from an [`u32`].
+    pub const fn from_u32(value: u32) -> Self {
+        Self {
+            shortname: Shortname::from_u32(value),
+        }
+    }
+
+    /// Create [`ShortnameZkComputation`] from an [`Shortname`].
+    pub fn new(shortname: Shortname) -> Self {
+        ShortnameZkComputation { shortname }
     }
 }
 

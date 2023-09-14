@@ -93,6 +93,7 @@ pub struct Interaction {
     payload: Vec<u8>,
     from_original_sender: bool,
     cost: Option<GasCost>,
+    cost_from_contract: bool,
 }
 
 /// A callback is a simple interaction that is sent *after* all sent events have been processed
@@ -178,6 +179,7 @@ pub struct InteractionBuilder<'a> {
     dest: Address,
     payload: Vec<u8>,
     cost: Option<GasCost>,
+    cost_from_contract: bool,
     parent: &'a mut EventGroupBuilder,
 }
 
@@ -199,6 +201,7 @@ impl EventGroupBuilder {
             dest,
             payload: shortname.bytes(),
             cost: None,
+            cost_from_contract: false,
             parent: self,
         }
     }
@@ -211,6 +214,7 @@ impl EventGroupBuilder {
             payload: vec![],
             from_original_sender: false,
             cost,
+            cost_from_contract: false,
         })
     }
 
@@ -281,11 +285,20 @@ impl InteractionBuilder<'_> {
         self
     }
 
-    /// Register that this interaction should cost at most this much gas.
+    /// Register that this interaction should cost at most this much gas. Gas is paid by the user.
     ///
     /// Idempotent.
     pub fn with_cost(mut self, cost: GasCost) -> Self {
         self.cost = Some(cost);
+        self
+    }
+
+    /// Register that this interaction should cost at most this much gas. Gas is paid by the contract.
+    ///
+    /// Idempotent.
+    pub fn with_cost_from_contract(mut self, cost: GasCost) -> Self {
+        self.cost = Some(cost);
+        self.cost_from_contract = true;
         self
     }
 
@@ -296,6 +309,7 @@ impl InteractionBuilder<'_> {
             payload: self.payload,
             from_original_sender: false, // disabled
             cost: self.cost,
+            cost_from_contract: self.cost_from_contract,
         })
     }
 }

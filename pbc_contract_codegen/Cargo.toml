@@ -3,6 +3,7 @@ name = "pbc_contract_codegen"
 version = "0.5.0"
 edition = "2021"
 resolver = "1"
+license = "MIT"
 
 [features]
 abi = ["pbc_contract_common/abi", "pbc_traits/abi", "pbc_lib/abi"]
@@ -17,7 +18,6 @@ quote = "1.0"
 proc-macro2 = "1.0"
 pbc_contract_common = { path = "../pbc_contract_common" }
 pbc_traits = {path = "../pbc_traits"}
-pbc_external = { path = "../pbc_external" }
 pbc_lib = { path = "../pbc_lib"}
 pbc_zk = { path = "../pbc_zk" }
 create_type_spec_derive = { path = "../create_type_spec_derive" }

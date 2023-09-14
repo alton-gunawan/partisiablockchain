@@ -294,7 +294,17 @@ fn is_empty() {
 
 #[test]
 fn from_tuples() {
-    let map = SortedVecMap::from([(1, 1), (2, 20), (3, 3), (4, 40), (5, 5), (6, 60), (7, 7)]);
+    let arr = [
+        (1, 1),
+        (2, 20),
+        (3, 3),
+        (4, 40),
+        (5, 5),
+        (6, 60),
+        (7, 7),
+        (3, 333),
+    ];
+    let map = SortedVecMap::from(arr);
 
     let mut other = SortedVecMap::new();
     other.insert(1, 1);
@@ -305,5 +315,6 @@ fn from_tuples() {
     other.insert(6, 60);
     other.insert(7, 7);
 
+    assert_eq!(map.len(), 7);
     assert_eq!(map, other);
 }

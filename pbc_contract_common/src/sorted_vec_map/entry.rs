@@ -1,3 +1,5 @@
+//! Contains [`Entry`] struct for [`super::SortedVecMap`].
+
 use pbc_traits::ReadWriteState;
 use read_write_state_derive::ReadWriteState;
 
@@ -7,6 +9,7 @@ use read_write_state_derive::ReadWriteState;
 /// * `key`: `K`, the key of the entry.
 ///
 /// * `value`: `V`, the value of the entry.
+#[repr(C)]
 #[derive(PartialEq, Debug, Clone, Eq, ReadWriteState)]
 pub struct Entry<K, V> {
     /// The key of the entry.
