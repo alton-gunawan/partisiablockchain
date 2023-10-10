@@ -4,7 +4,7 @@ error[E0308]: mismatched types
 14 | #[action(zk = true)]
    | ^^^^^^^^^^^^^^^^^^^^
    | |
-   | expected struct `ZkState`, found `u32`
+   | expected `ZkState<_>`, found `u32`
    | expected due to this
    |
    = note: expected struct `ZkState<_>`
@@ -15,7 +15,7 @@ error[E0308]: mismatched types
   --> tests/action/fail/zk/arg_instead_of_zk_state_action.rs:14:1
    |
 14 | #[action(zk = true)]
-   | ^^^^^^^^^^^^^^^^^^^^ expected `u32`, found struct `ZkState`
+   | ^^^^^^^^^^^^^^^^^^^^ expected `u32`, found `ZkState<_>`
 15 | fn action(_context: pbc_contract_common::context::ContractContext, state: u32, arg1: u32) -> u32 {
    |    ------ arguments to this function are incorrect
    |

@@ -2,9 +2,9 @@ use proc_macro2::{Ident, TokenStream};
 
 static CLIENT_ABI_VERSION: [u8; 3] = [5, 2, 0];
 /// Binder version for private contracts.
-static BINDER_ABI_VERSION_ZK: [u8; 3] = [9, 4, 0];
+static BINDER_ABI_VERSION_ZK: [u8; 3] = [10, 0, 0];
 /// Binder version for public contract.
-static BINDER_ABI_VERSION_PUB: [u8; 3] = [9, 4, 0];
+static BINDER_ABI_VERSION_PUB: [u8; 3] = [9, 5, 0];
 
 pub(crate) fn create_version_numbers(zk: bool) -> TokenStream {
     let mut result = create_static_version_client();

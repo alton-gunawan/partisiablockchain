@@ -91,7 +91,7 @@ impl TokenizedInvocation {
     }
 
     pub(crate) fn num_params(&self) -> usize {
-        let num_well_known_params = vec![
+        let num_well_known_params = [
             Some(&self.context),
             self.callback_context.as_ref(),
             self.state.as_ref(),

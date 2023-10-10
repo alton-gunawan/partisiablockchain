@@ -1,6 +1,6 @@
 //! Serialization for Partisia Blockchain SDK
 //!
-//! Exposes [the three serialization formats](https://privacyblockchain.gitlab.io/language/rust-contract-sdk/abiv1.html) used in contracts:
+//! Exposes [the three serialization formats](https://partisiablockchain.gitlab.io/documentation/smart-contracts/smart-contract-binary-formats.html) used in contracts:
 //!
 //! - [`ReadWriteState`] for State serialization.
 //! - [`ReadRPC`] for RPC serialization.

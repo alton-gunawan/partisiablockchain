@@ -3,7 +3,7 @@ use std::io::{Read, Write};
 use crate::read_int::ReadInt;
 use crate::write_int::WriteInt;
 
-/// Marks implementations that read [RPC serialization format](https://privacyblockchain.gitlab.io/language/rust-contract-sdk/abiv1.html).
+/// Marks implementations that read [RPC serialization format](https://partisiablockchain.gitlab.io/documentation/smart-contracts/smart-contract-binary-formats.html).
 ///
 /// # Serialization invariants and safety
 ///
@@ -22,7 +22,7 @@ pub trait ReadRPC: Sized {
     fn rpc_read_from<T: Read>(reader: &mut T) -> Self;
 }
 
-/// Marks implementations that the [RPC serialization format](https://privacyblockchain.gitlab.io/language/rust-contract-sdk/abiv1.html).
+/// Marks implementations that the [RPC serialization format](https://partisiablockchain.gitlab.io/documentation/smart-contracts/smart-contract-binary-formats.html).
 ///
 /// # Serialization invariants and safety
 ///

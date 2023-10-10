@@ -1,6 +1,6 @@
 [package]
 name = "derive_commons"
-version = "0.5.0"
+version = "16.8.0"
 edition = "2021"
 license = "MIT"
 

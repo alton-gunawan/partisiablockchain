@@ -13,12 +13,11 @@
 //! - [`macro@zk_on_variable_inputted`] declares an automatic hook for when a variable is confirmed inputted.
 //! - [`macro@zk_on_variable_rejected`] declares an automatic hook for when a variable is rejected.
 //! - [`macro@zk_on_compute_complete`] declares an automatic hook for when the zero-knowledge computation is finished.
-//! - [`macro@zk_on_variables_opened`] declares an automatic hook for when one of the contract's own secret variables is ready to be read.
-//! - [`macro@zk_on_user_variables_opened`] declares an automatic hook for when a user opens one of their variables and is ready to be read.
+//! - [`macro@zk_on_variables_opened`] declares an automatic hook for when secret variables is ready to be read.
 //! - [`macro@zk_on_attestation_complete`] declares an automatic hook for when the contract have
 //! asked nodes to attest a piece of data, and this process have completed.
 //!
-//! This crate can automatically produce [ABI files](https://privacyblockchain.gitlab.io/language/rust-contract-sdk/abiv1.html),
+//! This crate can automatically produce [ABI files](https://partisiablockchain.gitlab.io/documentation/smart-contracts/smart-contract-binary-formats.html),
 //! and serialization boilerplate for actions. Additionally, the crate will type check the
 //! function signatures of the annotated functions, to guarantee that the contract can interact
 //! correctly with the blockchain.
@@ -715,64 +714,6 @@ pub fn zk_on_compute_complete(attrs: TokenStream, input: TokenStream) -> TokenSt
     )
 }
 
-/// Secret user variable opened zero-knowledge contract annotation
-///
-/// **OPTIONAL HOOK**: This is an optional hook, and is not required for a well-formed
-/// zero-knowledge contract. The default behaviour is to do nothing.
-///
-/// Annotated function is automatically called when a user opens one or more of their secret
-/// variables.
-/// This hook is exclusively called by the blockchain itself, and cannot be called manually from
-/// the dashboard, nor from another contract.
-/// Allows the contract to automatically choose some action to take.
-///
-/// Annotated function must have a signature of following format:
-///
-/// ```ignore
-/// # use pbc_contract_codegen::zk_on_user_variables_opened;
-/// # use pbc_contract_common::context::*;
-/// # use pbc_contract_common::zk::*;
-/// # use pbc_contract_common::events::*;
-/// # type ContractState = u32;
-/// # type Metadata = u32;
-/// #[zk_on_user_variables_opened]
-/// pub fn zk_on_user_variables_opened(
-///   context: ContractContext,
-///   state: ContractState,
-///   zk_state: ZkState<Metadata>,
-///   opened_variables: Vec<SecretVarId>,
-/// ) -> (ContractState, Vec<EventGroup>, Vec<ZkStateChange>)
-/// # { (state, vec![], vec![]) }
-/// ```
-///
-/// Where `opened_variables` is a [`Vec`] of the opened variables.
-#[proc_macro_attribute]
-pub fn zk_on_user_variables_opened(attrs: TokenStream, input: TokenStream) -> TokenStream {
-    assert!(
-        attrs.is_empty(),
-        "No attributes are supported for zk_on_user_variables_opened"
-    );
-    let function_kind = WrappedFunctionKind {
-        output_state_and_events: true,
-        min_allowed_num_results: 1,
-        output_other_types: vec![(
-            quote! { Vec<pbc_contract_common::zk::ZkStateChange> },
-            format_ident!("write_zk_state_change"),
-        )],
-        system_arguments: 4,
-        fn_kind: FunctionKind::ZkUserVarOpened,
-        allow_rpc_arguments: true,
-    };
-    zk_macro::handle_zk_macro(
-        input,
-        None,
-        "zk_on_user_variables_opened",
-        &function_kind,
-        false,
-        SecretInput::None,
-    )
-}
-
 /// Secret variable opened zero-knowledge contract annotation
 ///
 /// **OPTIONAL HOOK**: This is an optional hook, and is not required for a well-formed
@@ -1425,6 +1366,7 @@ fn check_valid_zk_contract(zk_argument: bool, error_message: String) -> TokenStr
 mod test {
 
     #[test]
+    #[cfg(feature = "abi")]
     fn failing_actions() {
         let t = trybuild::TestCases::new();
         t.compile_fail("tests/action/fail/*.rs");

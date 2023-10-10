@@ -50,7 +50,7 @@ impl<T: Ord> SortedVecSet<T> {
     fn get_index_of<Q>(&self, element: &Q) -> Result<usize, usize>
     where
         T: Borrow<Q>,
-        Q: Eq + Ord,
+        Q: Eq + Ord + ?Sized,
     {
         self.elements
             .binary_search_by_key(&element, |element| element.borrow())
@@ -59,7 +59,7 @@ impl<T: Ord> SortedVecSet<T> {
     fn get_entry<Q>(&self, element: &Q) -> Option<&T>
     where
         T: Borrow<Q>,
-        Q: Eq + Ord,
+        Q: Eq + Ord + ?Sized,
     {
         self.get_index_of(element)
             .ok()
@@ -90,7 +90,7 @@ impl<T> SortedVecSet<T> {
     pub fn get<Q>(&self, element: &Q) -> Option<&T>
     where
         T: Borrow<Q> + Ord,
-        Q: Ord,
+        Q: Ord + ?Sized,
     {
         self.get_entry(element)
     }
@@ -119,7 +119,7 @@ impl<T> SortedVecSet<T> {
     pub fn contains<Q>(&self, element: &Q) -> bool
     where
         T: Borrow<Q> + Ord,
-        Q: Ord,
+        Q: Ord + ?Sized,
     {
         self.get(element).is_some()
     }
@@ -148,7 +148,7 @@ impl<T> SortedVecSet<T> {
     pub fn remove<Q>(&mut self, element: &Q) -> Option<T>
     where
         T: Borrow<Q> + Ord,
-        Q: Ord,
+        Q: Ord + ?Sized,
     {
         match self.get_index_of(element) {
             Ok(idx) => Some(self.elements.remove(idx)),

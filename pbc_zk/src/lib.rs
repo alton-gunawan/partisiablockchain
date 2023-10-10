@@ -60,9 +60,10 @@ mod sbi;
 pub mod sbi;
 
 extern crate pbc_zk_macros;
-pub use pbc_zk_macros::{zk_compute, SecretBinary};
 
-use sbi::*;
+pub use pbc_zk_macros::{zk_compute, SecretBinary};
+pub use sbi::*;
+use std::thread;
 
 /// A secret-shared [`bool`] value.
 pub type Sbi1 = bool;
@@ -88,9 +89,15 @@ pub mod api {
     //! Module for configuring outside environment of test.
 
     use core::any::Any;
+    use once_cell::sync::Lazy;
+    use std::collections::HashMap;
+    use std::sync::Mutex;
+    use std::thread;
+    use std::thread::ThreadId;
 
     /// The global vector of secrets
-    pub(super) static mut SECRETS: Vec<SecretVar> = vec![];
+    pub(super) static mut SECRETS: Lazy<Mutex<HashMap<ThreadId, Vec<SecretVar>>>> =
+        Lazy::new(|| Mutex::new(HashMap::new()));
 
     /// Sets the global secrets, should be called before testing a zk computation.
     ///
@@ -102,7 +109,10 @@ pub mod api {
     ///
     /// * `new_secrets`: [`Vec<SecretVar<Sbi32>>`], the new vector of secrets.
     pub unsafe fn set_secrets(new_secrets: Vec<SecretVar>) {
-        SECRETS = new_secrets;
+        SECRETS
+            .lock()
+            .unwrap()
+            .insert(thread::current().id(), new_secrets);
     }
 
     /// Sets the global secrets, should be called before testing a zk computation.
@@ -155,6 +165,14 @@ pub mod api {
         /// the metadata for the value
         pub metadata: MetadataT,
     }
+
+    pub(crate) fn num_secrets() -> i32 {
+        unsafe {
+            let map = SECRETS.lock().unwrap();
+            let secret_vars = map.get(&thread::current().id()).unwrap();
+            secret_vars.len() as i32
+        }
+    }
 }
 
 /// Get the number of secret variables.
@@ -164,7 +182,7 @@ pub mod api {
 /// The number of secret variables.
 #[deprecated(note = "use secret_variable_ids() instead when iterating over secret variables.")]
 pub fn num_secret_variables() -> i32 {
-    unsafe { api::SECRETS.len() as i32 }
+    api::num_secrets()
 }
 
 /// Creates an iterator for secret variable ids.
@@ -173,7 +191,7 @@ pub fn num_secret_variables() -> i32 {
 ///
 /// Iterator over the ids of secret variables.
 pub fn secret_variable_ids() -> impl Iterator<Item = i32> {
-    unsafe { 1..(api::SECRETS.len() as i32 + 1) }
+    1..(api::num_secrets() + 1)
 }
 
 /// Conversion from [`i32`] to [`Sbi32`]. Use [`Sbi32::from`] instead.
@@ -214,12 +232,16 @@ pub fn sbi32_input(variable_id: i32) -> Sbi32 {
 ///
 /// The corresponding secret value.
 pub fn load_sbi<T: Secret + Clone + 'static>(variable_id: i32) -> T {
-    let zk_var = unsafe { &api::SECRETS[variable_id as usize - 1] };
-    zk_var
-        .value
-        .downcast_ref::<T>()
-        .expect("Loaded variable value did not have expected type")
-        .clone()
+    unsafe {
+        let map = api::SECRETS.lock().unwrap();
+        let secret_vars = map.get(&thread::current().id()).unwrap();
+        let zk_var = &secret_vars[variable_id as usize - 1];
+        zk_var
+            .value
+            .downcast_ref::<T>()
+            .expect("Loaded variable value did not have expected type")
+            .clone()
+    }
 }
 
 /// Retrieve the metadata from `variable_id` as [`i32`]. Use [`load_metadata`] instead.
@@ -248,10 +270,14 @@ pub fn sbi32_metadata(variable_id: i32) -> i32 {
 ///
 /// The corresponding metadata.
 pub fn load_metadata<T: Clone + 'static>(variable_id: i32) -> T {
-    let zk_var = unsafe { &api::SECRETS[variable_id as usize - 1] };
-    zk_var
-        .metadata
-        .downcast_ref::<T>()
-        .expect("Loaded variable metadata did not have expected type")
-        .clone()
+    unsafe {
+        let map = api::SECRETS.lock().unwrap();
+        let secret_vars = map.get(&thread::current().id()).unwrap();
+        let zk_var = &secret_vars[variable_id as usize - 1];
+        zk_var
+            .metadata
+            .downcast_ref::<T>()
+            .expect("Loaded variable value did not have expected type")
+            .clone()
+    }
 }

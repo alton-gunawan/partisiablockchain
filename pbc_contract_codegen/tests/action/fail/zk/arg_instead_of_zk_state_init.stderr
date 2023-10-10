@@ -4,7 +4,7 @@ error[E0308]: mismatched types
 5 | #[init(zk = true)]
   | ^^^^^^^^^^^^^^^^^^
   | |
-  | expected struct `ZkState`, found `u64`
+  | expected `ZkState<_>`, found `u64`
   | expected due to this
   |
   = note: expected struct `ZkState<_>`
@@ -15,7 +15,7 @@ error[E0308]: mismatched types
  --> tests/action/fail/zk/arg_instead_of_zk_state_init.rs:5:1
   |
 5 | #[init(zk = true)]
-  | ^^^^^^^^^^^^^^^^^^ expected `u64`, found struct `ZkState`
+  | ^^^^^^^^^^^^^^^^^^ expected `u64`, found `ZkState<_>`
 6 | fn init(
   |    ---- arguments to this function are incorrect
   |

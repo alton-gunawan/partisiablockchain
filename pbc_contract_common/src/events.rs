@@ -249,9 +249,9 @@ impl EventGroupBuilder {
             None => (None, None),
         };
 
-        let return_data = self.return_data.and_then(|data| {
+        let return_data = self.return_data.map(|data| {
             if callback_payload.is_none() && callback_cost.is_none() {
-                Some(data)
+                data
             } else {
                 panic!("Attempted to build EventGroup with both callback and return data")
             }
