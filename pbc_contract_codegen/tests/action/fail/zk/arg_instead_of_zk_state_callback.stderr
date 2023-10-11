@@ -4,7 +4,7 @@ error[E0308]: mismatched types
 14 | #[callback(shortname = 0x02, zk = true)]
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    | |
-   | expected struct `ZkState`, found `u64`
+   | expected `ZkState<_>`, found `u64`
    | expected due to this
    |
    = note: expected struct `ZkState<_>`
@@ -15,7 +15,7 @@ error[E0308]: mismatched types
   --> tests/action/fail/zk/arg_instead_of_zk_state_callback.rs:14:1
    |
 14 | #[callback(shortname = 0x02, zk = true)]
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `u64`, found struct `ZkState`
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `u64`, found `ZkState<_>`
 15 | fn callback(
    |    -------- arguments to this function are incorrect
    |

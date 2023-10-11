@@ -11,7 +11,7 @@ mod impl_vec;
 pub use impl_misc::*;
 pub use impl_vec::*;
 
-/// Marks implementations of the [State serialization format](https://privacyblockchain.gitlab.io/language/rust-contract-sdk/abiv1.html).
+/// Marks implementations of the [State serialization format](https://partisiablockchain.gitlab.io/documentation/smart-contracts/smart-contract-binary-formats.html).
 ///
 /// # Serialization invariants
 ///

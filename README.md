@@ -36,16 +36,43 @@ add following to your root module:
 extern crate pbc_lib as _;
 ```
 
+## Migration from REAL Binder 9.X.X to 10.X.X for ZK contracts
+
+You will need to update your ZK contract code to compile for Binder 10.X.X.
+
+The `10.0.0` version allows the contract full control over deletion, transfer
+and opening of user variables, whereas the older binder versions prevented the
+contract from these actions.  ZK contracts are now more flexible with respect
+to user variables, regardless of the owner and the stage of the calculation,
+which have made the below-mentioned items redundant.
+
+The following changes have been made:
+
+- [`CalculationStatus::Output`] merged into [`CalculationStatus::Waiting`].
+- `zk_on_user_variables_opened` merged into [`zk_on_variables_opened`].
+- [`ZkStateChange::OutputComplete`] replaced with [`ZkStateChange::DeleteVariables`].
+
+These changes allows the contract to treat user variables equally to
+contract owned variables.
+
+You should update your ZK-contract code as follows:
+
+- Checks for [`CalculationStatus::Output`] are no longer needed, and can be removed.
+- Replace usages of `zk_on_user_variables_opened` with [`zk_on_variables_opened`].
+- [`ZkStateChange::OutputComplete`] can be replaced with [`ZkStateChange::DeleteVariables`].
+
 ## Version History
 
-| **Rust Crate** | **PUB Binder** | **REAL Binder** | **Client** | **SDK** | **Changes**                                                                                                                                                                |
-|---------------:|---------------:|----------------:|-----------:|--------:|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Rust Crate** | **PUB Binder** | **REAL Binder** | **Client** | **SDK** | **Changes**                                                                                                                                                                    |
+|---------------:|---------------:|----------------:|-----------:|--------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|          6.0.0 |          9.5.0 |          10.0.0 |      5.2.0 |  17.0.0 | Contracts can now delete, transfer and open any variable, regardless of owner and calculation stage. Removes `zk_on_user_variables_opened` and the output phase of ZK contracts. |
+|          5.0.1 |          9.5.0 |           9.5.0 |      5.2.0 |  16.1.0 | Support for Rust 1.70. New wasm instructions - sign extension.                                                                                                             |
 |          5.0.1 |          9.4.0 |           9.4.0 |      5.2.0 |  16.0.1 | Fixed bug whereby `start_computation` variants produced wrong RPC.                                                                                                         |
 |          5.0.0 |          9.4.0 |           9.4.0 |      5.2.0 |  16.0.0 | `start_computation` and `start_computation_with_inputs` now requires shortnames for ZK Computations.                                                                       |
 |          4.4.0 |          9.4.0 |           9.4.0 |      5.2.0 |  15.4.0 | Added `SortedVecSet` and `SortedVec` as gas-efficient implementations.                                                                                                     |
 |          4.3.0 |          9.4.0 |           9.4.0 |      5.2.0 |  15.3.0 | Removed unused `log_external` function, as it caused linker errors in certain setups.                                                                                      |
 |          4.2.0 |          9.4.0 |           9.4.0 |      5.2.0 |  15.2.0 | Added `with_cost_from_contract` to interaction builder for support for sending events using the contract's gas.                                                            |
-|          4.1.0 |          9.0.0 |           9.3.0 |      5.2.0 |  15.1.0 | Added secret_variable_ids() to `pbc_zk`. Deprecated num_secret_variables()    .                                                                                            |
+|          4.1.0 |          9.0.0 |           9.3.0 |      5.2.0 |  15.1.0 | Added `secret_variable_ids()` to `pbc_zk`. Deprecated `num_secret_variables()`.                                                                                            |
 |          4.0.0 |          9.0.0 |           9.3.0 |      5.2.0 |  15.0.0 | Removed the zk feature. Instead macros now take an optional argument zk. For an action or a callback to be zk the init must also be zk.                                    |
 |          3.0.0 |          9.0.0 |           9.3.0 |      5.2.0 |  14.0.0 | Added new SortedVecMap with faster serialization. Removed support for BTreeMap. Derives automatically requires generics to implement the trait in derive implementation.   |
 |          2.2.0 |          9.0.0 |           9.3.0 |      5.2.0 |  13.6.0 | Added support for user events in ZK contracts.                                                                                                                             |

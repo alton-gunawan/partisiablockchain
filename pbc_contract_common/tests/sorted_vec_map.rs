@@ -9,6 +9,16 @@ fn setup_simple_map() -> SortedVecMap<u8, String> {
 }
 
 #[test]
+fn string() {
+    let mut map = SortedVecMap::<String, u32>::new();
+    map.insert(String::from("hello world"), 123);
+
+    assert_eq!(map.get("hello world"), Some(&123u32));
+    assert_eq!(map.get("hello"), None);
+    assert_eq!(map.get("world"), None);
+}
+
+#[test]
 fn clear() {
     let mut map = SortedVecMap::new();
     map.insert(1, 1);

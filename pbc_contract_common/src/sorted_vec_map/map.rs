@@ -54,7 +54,7 @@ impl<K: Ord, V> SortedVecMap<K, V> {
     fn get_index_of<Q>(&self, key: &Q) -> Result<usize, usize>
     where
         K: Borrow<Q>,
-        Q: Eq + Ord,
+        Q: Eq + Ord + ?Sized,
     {
         self.entries
             .binary_search_by_key(&key, |entry| entry.key.borrow())
@@ -63,7 +63,7 @@ impl<K: Ord, V> SortedVecMap<K, V> {
     fn get_entry<Q>(&self, key: &Q) -> Option<&Entry<K, V>>
     where
         K: Borrow<Q>,
-        Q: Eq + Ord,
+        Q: Eq + Ord + ?Sized,
     {
         self.get_index_of(key)
             .ok()
@@ -73,7 +73,7 @@ impl<K: Ord, V> SortedVecMap<K, V> {
     fn get_entry_mut<Q>(&mut self, key: &Q) -> Option<&mut Entry<K, V>>
     where
         K: Borrow<Q>,
-        Q: Eq + Ord,
+        Q: Eq + Ord + ?Sized,
     {
         self.get_index_of(key)
             .ok()
@@ -104,7 +104,7 @@ impl<K, V> SortedVecMap<K, V> {
     pub fn get<Q>(&self, key: &Q) -> Option<&V>
     where
         K: Borrow<Q> + Ord,
-        Q: Ord,
+        Q: Ord + ?Sized,
     {
         self.get_entry(key).map(|entry| &entry.value)
     }
@@ -113,7 +113,7 @@ impl<K, V> SortedVecMap<K, V> {
     pub fn get_key_value<Q>(&self, k: &Q) -> Option<(&K, &V)>
     where
         K: Borrow<Q> + Ord,
-        Q: Ord,
+        Q: Ord + ?Sized,
     {
         self.get_entry(k).map(Entry::tuple)
     }
@@ -162,7 +162,7 @@ impl<K, V> SortedVecMap<K, V> {
     pub fn contains_key<Q>(&self, key: &Q) -> bool
     where
         K: Borrow<Q> + Ord,
-        Q: Ord,
+        Q: Ord + ?Sized,
     {
         self.get(key).is_some()
     }
@@ -171,7 +171,7 @@ impl<K, V> SortedVecMap<K, V> {
     pub fn get_mut<Q>(&mut self, key: &Q) -> Option<&mut V>
     where
         K: Borrow<Q> + Ord,
-        Q: Ord,
+        Q: Ord + ?Sized,
     {
         self.get_entry_mut(key).map(|entry| &mut entry.value)
     }
@@ -200,7 +200,7 @@ impl<K, V> SortedVecMap<K, V> {
     pub fn remove<Q>(&mut self, key: &Q) -> Option<V>
     where
         K: Borrow<Q> + Ord,
-        Q: Ord,
+        Q: Ord + ?Sized,
     {
         self.remove_entry(key).map(|entry| entry.1)
     }
@@ -209,7 +209,7 @@ impl<K, V> SortedVecMap<K, V> {
     pub fn remove_entry<Q>(&mut self, key: &Q) -> Option<(K, V)>
     where
         K: Borrow<Q> + Ord,
-        Q: Ord,
+        Q: Ord + ?Sized,
     {
         match self.get_index_of(key) {
             Ok(idx) => {
@@ -342,7 +342,7 @@ impl<K, V> SortedVecMap<K, V> {
 impl<K, V, Q> Index<&Q> for SortedVecMap<K, V>
 where
     K: Borrow<Q> + Ord,
-    Q: Ord,
+    Q: Ord + ?Sized,
 {
     type Output = V;
 

@@ -9,6 +9,16 @@ fn setup_simple_set() -> SortedVecSet<u8> {
 }
 
 #[test]
+fn with_strings() {
+    let mut set = SortedVecSet::new();
+    set.insert(String::from("hello world"));
+
+    assert!(set.contains("hello world"));
+    assert!(!set.contains("hello"));
+    assert!(!set.contains("world"));
+}
+
+#[test]
 fn clear() {
     let mut set = SortedVecSet::new();
     set.insert(1);

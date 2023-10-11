@@ -75,6 +75,7 @@ pub enum FunctionKind {
     /// Kind for `zk_on_variable_opened` hook.
     ZkVarOpened = 0x14,
     /// Kind for `zk_on_user_variable_opened` hook.
+    #[deprecated(note = "Use ZkVarOpened instead")]
     ZkUserVarOpened = 0x15,
     /// Kind for `zk_on_attestation_complete` hook.
     ZkAttestationComplete = 0x16,

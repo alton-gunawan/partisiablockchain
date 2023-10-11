@@ -6,10 +6,9 @@ use pbc_contract_common::context::{CallbackContext, ContractContext};
 use pbc_contract_common::events::EventGroup;
 use pbc_contract_common::test_examples::*;
 use pbc_contract_common::zk::*;
-use sdk_tests::test_contract_behaviour::{
-    assert_abi_serializable, rpc_self, test_contract_function_with_variants,
-    EXPECTED_DO_THING_ABI_BYTES,
-};
+#[cfg(feature = "abi")]
+use sdk_tests::test_contract_behaviour::{assert_abi_serializable, EXPECTED_DO_THING_ABI_BYTES};
+use sdk_tests::test_contract_behaviour::{rpc_self, test_contract_function_with_variants};
 
 type ContractState = u64;
 
@@ -93,17 +92,6 @@ fn do_zk_on_compute_complete(
     )
 }
 
-#[zk_on_user_variables_opened]
-fn do_zk_on_user_variables_opened(
-    _context: ContractContext,
-    state: ContractState,
-    _zk_state: ZkState<ZkMetadata>,
-    _opened_variables: Vec<SecretVarId>,
-    arg1: u16,
-) -> ContractState {
-    state.wrapping_add(arg1 as ContractState)
-}
-
 #[test]
 fn action_behaviour() {
     let segments: [&[u8]; 4] = [
@@ -153,22 +141,6 @@ fn zk_on_compute_complete() {
     );
 }
 
-#[test]
-fn zk_on_user_variables_opened() {
-    let variables = vec![SECRET_VAR_ID_30, SECRET_VAR_ID_31];
-    let segments: [&[u8]; 5] = [
-        &rpc_self(EXAMPLE_CONTEXT),    // Context
-        &[1, 2, 3, 4, 1, 2, 3, 4],     // State
-        &rpc_self(example_zk_state()), // ZkState
-        &rpc_self(variables),          // RPC: Created variables
-        &[9, 2],                       // RPC: arg1
-    ];
-    test_contract_function_with_variants(
-        __pbc_autogen__do_zk_on_user_variables_opened_wrapped,
-        &segments,
-    );
-}
-
 #[cfg(feature = "abi")]
 #[test]
 fn generated_abi_do_thing() {
@@ -193,25 +165,6 @@ fn generated_abi_zk_on_secret_input() {
             0, 0, 0, 12, // Secret Argument name length
             115, 101, 99, 114, 101, 116, 95, 105, 110, 112, 117, 116,
             8, // Secret Argument name
-        ],
-    );
-}
-
-#[cfg(feature = "abi")]
-#[test]
-fn generated_abi_zk_on_user_variables_opened() {
-    assert_abi_serializable(
-        __abi_fn_do_zk_on_user_variables_opened,
-        [
-            0x15, // Function kind: ZkUserVarOpened
-            0, 0, 0, 30, // Name length
-            100, 111, 95, 122, 107, 95, 111, 110, 95, 117, 115, 101, 114, 95, 118, 97, 114, 105,
-            97, 98, 108, 101, 115, 95, 111, 112, 101, 110, 101, 100, // Name
-            228, 180, 239, 148, 1, // Shortname
-            0, 0, 0, 1, // Number arguments
-            0, 0, 0, 4, // Argument 0 Name Length
-            97, 114, 103, 49,   // Argument 0 Name
-            0x02, // Field 0 type ordinal: u16
         ],
     );
 }

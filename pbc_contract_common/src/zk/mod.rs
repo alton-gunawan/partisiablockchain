@@ -82,14 +82,9 @@ pub struct DataAttestation {
 /// Status of the associated ZK computation. Life cycle:
 ///
 /// - [`Waiting`](Self::Waiting) => [`Calculating`](Self::Calculating) (by [`ZkStateChange::StartComputation`])
-/// - [`Calculating`](Self::Calculating) => [`Output`](Self::Output) (automatically)
+/// - [`Calculating`](Self::Calculating) => [`Waiting`](Self::Waiting) (automatically)
 /// - [`Calculating`](Self::Calculating) => [`MaliciousBehaviour`](Self::MaliciousBehaviour) (automatically)
-/// - [`Output`](Self::Output) => [`Waiting`](Self::Waiting) (by [`ZkStateChange::OutputComplete`])
-/// - [`Output`](Self::Output) => [`Done`](Self::Done) (by [`ZkStateChange::ContractDone`])
-///
-/// Note: It is only possible to use [`ZkStateChange::ContractDone`] when in [`Output`](Self::Output).
-/// It is not possible "to change your mind", once a [`ZkStateChange::OutputComplete`] action have
-/// been sent, and an entirely new Zk computation must be completed.
+/// - [`Waiting`](Self::Waiting) => [`Done`](Self::Done) (by [`ZkStateChange::ContractDone`])
 ///
 /// Cannot be manually created; must be retrieved from state.
 #[repr(u8)]
@@ -103,21 +98,21 @@ pub enum CalculationStatus {
     ///
     /// When completed, the contract enters the commitment phase. The commitment phase enables fair
     /// open, i.e. all nodes agree on the output since their commitments match (in a replicated
-    /// sharing). After checking the commitments the contract enters the output phase where the nodes send
-    /// their output.
+    /// sharing). After checking the commitments the computation is complete and another can be initiated.
     ///
-    /// The ZK nodes will automatically transition to either [`Output`](Self::Output) or [`MaliciousBehaviour`](Self::MaliciousBehaviour)
-    /// after haveing been transitioned to [`Calculating`](Self::Calculating).
+    /// The ZK nodes will automatically transition to either [`Waiting`](Self::Waiting) or [`MaliciousBehaviour`](Self::MaliciousBehaviour)
+    /// after having been transitioned to [`Calculating`](Self::Calculating).
     Calculating = 1,
 
     /// Notes are done with computation, having commited to computation output on the chain. This
     /// phase allows opening variables on chain.
+    #[deprecated(note = "This state can no longer occur. Use Waiting instead.")]
     Output = 2,
 
     /// Some part of the protocol isn't done correctly; acts as an error case.
     MaliciousBehaviour = 3,
 
-    /// MVP is complete, and nodes can be released.
+    /// The ZK part of the contract is finished and nodes can be released.
     Done = 4,
 }
 
@@ -159,6 +154,17 @@ impl<MetadataT: ReadWriteState> WriteRPC for ZkClosed<MetadataT> {
         self.is_sealed.rpc_write_to(writer)?;
         self.metadata.state_write_to(writer)?;
         self.data.rpc_write_to(writer)
+    }
+}
+
+impl<MetaDataT> ZkClosed<MetaDataT> {
+    /// Deserializes and reads state value of Zk variable.
+    ///
+    /// Returns `None` if the Zk variable has not been opened.
+    /// Otherwise returns `Some(T)`, where `T` is the type of the Zk variable state value.
+    pub fn open_value<T: ReadWriteState>(&self) -> Option<T> {
+        let buffer = self.data.as_ref()?;
+        Some(T::state_read_from(&mut buffer.as_slice()))
     }
 }
 
@@ -298,22 +304,19 @@ pub enum ZkStateChange {
         input_arguments: Vec<Vec<u8>>,
     },
 
-    /// Deletes pending input for the current user.
+    /// Deletes pending input for the given user.
+    /// If the variable is confirmed by the nodes before this state change is executed, the variable is not deleted.
     ///
     /// # Invariants
-    /// - Variable must not be open.
-    /// - Variable must be owned by contract caller.
     /// - Can occur in any [`ZkState::calculation_state`].
     DeletePendingInput {
         /// Input that should be deleted.
         variable: SecretInputId,
     },
 
-    /// Transfers variable owned by current user to [`new_owner`](ZkStateChange::TransferVariable::new_owner).
+    /// Transfers ownership of [`variable`](ZkStateChange::TransferVariable::variable) to [`new_owner`](ZkStateChange::TransferVariable::new_owner).
     ///
     /// # Invariants
-    /// - Variable must not be open.
-    /// - Variable must be owned by contract caller.
     /// - Can occur in any [`ZkState::calculation_state`].
     TransferVariable {
         /// Variable to transfer
@@ -322,46 +325,53 @@ pub enum ZkStateChange {
         new_owner: Address,
     },
 
-    /// Deletes given contract variable.
+    /// Deletes given secret variable.
     ///
     /// # Invariants
-    /// - Variable must not be open.
-    /// - Variable must be owned by contract caller.
     /// - Can occur in any [`ZkState::calculation_state`].
     DeleteVariable {
         /// Variable to delete
         variable: SecretVarId,
     },
 
-    /// Opens variables for the current user.
+    /// Deletes given secret variables.
     ///
     /// # Invariants
-    /// - Variables must not be open.
-    /// - Variables must be owned by contract caller.
-    /// - Must only occur when [`ZkState::calculation_state`] is [`CalculationStatus::Output`].
-    /// - There must be no pending inputs.
+    /// - Can occur in any [`ZkState::calculation_state`].
+    DeleteVariables {
+        /// Variables to delete
+        variables_to_delete: Vec<SecretVarId>,
+    },
+
+    /// Reveals the values of the given secret variables.
+    ///
+    /// # Invariants
+    /// - Can occur in any [`ZkState::calculation_state`].
     OpenVariables {
-        /// Variables that should be opened
+        /// Variables to open
         variables: Vec<SecretVarId>,
     },
 
-    /// Changes [`ZkState::calculation_state`](ZkState) back to [`CalculationStatus::Waiting`], deleting any given variables.
+    /// Deprecated state [`ZkStateChange`] that changed [`ZkState::calculation_state`](ZkState) from [`CalculationStatus::Output`] back to [`CalculationStatus::Waiting`], and deleted the specified variables.
     ///
-    /// # Invariants
-    /// - All variables are allowed, including user variables and contract variables.
-    /// - Must only occur when [`ZkState::calculation_state`] is [`CalculationStatus::Output`]
-    OutputComplete {
-        /// Variables that should be deleted
-        variables_to_delete: Vec<SecretVarId>,
-    },
+    /// # Deprecation
+    ///
+    /// Removed `variables_to_delete` field in order to trigger a hard error.
+    #[deprecated(
+        note = "OutputComplete state change is not supported. Either remove, or use DeleteVariables instead."
+    )]
+    OutputComplete {},
 
     /// Closes ZK computation; no further zero-knowledge can be done.
     ///
     /// # Invariants
-    /// Must only occur when [`ZkState::calculation_state`] is [`CalculationStatus::Output`].
+    /// Must only occur when [`ZkState::calculation_state`] is [`CalculationStatus::Waiting`].
     ContractDone,
 
-    /// Requests ZK nodes to sign/attest this piece of data. This can occur at any time.
+    /// Requests ZK nodes to sign/attest this piece of data.
+    ///
+    /// # Invariants
+    /// - Can occur in any [`ZkState::calculation_state`].
     Attest {
         /// The piece of data to attest.
         data_to_attest: Vec<u8>,
@@ -435,14 +445,14 @@ impl ZkStateChange {
 
     const DISCRIMINANT_DELETE_PENDING_VARIABLE: u8 = 0x01;
     const DISCRIMINANT_TRANSFER_VARIABLE: u8 = 0x02;
-    const DISCRIMINANT_DELETE_VARIABLE: u8 = 0x03;
+    const DISCRIMINANT_DELETE_VARIABLES: u8 = 0x03;
     const DISCRIMINANT_OPEN_VARIABLES: u8 = 0x04;
-    const DISCRIMINANT_OUTPUT_COMPLETE: u8 = 0x05;
     const DISCRIMINANT_CONTRACT_DONE: u8 = 0x06;
     const DISCRIMINANT_ATTEST: u8 = 0x07;
     const DISCRIMINANT_START_3: u8 = 0x09;
 }
 
+#[allow(deprecated)]
 impl WriteRPC for ZkStateChange {
     fn rpc_write_to<T: Write>(&self, writer: &mut T) -> std::io::Result<()> {
         match self {
@@ -469,18 +479,22 @@ impl WriteRPC for ZkStateChange {
                 new_owner.rpc_write_to(writer)
             }
             Self::DeleteVariable { variable } => {
-                writer.write_u8(Self::DISCRIMINANT_DELETE_VARIABLE)?;
-                variable.rpc_write_to(writer)
+                writer.write_u8(Self::DISCRIMINANT_DELETE_VARIABLES)?;
+                vec![*variable].rpc_write_to(writer)
+            }
+            Self::DeleteVariables {
+                variables_to_delete,
+            } => {
+                writer.write_u8(Self::DISCRIMINANT_DELETE_VARIABLES)?;
+                variables_to_delete.rpc_write_to(writer)
             }
             Self::OpenVariables { variables } => {
                 writer.write_u8(Self::DISCRIMINANT_OPEN_VARIABLES)?;
                 variables.rpc_write_to(writer)
             }
-            Self::OutputComplete {
-                variables_to_delete,
-            } => {
-                writer.write_u8(Self::DISCRIMINANT_OUTPUT_COMPLETE)?;
-                variables_to_delete.rpc_write_to(writer)
+            Self::OutputComplete {} => {
+                writer.write_u8(Self::DISCRIMINANT_DELETE_VARIABLES)?;
+                Vec::<u8>::new().rpc_write_to(writer)
             }
             Self::ContractDone => writer.write_u8(Self::DISCRIMINANT_CONTRACT_DONE),
             Self::Attest { data_to_attest } => {

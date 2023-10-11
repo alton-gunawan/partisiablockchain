@@ -1,64 +1,15 @@
-image: registry.gitlab.com/partisia/dockerimages/rust:1.67
+variables:
+  REDIRECT_FROM: language/contract-sdk
+  REDIRECT_TO: language/contract-sdk/pbc_traits/index.html
+  DEPLOYABLE: 'false'
 
-stages:
-- build
-- deploy
-
-build:
-  stage: build
-  script:
-  - |
-    mkdir -p "$CI_PROJECT_DIR/build_output"
-    cargo build --target x86_64-unknown-linux-gnu --release
-    find target/release -maxdepth 1 -type f -exec mv \{\} "$CI_PROJECT_DIR/build_output" \;
-
-codequality-test:
-  stage: build
-  dependencies:
-  - run-test
-  except:
-  - main
-  script:
-  - cargo check
-  - cargo clippy --all-targets --all-features -- -D warnings -D missing_docs
-  - cargo fmt --all -- --check
-
-run-test:
-  stage: build
-  except:
-  - main
-  script:
-  - CARGO_INCREMENTAL=0 cargo test --all-features -- --nocapture
-
-docs:
-  stage: build
-  script:
-  - cargo clippy --all-targets --all-features -- -D missing_docs -D warnings
-
-pages:
-  stage: .post
-  script:
-  - RUSTDOCFLAGS="-Dwarnings" cargo doc --workspace --no-deps --all-features
-  - mkdir -p public
-  - cp -R target/doc/* public
-  - echo "/language/rust-contract-sdk/index.html /language/rust-contract-sdk/pbc_traits/index.html 302" >> public/_redirects
-  - echo "/language/rust-contract-sdk/ /language/rust-contract-sdk/pbc_traits/index.html 302" >> public/_redirects
-  only:
-  - main
-  artifacts:
-    paths:
-    - public
-
-pages-dev:
-  stage: build
-  script:
-  - RUSTDOCFLAGS="-Dwarnings" cargo doc --workspace --no-deps --all-features
-  - mkdir -p public
-  - cp -R target/doc/* public
-  - echo "/language/rust-contract-sdk/index.html /language/rust-contract-sdk/pbc_traits/index.html 302" >> public/_redirects
-  - echo "/language/rust-contract-sdk/ /language/rust-contract-sdk/pbc_traits/index.html 302" >> public/_redirects
-  except:
-  - main
-  artifacts:
-    paths:
-    - public
+include:
+- project: 'secata-public/pom/shared-ci'
+  file: 'rust-base.yml'
+  ref: 'v.2.19.1'
+- project: 'secata-public/pom/shared-ci'
+  file: 'rust-docs.yml'
+  ref: 'v.2.19.1'
+- project: 'secata-public/pom/shared-ci'
+  file: 'rust-coverage.yml'
+  ref: 'v.2.19.1'

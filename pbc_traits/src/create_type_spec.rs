@@ -1,14 +1,14 @@
 use pbc_zk::{Sbi128, Sbi16, Sbi32, Sbi64, Sbi8};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
-/// This trait adds the runtime type information needed to generate the [contract PBC ABI files](https://privacyblockchain.gitlab.io/language/rust-contract-sdk/abiv1.html).
+/// This trait adds the runtime type information needed to generate the [contract PBC ABI files](https://partisiablockchain.gitlab.io/documentation/smart-contracts/smart-contract-binary-formats.html).
 ///
 /// * The [`__ty_name`](Self::__ty_name) method returns ordinary Rust names.
 /// * The [`__ty_identifier`](Self::__ty_identifier) method recursively creates the PBC ABI byte-serialized type specification
 ///
 /// Custom implementations should be rare, and throughly tested, as a malformed ABI might seriously
 /// affect intercontract communication, and might even prevent initialization. Ensure validity with
-/// respect to the [ABI specification](https://partisiablockchain.gitlab.io/documentation/abiv1.html).
+/// respect to the [ABI specification](https://partisiablockchain.gitlab.io/documentation/smart-contracts/smart-contract-binary-formats.html).
 ///
 /// Defines the ABI serialization format.
 pub trait CreateTypeSpec: Sized {
@@ -57,7 +57,7 @@ macro_rules! impl_for_type {
 
 // Implement the [`CreateTypeSpec`] trait for simple types.
 //
-// Byte values are taken from the [ABI spec](https://privacyblockchain.gitlab.io/language/rust-contract-sdk/abiv1.html). Due to macro_rules restrictions they can't be used as named constant.
+// Byte values are taken from the [ABI spec](https://partisiablockchain.gitlab.io/documentation/smart-contracts/smart-contract-binary-formats.html). Due to macro_rules restrictions they can't be used as named constant.
 // Sbi types are mapped to their public counterparts.
 impl_for_type!(
     u8,     0x01
