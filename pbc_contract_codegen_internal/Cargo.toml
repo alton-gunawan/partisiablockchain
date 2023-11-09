@@ -1,0 +1,23 @@
+[package]
+name = "pbc_contract_codegen_internal"
+version = "16.18.0"
+edition = "2021"
+resolver = "1"
+license = "MIT"
+
+[features]
+abi = ["pbc_contract_common/abi", "pbc_traits/abi", "pbc_lib/abi"]
+
+[dependencies]
+syn = { workspace = true, features = ["full"] }
+quote = { workspace = true }
+proc-macro2 = { workspace = true }
+
+pbc_contract_common = { path = "../pbc_contract_common" }
+pbc_traits = {path = "../pbc_traits"}
+pbc_lib = { path = "../pbc_lib"}
+create_type_spec_derive = { path = "../create_type_spec_derive" }
+
+[dev-dependencies]
+pbc_contract_common = { path = "../pbc_contract_common", features = ["test_examples"] }
+

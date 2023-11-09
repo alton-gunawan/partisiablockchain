@@ -1,7 +1,0 @@
-error: custom attribute panicked
- --> tests/action/fail/bad_arg_pattern_literal.rs:6:1
-  |
-6 | #[action]
-  | ^^^^^^^^^
-  |
-  = help: message: Unsupported argument pattern: 5

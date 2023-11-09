@@ -1,0 +1,47 @@
+error[E0308]: mismatched types
+  --> tests/pbc_contract_codegen/fail/zk/not_real_zkstate.rs:28:1
+   |
+28 | #[action(zk = true)]
+   | ^^^^^^^^^^^^^^^^^^^^
+   | |
+   | expected `ZkState<_>`, found `ZkState`
+   | expected due to this
+   |
+   = note: `ZkState` and `pbc_contract_common::zk::ZkState<_>` have similar names, but are actually distinct types
+note: `ZkState` is defined in the current crate
+  --> tests/pbc_contract_codegen/fail/zk/not_real_zkstate.rs:6:1
+   |
+6  | struct ZkState { }
+   | ^^^^^^^^^^^^^^
+note: `pbc_contract_common::zk::ZkState<_>` is defined in crate `pbc_contract_common`
+  --> $WORKSPACE/pbc_contract_common/src/zk/mod.rs
+   |
+   | pub struct ZkState<SecretVarMetadataT> {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = note: this error originates in the attribute macro `action` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0308]: mismatched types
+  --> tests/pbc_contract_codegen/fail/zk/not_real_zkstate.rs:28:1
+   |
+28 | #[action(zk = true)]
+   | ^^^^^^^^^^^^^^^^^^^^ expected `ZkState`, found `ZkState<_>`
+29 | fn action(_context: pbc_contract_common::context::ContractContext, state: u64, _zk_state: ZkState) -> u64 { state }
+   |    ------ arguments to this function are incorrect
+   |
+   = note: `pbc_contract_common::zk::ZkState<_>` and `ZkState` have similar names, but are actually distinct types
+note: `pbc_contract_common::zk::ZkState<_>` is defined in crate `pbc_contract_common`
+  --> $WORKSPACE/pbc_contract_common/src/zk/mod.rs
+   |
+   | pub struct ZkState<SecretVarMetadataT> {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: `ZkState` is defined in the current crate
+  --> tests/pbc_contract_codegen/fail/zk/not_real_zkstate.rs:6:1
+   |
+6  | struct ZkState { }
+   | ^^^^^^^^^^^^^^
+note: function defined here
+  --> tests/pbc_contract_codegen/fail/zk/not_real_zkstate.rs:29:4
+   |
+29 | fn action(_context: pbc_contract_common::context::ContractContext, state: u64, _zk_state: ZkState) -> u64 { state }
+   |    ^^^^^^                                                                      ------------------
+   = note: this error originates in the attribute macro `action` (in Nightly builds, run with -Z macro-backtrace for more info)

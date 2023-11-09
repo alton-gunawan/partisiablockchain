@@ -1,0 +1,7 @@
+error: custom attribute panicked
+ --> tests/pbc_contract_codegen/fail/shortname_bad_negative_hex.rs:7:1
+  |
+7 | #[action(shortname = -0x01)]
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = help: message: Invalid shortname, expecting a u32 hex literal, but got: - 0x01

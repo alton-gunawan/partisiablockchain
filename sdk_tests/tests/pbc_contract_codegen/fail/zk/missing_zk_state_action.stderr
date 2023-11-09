@@ -1,0 +1,7 @@
+error: custom attribute panicked
+  --> tests/pbc_contract_codegen/fail/zk/missing_zk_state_action.rs:14:1
+   |
+14 | #[action(zk = true)]
+   | ^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: message: Functions annotated with this macro must have at least 3 arguments, but had only 2

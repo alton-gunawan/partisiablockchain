@@ -1,4 +1,4 @@
-//! Contains definitions for use in Zk (Zero-Knowledge) Contracts
+//! Definitions specifically for Zero-Knowledge Contracts.
 //!
 //! These should be used in conjunction with the Zk macros in `pbc_contract_codegen`.
 
@@ -16,17 +16,26 @@ use crate::shortname::ShortnameZkComputation;
 use crate::signature::Signature;
 
 /// Identifier for a secret variable.
-///
-/// # Invariants
-///
-/// Cannot be manually created; must be retrieved from state.
 #[repr(transparent)]
 #[derive(
-    PartialEq, Eq, ReadRPC, WriteRPC, ReadWriteState, Debug, Clone, Copy, CreateTypeSpecInternal,
+    PartialEq,
+    Eq,
+    ReadRPC,
+    WriteRPC,
+    ReadWriteState,
+    Debug,
+    Clone,
+    Copy,
+    CreateTypeSpecInternal,
+    Hash,
 )]
 #[non_exhaustive]
 pub struct SecretVarId {
-    raw_id: u32,
+    /// Raw identifier of the secret variable.
+    ///
+    /// Should mainly be used for the few circumstances where [`SecretVarId`] itself cannot be
+    /// used.
+    pub raw_id: u32,
 }
 
 impl SecretVarId {
@@ -37,10 +46,6 @@ impl SecretVarId {
 }
 
 /// Identifier for a secret input (variable).
-///
-/// # Invariants
-///
-/// Cannot be manually created; must be retrieved from state.
 type SecretInputId = SecretVarId;
 
 /// Identifier for an attested piece of data.
@@ -292,7 +297,6 @@ pub enum ZkStateChange {
     ///
     /// - Must only occur when [`ZkState::calculation_state`] is [`CalculationStatus::Waiting`].
     /// - Only one [`StartComputation`](Self::StartComputation) is allowed per transaction.
-    #[non_exhaustive]
     StartComputation {
         /// Id of the Zk function to call initially. Function must be declared as `pub`.
         function_shortname: ShortnameZkComputation,

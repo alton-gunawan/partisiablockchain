@@ -253,7 +253,7 @@ impl<K, V> SortedVecMap<K, V> {
     /// `range((Excluded(4), Included(10)))` will yield a left-exclusive,
     /// right-inclusive range from 4 to 10.
     ///
-    /// Unlike [`BTreeMap::range`] this returns an empty iterator if range `start > end`
+    /// Unlike [`BTreeMap::range`](std::collections::BTreeMap::range) this returns an empty iterator if range `start > end`
     /// or if range `start == end` and both bounds are `Excluded`.
     pub fn range<T, R>(&self, range: R) -> impl DoubleEndedIterator<Item = (&'_ K, &'_ V)>
     where
@@ -274,7 +274,7 @@ impl<K, V> SortedVecMap<K, V> {
     /// `range((Excluded(4), Included(10)))` will yield a left-exclusive, right-inclusive
     /// range from 4 to 10.
     ///
-    /// Unlike [`BTreeMap::range_mut`] this returns an empty iterator if range `start > end`
+    /// Unlike [`BTreeMap::range_mut`](std::collections::BTreeMap::range_mut) this returns an empty iterator if range `start > end`
     /// or if range `start == end` and both bounds are `Excluded`.
     pub fn range_mut<T, R>(
         &mut self,

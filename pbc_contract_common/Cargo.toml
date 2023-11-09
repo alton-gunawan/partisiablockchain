@@ -1,20 +1,23 @@
 [package]
 name = "pbc_contract_common"
-version = "16.8.0"
+version = "16.18.0"
 edition = "2021"
 license = "MIT"
 
 [features]
-abi = ["pbc_traits/abi", "pbc_contract_core/abi"]
+abi = ["pbc_traits/abi", "pbc_contract_core/abi", "pbc_lib/abi"]
 test_examples = []
 
 [dependencies]
+quote = { workspace = true }
+
 read_write_state_derive = { path = "../read_write_state_derive" }
 read_write_rpc_derive = { path = "../read_write_rpc_derive" }
 create_type_spec_derive = { path = "../create_type_spec_derive" }
-quote = "1.0"
 pbc_traits = { path = "../pbc_traits" }
 pbc_contract_core= { path = "../pbc_contract_core" }
+pbc_lib = { path = "../pbc_lib"}
 
 [dev-dependencies]
 file_diff = "1.0.0"
+

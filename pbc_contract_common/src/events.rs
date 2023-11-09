@@ -1,4 +1,4 @@
-//! Definitions for RPC calls between contracts
+//! Definitions for RPC calls between contracts.
 //!
 //! # Motivation
 //!
@@ -193,9 +193,13 @@ pub struct CallbackBuilder<'a> {
 }
 
 impl EventGroupBuilder {
-    /// Register new call with the given event group. [`InteractionBuilder::done`] must
-    /// be called on the produced [`InteractionBuilder`] for it to be added to this
-    /// [`EventGroupBuilder`].
+    /// Register new call.
+    ///
+    /// Used by contracts to invoke each other, and is the main method for inter-contract
+    /// communication.
+    ///
+    /// [`InteractionBuilder::done`] must be called on the produced [`InteractionBuilder`] for it
+    /// to be added to this [`EventGroupBuilder`].
     pub fn call(&mut self, dest: Address, shortname: Shortname) -> InteractionBuilder {
         InteractionBuilder {
             dest,
@@ -206,8 +210,9 @@ impl EventGroupBuilder {
         }
     }
 
-    /// Register a new call with no payload with this [`EventGroupBuilder`].
-    /// This is used to ping a contract to check if it is alive.
+    /// Register a new call with no payload.
+    ///
+    /// Can be used both for adding gas to a contract, or to ping a contract to check if it is alive.
     pub fn ping(&mut self, dest: Address, cost: Option<GasCost>) {
         self.interactions.push(Interaction {
             dest,
@@ -218,7 +223,17 @@ impl EventGroupBuilder {
         })
     }
 
-    /// Register new callback with the given event group.
+    /// Register new callback.
+    ///
+    /// [`CallbackBuilder::done`] must be called on the produced [`CallbackBuilder`] for it
+    /// to be added to this [`EventGroupBuilder`].
+    ///
+    /// The `#[callback]` invocation of the given shortname will be invoked when all
+    /// [`Interaction`]s of the [`EventGroup`] have been evaluated and returned their status. The
+    /// result status and potential return data will be encoded in the
+    /// [`CallbackContext`](crate::context::CallbackContext).
+    ///
+    /// Note: Incompatible with [`return_data`](Self::return_data).
     pub fn with_callback(&mut self, shortname: ShortnameCallback) -> CallbackBuilder {
         CallbackBuilder {
             payload: shortname.shortname.bytes(),
@@ -227,8 +242,15 @@ impl EventGroupBuilder {
         }
     }
 
-    /// Register new return data with the given event group. Only a single type can be returned at a time.
-    /// If called multiple times, overwrites previous return data.
+    /// Register return data.
+    ///
+    /// Used to return arbitrary data from an invocation to the calling contract, if that contract
+    /// used [`with_callback`](Self::with_callback). Returned data will be discarded if no callback was declared.
+    ///
+    /// Note: Only as single value can be returned at a time. Previous values will be ignored if called
+    /// repeatedly. Create a single struct that encapsulates all data that you want to return.
+    ///
+    /// Note: Incompatible with [`with_callback`](Self::with_callback).
     pub fn return_data<T: WriteRPC>(&mut self, return_value: T) {
         let mut buffer: Vec<u8> = vec![];
         return_value.rpc_write_to(&mut buffer).unwrap();
@@ -315,7 +337,7 @@ impl InteractionBuilder<'_> {
 }
 
 impl CallbackBuilder<'_> {
-    /// Register new argument for this callback. This argument is automatically serialized. It
+    /// Register new argument for the callback. This argument is automatically serialized. It
     /// is the programmer's responsibility to check that this type is correct, wrt. target
     /// contract's ABI.
     ///

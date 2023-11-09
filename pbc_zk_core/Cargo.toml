@@ -1,0 +1,11 @@
+[package]
+name = "pbc_zk_core"
+version = "16.18.0"
+edition = "2021"
+license = "MIT"
+
+[features]
+abi = ["pbc_traits/abi"]
+
+[dependencies]
+pbc_traits = { path = "../pbc_traits" }

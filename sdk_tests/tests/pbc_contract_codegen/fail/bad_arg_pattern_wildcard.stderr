@@ -1,0 +1,7 @@
+error: custom attribute panicked
+ --> tests/pbc_contract_codegen/fail/bad_arg_pattern_wildcard.rs:6:1
+  |
+6 | #[action]
+  | ^^^^^^^^^
+  |
+  = help: message: Unsupported argument pattern: _

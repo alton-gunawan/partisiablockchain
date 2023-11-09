@@ -1,7 +1,0 @@
-error[E0080]: evaluation of constant value failed
-  --> tests/action/fail/zk/zk_init_arg_false_for_zk_callback.rs:13:1
-   |
-13 | #[callback(shortname = 0x21, zk = true)]
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the evaluated program panicked at 'callback cannot be zk if the init function is not zk. Consider using #[init(zk = true)]', $DIR/tests/action/fail/zk/zk_init_arg_false_for_zk_callback.rs:13:1
-   |
-   = note: this error originates in the macro `$crate::panic::panic_2021` which comes from the expansion of the macro `assert` (in Nightly builds, run with -Z macro-backtrace for more info)

@@ -1,6 +1,6 @@
 [package]
 name = "sdk_tests"
-version = "16.8.0"
+version = "16.18.0"
 edition = "2021"
 resolver = "1"
 license = "MIT"
@@ -19,11 +19,13 @@ pbc_lib = { path = "../pbc_lib" }
 pbc_zk = { path = "../pbc_zk" }
 
 [dev-dependencies]
-trybuild = "1.0.55"
-syn = "1.0"
-quote = "1.0"
-proc-macro2 = "1.0"
+syn = { workspace = true }
+quote = { workspace = true }
+proc-macro2 = { workspace = true }
+
+trybuild = "1.0.85"
+pbc_contract_common = { path = "../pbc_contract_common", features = ["test_examples"] }
 
 [features]
 test_lib = []
-abi = ["pbc_contract_common/abi", "pbc_contract_codegen/abi", "pbc_traits/abi", "create_type_spec_derive/abi", "pbc_lib/abi"]
+abi = ["pbc_contract_common/abi", "pbc_contract_codegen/abi", "pbc_traits/abi", "create_type_spec_derive/abi", "pbc_lib/abi", "pbc_zk/abi"]

@@ -1,6 +1,6 @@
 [package]
 name = "pbc_lib"
-version = "16.8.0"
+version = "16.18.0"
 edition = "2021"
 license = "MIT"
 

@@ -1,7 +1,0 @@
-error: custom attribute panicked
- --> tests/action/fail/shortname_bad_not_leb128.rs:7:1
-  |
-7 | #[action(shortname = 0xFF)]
-  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  |
-  = help: message: Invalid shortname, should be LEB128 encoded: "Shortname's last byte must not have continuation bit set"

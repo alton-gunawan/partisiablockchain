@@ -1,4 +1,13 @@
-//! The contract context module.
+//! Definitions for commonly used [`ContractContext`] and [`CallbackContext`].
+//!
+//! The contract contexts contains information about when and why the current invocation is being
+//! executed.
+//!
+//! - [`ContractContext`] is used by all invocations to determine the what and why of the current
+//! invocation.
+//! - [`CallbackContext`] is used by `#[callback]` invocations to indicate whether the invocation
+//! that triggered the callback succeeded, or if whether it resulted in an error. Also includes
+//! return data if applicable.
 
 use std::io::{Read, Write};
 
@@ -10,34 +19,54 @@ use read_write_rpc_derive::WriteRPC;
 use crate::address::Address;
 use crate::Hash;
 
-/// The contract context encapsulates the blockchain state and relevant information
-/// for the callee.
+/// The functional and temporal context that contract invocations are called in.
 ///
-/// Serialized with the RPC format.
+/// Can be through of as the when and why of the current invocation.
+///
+/// Contains information on the caller, the current time, and various PBC specific informations,
+/// like the hash of the transaction, or the hash of the parent transaction.
 #[repr(C)]
 #[derive(Eq, PartialEq, Debug, ReadRPC, WriteRPC)]
 pub struct ContractContext {
     /// The address of the contract being called.
+    ///
+    /// Primary way for the contract to determine its own address. Will never change for any
+    /// specific contract deployment.
     pub contract_address: Address,
 
-    /// The sender of the transaction.
+    /// The sender of the event that resulted in the currently running invocation.
+    ///
+    /// In `#[init]` invocations this will be the creator of the contract, and in other invocations
+    /// it will be users of the contract, possibly a contract if an invocation have occured.
     pub sender: Address,
 
-    /// The block time.
+    /// The monotonically rising block height of the block this invocation is executed in. Counts the number of blocks that have been produced since genesis.
+    ///
+    /// Should not be used for time-outs or similar system, as block production periods are
+    /// highly variadic, due to being produced on-demand, and being easily manipulated by block
+    /// producers.
     pub block_time: i64,
 
-    /// The block production time in millis UTC.
+    /// The [Unix time](https://en.wikipedia.org/wiki/Unix_time) in milliseconds of the block this invocation is executed in. Monotonically rising.
+    ///
+    /// Preferred for time-outs, but beware that block producers may manipulate the value slightly.
     pub block_production_time: i64,
 
-    /// The hash of the current transaction.
+    /// The hash of the event that spawned this invocation.
+    ///
+    /// Guarenteed unique between all invocations.
     pub current_transaction: Hash,
 
-    /// The hash of the parent transaction, if available.
+    /// The hash of the signed transaction that eventually resulted in the creation of this invocation.
+    ///
+    /// The most important use of this field is to determine the address of a deployed contract.
     pub original_transaction: Hash,
 }
 
-/// This is the additional context object that all callbacks receive as a parameter.
-/// It includes the execution status of the transactions sent by the event that registered this function as a callback.
+/// Additional context for `#[callback]` invocations, indicating the success status and result
+/// values of the invocation.
+///
+/// It includes the [`ExecutionResult`] of the transactions sent by the event that registered this function as a callback.
 pub struct CallbackContext {
     /// Whether or not the callback was a success
     pub success: bool,
@@ -63,16 +92,25 @@ impl WriteRPC for CallbackContext {
     }
 }
 
-/// An execution result containing the success flag of a transaction.
+/// Execution result of a single event from an event group.
+///
+/// Primarily retrieved from [`CallbackContext`].
 pub struct ExecutionResult {
-    /// Denotes whether the transaction executed successfully
+    /// Denotes whether the event executed successfully, without panicking.
     pub succeeded: bool,
-    /// The serialized data to be sent along with an ExecutionResult
+    /// The serialized return data.
+    ///
+    /// Attached to the event by the called contract using
+    /// [`EventGroupBuilder::return_data`](crate::events::EventGroupBuilder::return_data). Use
+    /// [`get_return_data`](Self::get_return_data) to deserialize to a specific type.
     pub return_data: Vec<u8>,
 }
 
 impl ExecutionResult {
-    /// Parse return_data bytes to object of type T
+    /// Deserialize the return data to a specific type, using [`ReadRPC`].
+    ///
+    /// Utility method to avoid the need for manual deserialization over
+    /// [`ExecutionResult::return_data`].
     pub fn get_return_data<T: ReadRPC>(&self) -> T {
         let mut return_data_bytes: &[u8] = self.return_data.as_slice();
         T::rpc_read_from(&mut return_data_bytes)

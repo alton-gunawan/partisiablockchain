@@ -3,6 +3,7 @@ members = [
     "create_type_spec_derive",
     "derive_commons",
     "pbc_contract_common",
+    "pbc_contract_codegen_internal",
     "pbc_contract_codegen",
     "pbc_traits",
     "pbc_lib",
@@ -11,3 +12,8 @@ members = [
     "read_write_state_derive",
     "sdk_tests"
 ]
+
+[workspace.dependencies]
+syn = { version = "1.0.109" }
+quote = { version = "1.0.33" }
+proc-macro2 = { version = "1.0.66" }
