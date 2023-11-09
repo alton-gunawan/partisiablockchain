@@ -21,6 +21,8 @@ pub mod signature;
 
 pub mod sorted_vec_map;
 
+pub mod avl_tree_map;
+
 pub mod zk;
 
 //// Reexports
@@ -37,7 +39,7 @@ use pbc_traits::{ReadRPC, WriteRPC};
 use read_write_rpc_derive::ReadWriteRPC;
 use read_write_state_derive::ReadWriteState;
 
-/// Address module.
+/// Definitions for blockchain [`Address`](address_internal::Address)es.
 pub mod address {
     pub use super::address_internal::{Address, AddressType};
     pub use super::shortname::{Shortname, ShortnameCallback};

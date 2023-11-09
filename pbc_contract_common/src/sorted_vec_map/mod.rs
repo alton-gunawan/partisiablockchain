@@ -1,4 +1,4 @@
-//! Provides a sorted [`Vec`]-based [`SortedVecMap`] and [`SortedVecSet`].
+//! Definition of sorted [`Vec`]-based [`SortedVecMap`] and [`SortedVecSet`].
 //!
 //! [`SortedVecMap`] and [`SortedVecSet`] provides constant time serialization/deserialization if
 //! the entries is serializable by copy (Constant size determinable at compile time), and

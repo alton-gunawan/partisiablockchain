@@ -186,7 +186,7 @@ impl<T> SortedVecSet<T> {
     /// `range((Excluded(4), Included(10)))` will yield a left-exclusive,
     /// right-inclusive range from 4 to 10.
     ///
-    /// Unlike [`BTreeMap::range`] this returns an empty iterator if range `start > end`
+    /// Unlike [`BTreeMap::range`](std::collections::BTreeMap::range) this returns an empty iterator if range `start > end`
     /// or if range `start == end` and both bounds are `Excluded`.
     pub fn range<'a, K, R>(&'a self, range: R) -> impl DoubleEndedIterator<Item = &'a T>
     where

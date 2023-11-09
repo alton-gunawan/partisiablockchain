@@ -43,3 +43,8 @@ pub mod mem;
 #[cfg(all(not(feature = "abi"), any(target_arch = "wasm32", doc)))]
 #[path = "wasm_exit.rs"]
 pub mod exit;
+
+#[path = "wasm_avl_tree.rs"]
+mod wasm_avl_tree;
+
+pub use wasm_avl_tree::wasm_avl;

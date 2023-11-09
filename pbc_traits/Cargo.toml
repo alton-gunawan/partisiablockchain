@@ -1,12 +1,8 @@
 [package]
 name = "pbc_traits"
-version = "16.8.0"
+version = "16.18.0"
 edition = "2021"
 license = "MIT"
 
 [features]
 abi = []
-
-[dependencies]
-quote = "1.0"
-pbc_zk = { path = "../pbc_zk" }

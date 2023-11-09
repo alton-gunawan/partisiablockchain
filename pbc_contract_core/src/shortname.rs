@@ -1,13 +1,14 @@
-//! Exposes [`Shortname`] and similar identifiers.
+//! Definitions for contract invocation [`Shortname`]s and similar identifiers.
 
 use pbc_traits::ReadRPC;
 use pbc_traits::WriteRPC;
 
 use super::leb128;
 
-/// LEB128-encoded [`Shortname`].
+/// Unique [LEB128](https://en.wikipedia.org/wiki/LEB128) identifier for a contract's invocations.
 ///
-/// Instances of this type is always valid LEB128-encoded.
+/// Automatically created for each of the contract's own invocations. Shortnames for invocations in other contracts must be created when
+/// calling those contracts.
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub struct Shortname {
     /// Raw ID value
@@ -20,7 +21,7 @@ impl Shortname {
         Self { value }
     }
 
-    /// Create [`Shortname`] from a slice of bytes. Slice must be valid LEB128-encoded.
+    /// Create [`Shortname`] from a slice of bytes. Slice must be valid [LEB128](https://en.wikipedia.org/wiki/LEB128)-encoded.
     pub fn from_be_bytes(bytes: &[u8]) -> Result<Self, String> {
         // Errors for last byte
         match bytes.last() {
@@ -84,7 +85,7 @@ impl Shortname {
     }
 }
 
-/// LEB128-encoded callback-oriented [`Shortname`].
+/// Special [`Shortname`] variant for `#[callback]` invocations.
 #[non_exhaustive]
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub struct ShortnameCallback {
@@ -106,7 +107,7 @@ impl ShortnameCallback {
     }
 }
 
-/// LEB128-encoded ZK computation/function-oriented [`Shortname`].
+/// Special [`Shortname`] variant for `#[zk_compute]` Zero-knowledge computation invocations.
 #[non_exhaustive]
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub struct ShortnameZkComputation {

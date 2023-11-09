@@ -1,10 +1,10 @@
 [package]
 name = "derive_commons"
-version = "16.8.0"
+version = "16.18.0"
 edition = "2021"
 license = "MIT"
 
 [dependencies]
-syn = "1.0"
-quote = "1.0"
-proc-macro2 = "1.0"
+syn = { workspace = true }
+quote = { workspace = true }
+proc-macro2 = { workspace = true }

@@ -1,4 +1,3 @@
-use pbc_zk::{Sbi128, Sbi16, Sbi32, Sbi64, Sbi8};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 /// This trait adds the runtime type information needed to generate the [contract PBC ABI files](https://partisiablockchain.gitlab.io/documentation/smart-contracts/smart-contract-binary-formats.html).
@@ -39,7 +38,7 @@ macro_rules! impl_for_type {
 
                 #[doc = concat!("Constant string `", stringify!($type), "`.")]
                 fn __ty_name() -> String {
-                    format!("{}", quote!($type).to_string())
+                    format!("{}", stringify!($type).to_string())
                 }
 
                 #[doc = concat!("Ordinal is `", stringify!($val), "`, as defined in [ABI Spec](https://partisiablockchain.gitlab.io/documentation/abiv1.html).")]
@@ -58,6 +57,7 @@ macro_rules! impl_for_type {
 // Implement the [`CreateTypeSpec`] trait for simple types.
 //
 // Byte values are taken from the [ABI spec](https://partisiablockchain.gitlab.io/documentation/smart-contracts/smart-contract-binary-formats.html). Due to macro_rules restrictions they can't be used as named constant.
+//
 // Sbi types are mapped to their public counterparts.
 impl_for_type!(
     u8,     0x01
@@ -72,11 +72,6 @@ impl_for_type!(
     i128,   0x0a
     String, 0x0b
     bool,   0x0c
-    Sbi8,   0x06
-    Sbi16,  0x07
-    Sbi32,  0x08
-    Sbi64,  0x09
-    Sbi128, 0x0a
 );
 
 /// Implementation of the [`CreateTypeSpec`] trait for [`Vec<T>`] for any `T` that implements

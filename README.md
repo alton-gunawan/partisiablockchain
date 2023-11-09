@@ -65,6 +65,7 @@ You should update your ZK-contract code as follows:
 
 | **Rust Crate** | **PUB Binder** | **REAL Binder** | **Client** | **SDK** | **Changes**                                                                                                                                                                    |
 |---------------:|---------------:|----------------:|-----------:|--------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|          6.1.0 |         10.1.0 |          10.1.0 |      5.3.0 |  17.1.0 | Added `AvlTreeMap` map implementation that allows for partial deserialization of state. map                                                                               |
 |          6.0.0 |          9.5.0 |          10.0.0 |      5.2.0 |  17.0.0 | Contracts can now delete, transfer and open any variable, regardless of owner and calculation stage. Removes `zk_on_user_variables_opened` and the output phase of ZK contracts. |
 |          5.0.1 |          9.5.0 |           9.5.0 |      5.2.0 |  16.1.0 | Support for Rust 1.70. New wasm instructions - sign extension.                                                                                                             |
 |          5.0.1 |          9.4.0 |           9.4.0 |      5.2.0 |  16.0.1 | Fixed bug whereby `start_computation` variants produced wrong RPC.                                                                                                         |

@@ -1,7 +1,0 @@
-error[E0080]: evaluation of constant value failed
-  --> tests/action/fail/zk/missing_zk_action_arg.rs:14:1
-   |
-14 | #[action]
-   | ^^^^^^^^^ the evaluated program panicked at 'action cannot be non-zk if the init function is zk. Consider using #[action(zk = true)]', $DIR/tests/action/fail/zk/missing_zk_action_arg.rs:14:1
-   |
-   = note: this error originates in the macro `$crate::panic::panic_2021` which comes from the expansion of the macro `assert` (in Nightly builds, run with -Z macro-backtrace for more info)

@@ -1,18 +1,18 @@
 [package]
 name = "pbc_contract_core"
-version = "16.8.0"
+version = "16.18.0"
 edition = "2021"
 license = "MIT"
 
 [features]
-abi = ["pbc_traits/abi"]
+abi = ["pbc_traits/abi", "pbc_zk_core/abi"]
 
 [dependencies]
-sha2 = "0.9"
+sha2 = "0.10.8"
 read_write_state_derive = { path = "../read_write_state_derive" }
 read_write_rpc_derive = { path = "../read_write_rpc_derive" }
 pbc_traits = { path = "../pbc_traits" }
-pbc_zk = { path = "../pbc_zk" }
+pbc_zk_core = { path = "../pbc_zk_core" }
 
 [dev-dependencies]
 file_diff = "1.0.0"

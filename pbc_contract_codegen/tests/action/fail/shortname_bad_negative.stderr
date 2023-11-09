@@ -1,7 +1,0 @@
-error: custom attribute panicked
- --> tests/action/fail/shortname_bad_negative.rs:7:1
-  |
-7 | #[action(shortname = -1)]
-  | ^^^^^^^^^^^^^^^^^^^^^^^^^
-  |
-  = help: message: Invalid shortname, expecting a u32 hex literal, but got: - 1

@@ -1,7 +1,0 @@
-error: custom attribute panicked
- --> tests/action/fail/shortname_bad_too_long.rs:7:1
-  |
-7 | #[action(shortname = 0x99AABBCCEEFF55)]
-  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  |
-  = help: message: Invalid shortname, should be LEB128 encoded: "Shortname value too large for u32"

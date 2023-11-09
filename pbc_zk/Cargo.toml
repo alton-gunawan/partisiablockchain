@@ -1,14 +1,19 @@
 [package]
 name = "pbc_zk"
-version = "16.8.0"
+version = "16.18.0"
 edition = "2021"
 license = "MIT"
 
-test = "tests"
+[features]
+abi = ["pbc_zk_core/abi", "pbc_zk_macros/abi", "pbc_contract_common/abi", "pbc_traits/abi"]
 
 [dependencies]
-pbc_zk_macros = { path = "../pbc_zk_macros" }
 once_cell = "1.18.0"
 
+pbc_zk_core = { path = "../pbc_zk_core" }
+pbc_zk_macros = { path = "../pbc_zk_macros" }
+pbc_contract_common = { path = "../pbc_contract_common" }
+pbc_traits = { path = "../pbc_traits" }
+
 [dev-dependencies]
-proptest = "1.0.0"
+proptest = "1.3.1"

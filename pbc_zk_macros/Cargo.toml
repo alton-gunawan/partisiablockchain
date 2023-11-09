@@ -1,14 +1,19 @@
 [package]
 name = "pbc_zk_macros"
-version = "16.8.0"
+version = "16.18.0"
 edition = "2021"
 license = "MIT"
 
 [lib]
 proc-macro = true
 
+[features]
+abi = ["pbc_contract_codegen_internal/abi"]
+
 [dependencies]
-syn = "1.0"
-quote = "1.0"
-proc-macro2 = "1.0"
+syn = { workspace = true, features = ["full"] }
+quote = { workspace = true }
+proc-macro2 = { workspace = true }
+
 derive_commons = { path = "../derive_commons" }
+pbc_contract_codegen_internal = { path = "../pbc_contract_codegen_internal" }

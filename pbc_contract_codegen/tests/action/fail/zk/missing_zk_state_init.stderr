@@ -1,7 +1,0 @@
-error: custom attribute panicked
- --> tests/action/fail/zk/missing_zk_state_init.rs:5:1
-  |
-5 | #[init(zk = true)]
-  | ^^^^^^^^^^^^^^^^^^
-  |
-  = help: message: Functions annotated with this macro must have at least 2 arguments, but had only 1

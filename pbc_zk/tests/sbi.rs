@@ -58,3 +58,120 @@ proptest! {
         assert_eq!(e, Sbi128::from_le_bits(e.to_le_bits()));
     }
 }
+
+proptest! {
+    #[test]
+    fn add(lhs: i32, rhs: i32) {
+        let expected = lhs.wrapping_add(rhs);
+        let gotten = Sbi32::from(lhs) + Sbi32::from(rhs);
+        assert_eq!(gotten, Sbi32::from(expected));
+    }
+}
+
+proptest! {
+    #[test]
+    fn sub(lhs: i32, rhs: i32) {
+        let expected = lhs.wrapping_sub(rhs);
+        let gotten = Sbi32::from(lhs) - Sbi32::from(rhs);
+        assert_eq!(gotten, Sbi32::from(expected));
+    }
+}
+
+proptest! {
+    #[test]
+    fn shl(lhs: i32, rhs: usize) {
+        let expected = lhs.wrapping_shl(rhs as u32);
+        let gotten = Sbi32::from(lhs) << rhs;
+        assert_eq!(gotten, Sbi32::from(expected));
+    }
+}
+
+proptest! {
+    #[test]
+    fn shr(lhs: i32, rhs: usize) {
+        let expected = lhs.wrapping_shr(rhs as u32);
+        let gotten = Sbi32::from(lhs) >> rhs;
+        assert_eq!(gotten, Sbi32::from(expected));
+    }
+}
+
+proptest! {
+    #[test]
+    fn band(lhs: i32, rhs: i32) {
+        let expected = lhs & rhs;
+        let gotten = Sbi32::from(lhs) & Sbi32::from(rhs);
+        assert_eq!(gotten, Sbi32::from(expected));
+    }
+}
+
+proptest! {
+    #[test]
+    fn bor(lhs: i32, rhs: i32) {
+        let expected = lhs | rhs;
+        let gotten = Sbi32::from(lhs) | Sbi32::from(rhs);
+        assert_eq!(gotten, Sbi32::from(expected));
+    }
+}
+
+proptest! {
+    #[test]
+    fn bxor(lhs: i32, rhs: i32) {
+        let expected = lhs ^ rhs;
+        let gotten = Sbi32::from(lhs) ^ Sbi32::from(rhs);
+        assert_eq!(gotten, Sbi32::from(expected));
+    }
+}
+
+proptest! {
+    #[test]
+    fn eq(lhs: i32, rhs: i32) {
+        let expected = lhs == rhs;
+        let gotten = Sbi32::from(lhs) == Sbi32::from(rhs);
+        assert_eq!(gotten, expected);
+    }
+}
+
+proptest! {
+    #[test]
+    fn leq(lhs: i32, rhs: i32) {
+        let expected = lhs <= rhs;
+        let gotten = Sbi32::from(lhs) <= Sbi32::from(rhs);
+        assert_eq!(gotten, expected);
+    }
+}
+
+proptest! {
+    #[test]
+    fn geq(lhs: i32, rhs: i32) {
+        let expected = lhs >= rhs;
+        let gotten = Sbi32::from(lhs) >= Sbi32::from(rhs);
+        assert_eq!(gotten, expected);
+    }
+}
+
+proptest! {
+    #[test]
+    fn lt(lhs: i32, rhs: i32) {
+        let expected = lhs < rhs;
+        let gotten = Sbi32::from(lhs) < Sbi32::from(rhs);
+        assert_eq!(gotten, expected);
+    }
+}
+
+proptest! {
+    #[test]
+    fn gt(lhs: i32, rhs: i32) {
+        let expected = lhs > rhs;
+        let gotten = Sbi32::from(lhs) > Sbi32::from(rhs);
+        assert_eq!(gotten, expected);
+    }
+}
+
+proptest! {
+    #[test]
+    fn partial_cmp(lhs: i32, rhs: i32) {
+        let expected = lhs.partial_cmp(&rhs);
+        let gotten = Sbi32::from(lhs).partial_cmp(&Sbi32::from(rhs));
+        assert_eq!(gotten, expected);
+    }
+}

@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 use std::io::Write;
 
 use pbc_traits::{CreateTypeSpec, WriteRPC};
-use pbc_zk::{Sbi32, SecretBinary};
+use pbc_zk_core::{Sbi32, SecretBinary};
 
 use super::{abi_serialize_slice, AbiSerialize, NamedEntityAbi};
 use crate::function_name::{FunctionKind, FunctionName};
@@ -45,7 +45,7 @@ impl FnAbi {
         self.args.push(NamedEntityAbi::new::<T>(name, lut));
     }
 
-    /// Add a secret argument to this instance. Argument must implement SecretBinary.
+    /// Add a secret argument to this instance. Argument must implement [`SecretBinary`].
     /// Name is "secret_input"
     ///
     /// * `lut` - the lookup table for the ABI generation. See `pbc-abigen` for details.

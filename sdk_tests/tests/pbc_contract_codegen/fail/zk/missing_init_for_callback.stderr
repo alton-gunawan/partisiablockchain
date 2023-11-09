@@ -1,0 +1,7 @@
+error[E0425]: cannot find value `__PBC_IS_ZK_CONTRACT` in this scope
+ --> tests/pbc_contract_codegen/fail/zk/missing_init_for_callback.rs:5:1
+  |
+5 | #[callback(shortname = 0x21, zk = true)]
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+  |
+  = note: this error originates in the attribute macro `callback` (in Nightly builds, run with -Z macro-backtrace for more info)

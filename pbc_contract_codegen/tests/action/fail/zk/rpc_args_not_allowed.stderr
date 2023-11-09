@@ -1,7 +1,0 @@
-error: custom attribute panicked
-  --> tests/action/fail/zk/rpc_args_not_allowed.rs:17:1
-   |
-17 | #[zk_on_variable_inputted]
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = help: message: Functions annotated with this macro must have at most 4 arguments

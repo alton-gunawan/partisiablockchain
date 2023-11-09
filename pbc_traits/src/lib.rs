@@ -8,13 +8,6 @@
 //! - [`create_type_spec::CreateTypeSpec`] for ABI serialization.
 
 #[cfg(feature = "abi")]
-#[macro_use]
-extern crate quote;
-
-#[cfg(not(feature = "abi"))]
-extern crate quote;
-
-#[cfg(feature = "abi")]
 pub use create_type_spec::CreateTypeSpec;
 pub use read_int::ReadInt;
 pub use readwrite_rpc::ReadRPC;
