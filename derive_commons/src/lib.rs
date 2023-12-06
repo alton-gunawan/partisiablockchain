@@ -63,7 +63,7 @@ impl ReadWriteGenType {
 /// # Arguments
 /// * `generics` - Generics AST element to modify.
 /// * `trait_name` - Name of the trait.
-fn extend_generic_bounds_with_trait(generics: &mut syn::Generics, trait_name: syn::Path) {
+pub fn extend_generic_bounds_with_trait(generics: &mut syn::Generics, trait_name: syn::Path) {
     // This method operates on syn directly, instead of emitting syntax directly, as this domain is
     // complex, and we want to minimize the risk of accidentally producing wrong syntax.
 

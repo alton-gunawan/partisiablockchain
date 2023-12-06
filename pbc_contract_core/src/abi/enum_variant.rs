@@ -1,15 +1,12 @@
 use std::io::Write;
 
 use pbc_traits::{WriteInt, WriteRPC};
-use read_write_rpc_derive::ReadRPC;
-use read_write_rpc_derive::WriteRPC;
 
 use super::AbiSerialize;
 
 /// A struct representing an enum variant.
 ///
 /// Serialized with the ABI format.
-#[derive(PartialEq, Eq, Debug, ReadRPC, WriteRPC)]
 pub struct EnumVariant {
     /// The discriminant of the variant.
     pub discriminant: u8,

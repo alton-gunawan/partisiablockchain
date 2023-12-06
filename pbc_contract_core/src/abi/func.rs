@@ -13,7 +13,6 @@ use crate::shortname::Shortname;
 /// A struct representing a function in the ABI.
 ///
 /// Serialized with the ABI format.
-#[derive(PartialEq, Eq)]
 pub struct FnAbi {
     name: FunctionName,
     fn_kind: FunctionKind,

@@ -9,7 +9,6 @@ use super::{abi_serialize_slice, AbiSerialize};
 /// A struct representing the ABI for a Rust type.
 ///
 /// Serialized with the ABI format.
-#[derive(PartialEq, Debug, Eq)]
 pub struct NamedTypeSpec {
     /// The name of the type.
     pub name: String,
@@ -22,7 +21,6 @@ pub struct NamedTypeSpec {
 }
 
 /// An enum holding the specific kind information for the different named type specifications.
-#[derive(PartialEq, Debug, Eq)]
 pub enum KindInfo {
     /// The list of the fields that are associated with the struct.
     Struct {

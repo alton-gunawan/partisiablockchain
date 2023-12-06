@@ -1,0 +1,30 @@
+error: custom attribute panicked
+  --> tests/pbc_contract_codegen/fail/zk/attributes_not_allowed_zk_on_attestation_complete.rs:16:1
+   |
+16 | #[zk_on_attestation_complete(shortname=0x32)]
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: message: No attributes are supported for zk_on_attestation_complete
+
+error[E0277]: the trait bound `ContractState: ReadWriteState` is not satisfied
+ --> tests/pbc_contract_codegen/fail/zk/attributes_not_allowed_zk_on_attestation_complete.rs:8:1
+  |
+8 | #[init(zk = true)]
+  | ^^^^^^^^^^^^^^^^^^ the trait `ReadWriteState` is not implemented for `ContractState`
+  |
+  = help: the following other types implement trait `ReadWriteState`:
+            bool
+            i8
+            i16
+            i32
+            i64
+            i128
+            u8
+            u16
+          and $N others
+note: required by a bound in `ContractResultBuffer::write_state`
+ --> $WORKSPACE/pbc_contract_common/src/result_buffer.rs
+  |
+  |     pub fn write_state<S: ReadWriteState>(&mut self, state: S) {
+  |                           ^^^^^^^^^^^^^^ required by this bound in `ContractResultBuffer::write_state`
+  = note: this error originates in the attribute macro `init` (in Nightly builds, run with -Z macro-backtrace for more info)

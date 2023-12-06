@@ -163,6 +163,16 @@ pub enum SecretInput {
     Some(String),
 }
 
+impl SecretInput {
+    /// Determines the type string, if any was given.
+    pub fn to_secret_type_str(&self) -> Option<&str> {
+        match self {
+            SecretInput::Some(secret_type) => Some(secret_type),
+            _ => None,
+        }
+    }
+}
+
 /// Whether the given integer literal is hex formatted or not.
 fn is_hex_literal(lit: &syn::LitInt) -> bool {
     let token_text = format!("{}", lit.token());

@@ -1,6 +1,5 @@
 //! Definitions for contract invocation [`Shortname`]s and similar identifiers.
 
-use pbc_traits::ReadRPC;
 use pbc_traits::WriteRPC;
 
 use super::leb128;
@@ -139,12 +138,6 @@ impl std::fmt::Display for Shortname {
             write!(f, "{byte:02x}")?;
         }
         Ok(())
-    }
-}
-
-impl ReadRPC for Shortname {
-    fn rpc_read_from<R: std::io::Read>(_reader: &mut R) -> Self {
-        unimplemented!();
     }
 }
 

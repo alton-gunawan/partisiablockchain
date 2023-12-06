@@ -165,18 +165,6 @@ pub fn zk_closed_open() -> zk::ZkClosed<ExampleZkMetadata> {
     }
 }
 
-/// Generator of ZkInputDef examples
-///
-/// Metadata is explicitly NOT palindromic wrt. endianess.
-pub fn zk_input_def(seed: u32) -> zk::ZkInputDef<ExampleZkMetadata> {
-    assert_ne!(seed, u32::from_be(seed));
-    zk::ZkInputDef {
-        seal: seed % 2 == 0,
-        expected_bit_lengths: (1..(seed % 10 + 2)).collect(),
-        metadata: seed,
-    }
-}
-
 /// Generator of Signatures examples
 fn example_signature(rng: &mut Rng) -> Signature {
     Signature {
@@ -201,6 +189,41 @@ pub fn example_data_attestation() -> zk::DataAttestation {
     }
 }
 
+/// Generate example event subscription.
+fn example_subscription() -> zk::evm_event::EventSubscription {
+    let mut rng = Rng::new(312);
+    zk::evm_event::EventSubscription {
+        subscription_id: zk::evm_event::EventSubscriptionId::new(1),
+        is_active: true,
+        chain_id: "POLYGON".to_string(),
+        contract_address: rng.get_bytearray(),
+        from_block: U256 {
+            bytes: rng.get_bytearray(),
+        },
+        topics: vec![
+            vec![rng.get_bytearray()],
+            vec![],
+            vec![rng.get_bytearray(), rng.get_bytearray()],
+        ],
+    }
+}
+
+/// Generate example external event log.
+fn example_external_event() -> zk::evm_event::ExternalEvent {
+    let mut rng = Rng::new(312);
+    zk::evm_event::ExternalEvent {
+        subscription_id: zk::evm_event::EventSubscriptionId::new(1),
+        event_id: zk::evm_event::ExternalEventId::new(1),
+        data: vec![rng.get_u8(), rng.get_u8(), rng.get_u8(), rng.get_u8()],
+        topics: vec![
+            rng.get_bytearray(),
+            rng.get_bytearray(),
+            rng.get_bytearray(),
+            rng.get_bytearray(),
+        ],
+    }
+}
+
 /// Generator of example callback contexts
 pub fn example_zk_state() -> zk::ZkState<ExampleZkMetadata> {
     zk::ZkState {
@@ -208,8 +231,8 @@ pub fn example_zk_state() -> zk::ZkState<ExampleZkMetadata> {
         pending_inputs: vec![ZK_CLOSED_1],
         secret_variables: vec![ZK_CLOSED_2, zk_closed_open()],
         data_attestations: vec![example_data_attestation()],
-        reserved_1: 0,
-        reserved_2: 0,
+        event_subscriptions: vec![example_subscription()],
+        external_events: vec![example_external_event()],
     }
 }
 

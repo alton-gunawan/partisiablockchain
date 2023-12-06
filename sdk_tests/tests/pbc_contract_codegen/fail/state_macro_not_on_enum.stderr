@@ -1,0 +1,7 @@
+error: custom attribute panicked
+ --> tests/pbc_contract_codegen/fail/state_macro_not_on_enum.rs:6:1
+  |
+6 | #[state]
+  | ^^^^^^^^
+  |
+  = help: message: not implemented: The state attribute is only valid for structs.

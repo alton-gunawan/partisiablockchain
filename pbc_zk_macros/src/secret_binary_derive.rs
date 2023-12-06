@@ -35,8 +35,14 @@ pub(crate) fn implement_secret(input: TokenStream) -> TokenStream {
         Ok(())
     };
 
+    let bits = quote! { #( <#field_types>::BITS +)* 0 };
+
     let impl_secret_block = quote! {
         #[automatically_derived]
+        impl ::pbc_zk::SecretBinaryFixedSize for #type_name {
+            const BITS: u32 = #bits;
+        }
+
         impl ::pbc_zk::SecretBinary for #type_name {
             fn secret_read_from<T: std::io::Read>(reader: &mut T) -> Self {
                 #read_block

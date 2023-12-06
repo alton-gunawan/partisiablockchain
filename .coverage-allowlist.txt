@@ -1,0 +1,17 @@
+create_type_spec_derive/src/lib.rs                      # Difficult to hit codegen panic.
+derive_commons/src/lib.rs                               # Difficult to hit codegen panic.
+pbc_contract_codegen/src/lib.rs                         # Difficult to hit codegen panic.
+pbc_contract_codegen_internal/src/lib.rs                # Difficult to hit codegen panic.
+pbc_contract_codegen_internal/src/state_macro.rs        # Difficult to hit codegen panic.
+pbc_contract_codegen_internal/src/zk_compute_macro.rs
+pbc_contract_common/src/avl_tree_map/tree.rs            # Difficult to hit due to constant elimination
+pbc_contract_common/src/lib.rs
+pbc_contract_common/src/raw_ptr.rs                      # WASM-specific code
+pbc_contract_common/src/result_buffer.rs
+pbc_contract_common/src/zk/evm_event.rs
+pbc_contract_common/src/zk/mod.rs
+pbc_contract_core/src/abi/contract.rs
+pbc_contract_core/src/abi/func.rs                       # Difficult to hit codegen panic
+pbc_contract_core/src/abi/generate.rs                   # Unsafe ABI-specific code
+pbc_traits/src/readwrite_state/impl_vec.rs              # Difficult to hit due to constant elimination
+pbc_zk_macros/src/secret_binary_derive.rs               # Difficult to hit codegen panic

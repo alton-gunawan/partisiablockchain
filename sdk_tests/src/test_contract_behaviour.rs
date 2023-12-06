@@ -63,10 +63,7 @@ pub fn test_contract_function_with_variants(
             let mut input_buf = variant.clone();
             call(input_buf.as_mut_ptr(), input_buf.len());
         });
-        assert!(
-            result.is_err(),
-            "Succeeded for input bytes, when it should fail: {variant:?}",
-        );
+        assert!(result.is_err());
     }
 }
 

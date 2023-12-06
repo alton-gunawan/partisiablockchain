@@ -16,4 +16,4 @@ members = [
 [workspace.dependencies]
 syn = { version = "1.0.109" }
 quote = { version = "1.0.33" }
-proc-macro2 = { version = "1.0.66" }
+proc-macro2 = { version = "1.0.70" }

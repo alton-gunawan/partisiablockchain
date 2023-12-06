@@ -1,6 +1,6 @@
 [package]
 name = "create_type_spec_derive"
-version = "16.18.0"
+version = "16.32.0"
 edition = "2021"
 license = "MIT"
 
@@ -16,4 +16,4 @@ derive_commons = { path = "../derive_commons" }
 syn = { workspace = true }
 quote = { workspace = true }
 proc-macro2 = { workspace = true }
-uuid = { version = "0.8", features = ["v4"] }
+uuid = { version = "1.6.1", features = ["v4"] }

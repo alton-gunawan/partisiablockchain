@@ -7,7 +7,6 @@ use super::{abi_serialize_slice, FnAbi};
 /// in the contract and the contract state + all user-defined structs within the state and actions.
 ///
 /// Serialized with the ABI format.
-#[derive(PartialEq, Eq)]
 pub struct ContractAbi {
     types: Vec<NamedTypeSpec>,
     actions: Vec<FnAbi>,

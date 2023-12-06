@@ -2,7 +2,6 @@ use std::collections::BTreeMap;
 use std::io::Write;
 
 use pbc_traits::{CreateTypeSpec, WriteInt, WriteRPC};
-use read_write_rpc_derive::ReadRPC;
 use read_write_rpc_derive::WriteRPC;
 
 use super::{type_spec_from_type, AbiSerialize};
@@ -11,7 +10,7 @@ use super::{type_spec_from_type, AbiSerialize};
 /// In this case it is function arguments and struct fields.
 ///
 /// Serialized with the ABI format.
-#[derive(PartialEq, Eq, Debug, ReadRPC, WriteRPC)]
+#[derive(WriteRPC)]
 pub struct NamedEntityAbi {
     /// The name of the field or argument.
     pub name: String,

@@ -1,4 +1,3 @@
-use std::collections::BTreeSet;
 use std::fmt::Debug;
 use std::io::Cursor;
 
@@ -84,52 +83,4 @@ pub fn strings() {
     assert_serializes("".to_string());
     assert_serializes("This is a string".to_string());
     assert_serializes("Tæstång unícöde".to_string());
-}
-
-#[test]
-pub fn btree_set_1() {
-    let mut simple: BTreeSet<u64> = BTreeSet::new();
-    simple.insert(2u64);
-
-    assert_state(simple.clone());
-
-    let mut complex: BTreeSet<BTreeSet<u64>> = BTreeSet::new();
-    complex.insert(simple.clone());
-
-    assert_state(complex.clone());
-}
-
-#[test]
-pub fn btree_set_2() {
-    let mut simple: BTreeSet<u64> = BTreeSet::new();
-    simple.insert(2u64);
-    simple.insert(42u64);
-
-    assert_state(simple.clone());
-
-    let mut complex: BTreeSet<BTreeSet<u64>> = BTreeSet::new();
-    complex.insert(simple.clone());
-    complex.insert(simple.clone());
-
-    assert_state(complex.clone());
-}
-
-#[test]
-pub fn btree_set_n_mod_2() {
-    let mut simple: BTreeSet<u64> = BTreeSet::new();
-    for i in 1..=10 {
-        simple.insert(i as u64);
-    }
-
-    assert_state(simple.clone());
-}
-
-#[test]
-pub fn btree_set_n_not_mod_2() {
-    let mut simple: BTreeSet<u64> = BTreeSet::new();
-    for i in 1..=11 {
-        simple.insert(i as u64);
-    }
-
-    assert_state(simple.clone());
 }

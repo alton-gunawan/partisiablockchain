@@ -1,6 +1,9 @@
 #![cfg(feature = "abi")]
+#![allow(dead_code)]
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
+
+use create_type_spec_derive::create_type_spec_for_generic;
 
 use create_type_spec_derive::CreateTypeSpec;
 use pbc_contract_common::abi::generate::{generate_types, LookupTable};
@@ -9,6 +12,8 @@ use pbc_contract_common::abi::NamedTypeSpec;
 use pbc_contract_common::sorted_vec_map::SortedVecMap;
 use pbc_traits::CreateTypeSpec;
 use read_write_state_derive::ReadWriteState;
+
+// Structs
 
 #[allow(dead_code)]
 #[derive(CreateTypeSpec)]
@@ -23,71 +28,6 @@ struct DeriveAbiForMe {
 #[derive(CreateTypeSpec)]
 struct Nested {
     derived: DeriveAbiForMe,
-}
-
-#[test]
-fn implemented_create_type_spec_trait() {
-    assert_eq!(DeriveAbiForMe::__ty_name(), "DeriveAbiForMe".to_string());
-
-    let mut ordinal: Vec<u8> = Vec::new();
-    DeriveAbiForMe::__ty_spec_write(&mut ordinal, &BTreeMap::new());
-    assert_eq!(ordinal, vec![0x00, 0x00]);
-}
-
-#[test]
-fn derived_for_struct() {
-    let lut: BTreeMap<String, u8> = BTreeMap::new();
-
-    let abi: NamedTypeSpec = __abi_for_type_deriveabiforme(&lut)
-        .into_iter()
-        .next()
-        .unwrap();
-    assert_eq!(abi.name, "DeriveAbiForMe".to_string());
-    assert_eq!(abi.type_spec, vec![0x00, 0x00]);
-
-    let expected = vec![
-        1, // It's a struct
-        0, 0, 0, 14, // Length of name
-        b'D', b'e', b'r', b'i', b'v', b'e', b'A', b'b', b'i', b'F', b'o', b'r', b'M',
-        b'e', // Name
-        0, 0, 0, 4, // 4 fields
-        0, 0, 0, 1,    // Length of field name
-        b'a', // Field name
-        11,   // String
-        0, 0, 0, 1,    // Length of field name
-        b'b', // Field name
-        4,    //u64
-        0, 0, 0, 1,    // Length of field name
-        b'c', // Field name
-        1,    //u8
-        0, 0, 0, 1,    // Length of field name
-        b'd', // Field name
-        14, 14, 14, 14, 1, // Vec<Vec<Vec<Vec<u8>>>>
-    ];
-
-    assert_abi(&abi, expected);
-}
-
-#[test]
-fn nested_structs() {
-    let mut lut: BTreeMap<String, u8> = BTreeMap::new();
-    lut.insert(DeriveAbiForMe::__ty_identifier(), 42);
-
-    let abi: NamedTypeSpec = __abi_for_type_nested(&lut).into_iter().next().unwrap();
-    assert_eq!(abi.name, "Nested".to_string());
-    assert_eq!(abi.type_spec, vec![0x00, 0x00]);
-
-    let expected = vec![
-        1, // It's a struct
-        0, 0, 0, 6, // Length of name
-        b'N', b'e', b's', b't', b'e', b'd', // Name
-        0, 0, 0, 1, // 1 field
-        0, 0, 0, 7, // Length of field name
-        b'd', b'e', b'r', b'i', b'v', b'e', b'd', // Field name
-        0, 42, // pointer to DeriveAbiForMe as inserted in lut
-    ];
-
-    assert_abi(&abi, expected);
 }
 
 #[derive(Ord, PartialOrd, Eq, PartialEq, Clone, CreateTypeSpec, ReadWriteState)]
@@ -135,6 +75,96 @@ struct OuterComposite {
 struct WithArray {
     #[allow(dead_code)]
     inner: [u8; 50],
+}
+
+#[derive(Clone, PartialOrd, Ord, PartialEq, Eq, CreateTypeSpec)]
+enum MyRoleEnum<RankT: PartialOrd + PartialEq + Eq + Ord + Clone> {
+    #[discriminant(1)]
+    Admin {},
+    #[discriminant(2)]
+    Moderator {},
+    #[discriminant(3)]
+    User { rank: RankT },
+}
+
+#[derive(Clone, PartialOrd, Ord, PartialEq, Eq, CreateTypeSpec)]
+struct MiniAccess {} // No access
+
+#[derive(Clone, CreateTypeSpec)]
+struct AccessControl<RoleT: Ord + Clone> {
+    pub role_mappings: SortedVecMap<RoleT, RoleT>,
+}
+
+#[derive(Clone, CreateTypeSpec)]
+struct StateWithAccessControl {
+    pub access_control: AccessControl<MyRoleEnum<u32>>,
+}
+
+// Derive tests
+
+#[test]
+fn implemented_create_type_spec_trait() {
+    assert_eq!(DeriveAbiForMe::__ty_name(), "DeriveAbiForMe".to_string());
+
+    let mut ordinal: Vec<u8> = Vec::new();
+    DeriveAbiForMe::__ty_spec_write(&mut ordinal, &BTreeMap::new());
+    assert_eq!(ordinal, vec![0x00, 0xFF]);
+}
+
+#[test]
+fn derived_for_struct() {
+    let lut: BTreeMap<String, u8> = BTreeMap::new();
+
+    let abi: NamedTypeSpec = __abi_for_type_deriveabiforme(&lut)
+        .into_iter()
+        .next()
+        .unwrap();
+    assert_eq!(abi.name, "DeriveAbiForMe".to_string());
+    assert_eq!(abi.type_spec, vec![0x00, 0xFF]);
+
+    let expected = vec![
+        1, // It's a struct
+        0, 0, 0, 14, // Length of name
+        b'D', b'e', b'r', b'i', b'v', b'e', b'A', b'b', b'i', b'F', b'o', b'r', b'M',
+        b'e', // Name
+        0, 0, 0, 4, // 4 fields
+        0, 0, 0, 1,    // Length of field name
+        b'a', // Field name
+        11,   // String
+        0, 0, 0, 1,    // Length of field name
+        b'b', // Field name
+        4,    //u64
+        0, 0, 0, 1,    // Length of field name
+        b'c', // Field name
+        1,    //u8
+        0, 0, 0, 1,    // Length of field name
+        b'd', // Field name
+        14, 14, 14, 14, 1, // Vec<Vec<Vec<Vec<u8>>>>
+    ];
+
+    assert_abi(&abi, expected);
+}
+
+#[test]
+fn nested_structs() {
+    let mut lut: BTreeMap<String, u8> = BTreeMap::new();
+    lut.insert(DeriveAbiForMe::__ty_identifier(), 42);
+
+    let abi: NamedTypeSpec = __abi_for_type_nested(&lut).into_iter().next().unwrap();
+    assert_eq!(abi.name, "Nested".to_string());
+    assert_eq!(abi.type_spec, vec![0x00, 0xFF]);
+
+    let expected = vec![
+        1, // It's a struct
+        0, 0, 0, 6, // Length of name
+        b'N', b'e', b's', b't', b'e', b'd', // Name
+        0, 0, 0, 1, // 1 field
+        0, 0, 0, 7, // Length of field name
+        b'd', b'e', b'r', b'i', b'v', b'e', b'd', // Field name
+        0, 42, // pointer to DeriveAbiForMe as inserted in lut
+    ];
+
+    assert_abi(&abi, expected);
 }
 
 #[test]
@@ -437,4 +467,65 @@ fn assert_abi<T: AbiSerialize>(obj: &T, expected: Vec<u8>) {
     let mut actual = Vec::new();
     obj.serialize_abi(&mut actual).unwrap();
     assert_eq!(actual, expected);
+}
+
+#[test]
+fn type_names_for_generic() {
+    assert_eq!(MyRoleEnum::<u32>::__ty_name(), "MyRoleEnum<u32>");
+    assert_eq!(
+        AccessControl::<MiniAccess>::__ty_name(),
+        "AccessControl<MiniAccess>"
+    );
+    assert_eq!(
+        StateWithAccessControl::__ty_name(),
+        "StateWithAccessControl"
+    );
+    assert!(MyRoleEnum::<u32>::__ty_identifier().ends_with("<u32>"));
+    assert!(AccessControl::<MiniAccess>::__ty_identifier().ends_with('>'));
+}
+
+create_type_spec_for_generic! {MyRoleEnum::<u32>}
+create_type_spec_for_generic! {AccessControl::<MyRoleEnum<u32>>}
+
+#[test]
+fn create_type_spec_for_generics() {
+    // Test ABI
+    let mut lut: BTreeMap<String, u8> = BTreeMap::new();
+    lut.insert(MyRoleEnum::<u32>::__ty_identifier(), 1);
+    lut.insert(AccessControl::<MyRoleEnum<u32>>::__ty_identifier(), 2);
+    lut.insert(StateWithAccessControl::__ty_identifier(), 3);
+
+    let abi: NamedTypeSpec = __abi_for_type_myroleenum::<u32>(&lut)
+        .into_iter()
+        .next()
+        .unwrap();
+    assert_eq!(abi.name, "MyRoleEnum".to_string());
+    assert_eq!(abi.type_spec, vec![0x00, 1]);
+
+    let abi: NamedTypeSpec = __abi_for_type_accesscontrol::<MyRoleEnum<u32>>(&lut)
+        .into_iter()
+        .next()
+        .unwrap();
+    assert_eq!(abi.name, "AccessControl".to_string());
+    assert_eq!(abi.type_spec, vec![0x00, 2]);
+
+    let abi: NamedTypeSpec = __abi_for_type_statewithaccesscontrol(&lut)
+        .into_iter()
+        .next()
+        .unwrap();
+    assert_eq!(abi.name, "StateWithAccessControl".to_string());
+    assert_eq!(abi.type_spec, vec![0x00, 3]);
+
+    let expected = vec![
+        1, // Struct
+        0, 0, 0, 22, // Name length
+        83, 116, 97, 116, 101, 87, 105, 116, 104, 65, 99, 99, 101, 115, 115, 67, 111, 110, 116,
+        114, 111, 108, // StateWithAccessControl
+        0, 0, 0, 1, // One field
+        0, 0, 0, 14, // Field name
+        97, 99, 99, 101, 115, 115, 95, 99, 111, 110, 116, 114, 111, 108, // access_control
+        0, 2, // pointer to type inserted in lut
+    ];
+
+    assert_abi(&abi, expected);
 }

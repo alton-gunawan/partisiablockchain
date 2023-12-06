@@ -10,7 +10,7 @@ fn create_type_spec_macro_fail() {
     t.compile_fail("tests/create-type-spec-macro-fail/*.rs");
 }
 
-#[cfg(abi)]
+#[cfg(feature = "abi")]
 #[test]
 fn trybuild_codegen_fail() {
     let t = trybuild::TestCases::new();

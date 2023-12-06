@@ -69,7 +69,10 @@ use std::fmt::Debug;
 use std::io::{Read, Write};
 use std::marker::PhantomData;
 
-use pbc_lib::wasm_avl::{get, get_size, insert, new, remove};
+use crate::sorted_vec_map::entry::Entry;
+use pbc_lib::wasm_avl::{
+    avl_tree_len, get, get_next, get_next_size, get_size, insert, new, remove,
+};
 #[cfg(feature = "abi")]
 use pbc_traits::CreateTypeSpec;
 use pbc_traits::{ReadInt, ReadWriteState, WriteInt};
@@ -79,7 +82,7 @@ const U32_MAX: usize = u32::MAX as usize;
 /// [`AvlTreeMap`] provides partial deserialization, enabling bigger smart contract states.
 /// [`AvlTreeMap`] must only be used at the top level of the smart contract and should not be
 /// initialized for intermediate computation.
-#[derive(PartialEq, Debug, Eq)]
+#[derive(Debug)]
 pub struct AvlTreeMap<K, V> {
     /// Ties the key type to the [`AvlTreeMap`]
     key_type: PhantomData<K>,
@@ -207,7 +210,7 @@ impl<K: ReadWriteState + Ord, V: ReadWriteState> AvlTreeMap<K, V> {
     ///
     /// * `key`: the key to insert
     /// * `value`: the corresponding value to insert
-    pub fn insert(&self, key: &K, value: &V) {
+    pub fn insert(&self, key: K, value: V) {
         let mut key_bytes = Vec::new();
         key.state_write_to(&mut key_bytes).unwrap();
         let mut value_bytes = Vec::new();
@@ -224,5 +227,66 @@ impl<K: ReadWriteState + Ord, V: ReadWriteState> AvlTreeMap<K, V> {
         let mut key_bytes = Vec::new();
         key.state_write_to(&mut key_bytes).unwrap();
         remove(self.tree_id, &key_bytes);
+    }
+
+    /// Returns the number of elements in [`AvlTreeMap`].
+    pub fn len(&self) -> usize {
+        avl_tree_len(self.tree_id)
+    }
+
+    /// Returns `true` if [`AvlTreeMap`] contains no elements.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    /// Gets an iterator over the entries of [`AvlTreeMap`], sorted by the byte serialization of key.
+    pub fn iter(&self) -> impl Iterator<Item = (K, V)> {
+        AvlIterator {
+            prev_key: None,
+            key_type: PhantomData,
+            value_type: PhantomData,
+            tree_id: self.tree_id,
+        }
+    }
+}
+
+pub struct AvlIterator<K, V> {
+    prev_key: Option<Vec<u8>>,
+    /// Ties the key type to the [`AvlTreeMap`]
+    key_type: PhantomData<K>,
+    /// Ties the value type to the [`AvlTreeMap`]
+    value_type: PhantomData<V>,
+    /// Unique id in WASM state.
+    tree_id: i32,
+}
+
+impl<K: ReadWriteState, V: ReadWriteState> Iterator for AvlIterator<K, V> {
+    type Item = (K, V);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let value_size: usize = if Entry::<K, V>::SERIALIZABLE_BY_COPY {
+            std::mem::size_of::<Entry<K, V>>()
+        } else {
+            get_next_size(self.tree_id, self.prev_key.as_deref())
+        };
+        if value_size == U32_MAX {
+            return None;
+        }
+
+        // Fetch entry data
+        let mut entry_bytes: Vec<u8> = vec![0; value_size];
+        let could_get_next = get_next(self.tree_id, self.prev_key.as_deref(), &mut entry_bytes);
+        if !could_get_next {
+            return None;
+        }
+
+        // Deserialize
+        let reader: &mut &[u8] = &mut entry_bytes.as_slice();
+        let key: K = ReadWriteState::state_read_from(reader);
+        let value_len = reader.len();
+        let value: V = ReadWriteState::state_read_from(reader);
+        let key_bytes = entry_bytes.split_at(entry_bytes.len() - value_len).0;
+        self.prev_key = Some(key_bytes.to_vec());
+        Some((key, value))
     }
 }

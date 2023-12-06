@@ -1,11 +1,11 @@
 [package]
 name = "pbc_contract_common"
-version = "16.18.0"
+version = "16.32.0"
 edition = "2021"
 license = "MIT"
 
 [features]
-abi = ["pbc_traits/abi", "pbc_contract_core/abi", "pbc_lib/abi"]
+abi = ["pbc_traits/abi", "pbc_contract_core/abi", "pbc_zk_core/abi", "pbc_lib/abi"]
 test_examples = []
 
 [dependencies]
@@ -16,6 +16,7 @@ read_write_rpc_derive = { path = "../read_write_rpc_derive" }
 create_type_spec_derive = { path = "../create_type_spec_derive" }
 pbc_traits = { path = "../pbc_traits" }
 pbc_contract_core= { path = "../pbc_contract_core" }
+pbc_zk_core= { path = "../pbc_zk_core" }
 pbc_lib = { path = "../pbc_lib"}
 
 [dev-dependencies]

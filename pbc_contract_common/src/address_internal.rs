@@ -7,6 +7,8 @@ use read_write_rpc_derive::ReadRPC;
 use read_write_rpc_derive::WriteRPC;
 use read_write_state_derive::ReadWriteState;
 
+use std::fmt;
+
 /// An address identifier is a 20 byte array derived from the hash of the public key of
 /// an account.
 pub type Identifier = [u8; 20];
@@ -22,7 +24,9 @@ impl CreateTypeSpec for Address {
 ///
 /// Serializable with both RPC format and State format, guaranteed identical representation.
 #[repr(u8)]
-#[derive(Eq, PartialEq, Debug, Clone, Ord, PartialOrd, Copy, ReadWriteState, ReadRPC, WriteRPC)]
+#[derive(
+    Eq, PartialEq, Debug, Clone, Ord, PartialOrd, Copy, ReadWriteState, ReadRPC, WriteRPC, Hash,
+)]
 pub enum AddressType {
     /// Specifies that the [`Address`] identifies an end user or service account.
     ///
@@ -74,6 +78,18 @@ pub enum AddressType {
     GoveranceContract = 0x04,
 }
 
+impl AddressType {
+    fn discriminant(&self) -> u8 {
+        match self {
+            Self::Account => 0x00,
+            Self::SystemContract => 0x01,
+            Self::PublicContract => 0x02,
+            Self::ZkContract => 0x03,
+            Self::GoveranceContract => 0x04,
+        }
+    }
+}
+
 /// A unique number that identifies accounts and contracts on Partisia BlockChain.
 ///
 /// [`Address`]es are used to for most blockchain interactions, including:
@@ -98,11 +114,69 @@ pub enum AddressType {
 ///
 /// Serializable with both RPC format and State format, guaranteed identical representation.
 #[repr(C)]
-#[derive(Eq, PartialEq, Debug, Clone, Ord, PartialOrd, Copy, ReadRPC, WriteRPC, ReadWriteState)]
+#[derive(
+    Eq, PartialEq, Debug, Clone, Ord, PartialOrd, Copy, ReadRPC, WriteRPC, ReadWriteState, Hash,
+)]
 pub struct Address {
     /// The type of the [`Address`], indicating whether the address identifies an account or
     /// a contract.
     pub address_type: AddressType,
     /// The embedded identifier of the [`Address`].
     pub identifier: Identifier,
+}
+
+impl fmt::UpperHex for Address {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:02X}", self.address_type.discriminant())?;
+        for b in self.identifier {
+            write!(f, "{:02X}", b)?;
+        }
+        Ok(())
+    }
+}
+
+impl fmt::LowerHex for Address {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:02x}", self.address_type.discriminant())?;
+        for b in self.identifier {
+            write!(f, "{:02x}", b)?;
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Display for Address {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::UpperHex::fmt(self, f)
+    }
+}
+
+#[cfg(test)]
+use pbc_traits::{ReadRPC, ReadWriteState};
+
+#[cfg(test)]
+const ADDRESS_TYPES: [AddressType; 5] = [
+    AddressType::Account,
+    AddressType::SystemContract,
+    AddressType::PublicContract,
+    AddressType::ZkContract,
+    AddressType::GoveranceContract,
+];
+
+#[test]
+pub fn discriminant_test_rpc() {
+    for address_type in ADDRESS_TYPES {
+        let rpc = [address_type.discriminant(); 1];
+        let deserialized: AddressType = ReadRPC::rpc_read_from(&mut rpc.as_slice());
+        assert_eq!(deserialized, address_type);
+    }
+}
+
+#[test]
+pub fn discriminant_test_state() {
+    for address_type in ADDRESS_TYPES {
+        let rpc = [address_type.discriminant(); 1];
+        let deserialized: AddressType = ReadWriteState::state_read_from(&mut rpc.as_slice());
+        assert_eq!(deserialized, address_type);
+    }
 }

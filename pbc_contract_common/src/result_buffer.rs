@@ -3,6 +3,7 @@ use pbc_traits::WriteInt;
 use pbc_traits::{ReadWriteState, WriteRPC};
 
 use crate::zk;
+use pbc_zk_core::{SecretBinary, SecretBinaryFixedSize};
 
 fn write_u32_be_at_idx(buffer: &mut [u8], idx: usize, value: u32) -> std::io::Result<()> {
     let mut value_buffer = Vec::with_capacity(4);
@@ -144,9 +145,12 @@ impl ContractResultBuffer {
     }
 
     /// Writes an instance of [`zk::ZkInputDef`] to the output buffer.
-    pub fn write_zk_input_def_result<MetadataT: ReadWriteState>(
+    pub fn write_zk_input_def_result<
+        MetadataT: ReadWriteState,
+        SecretT: SecretBinary + SecretBinaryFixedSize,
+    >(
         &mut self,
-        declaration: zk::ZkInputDef<MetadataT>,
+        declaration: zk::ZkInputDef<MetadataT, SecretT>,
     ) {
         self.write_section(result_section_type_id::ZK_INPUT_DEF, |buf| {
             declaration.rpc_write_to(buf)

@@ -1,6 +1,7 @@
 #![cfg(feature = "abi")]
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
+use pbc_contract_common::sorted_vec_map::{SortedVec, SortedVecMap, SortedVecSet};
 use pbc_traits::CreateTypeSpec;
 
 #[test]
@@ -23,6 +24,10 @@ pub fn ty_names_simple_types() {
 pub fn ty_names_complex_types() {
     assert_eq!(<BTreeSet<String>>::__ty_name(), "BTreeSet<String>");
     assert_eq!(<Vec<String>>::__ty_name(), "Vec<String>");
+    assert_eq!(<VecDeque<String>>::__ty_name(), "VecDeque<String>");
+    assert_eq!(<VecDeque<String>>::__ty_identifier(), "VecDeque<String>");
+    assert_eq!(<Option<String>>::__ty_name(), "Option<String>");
+    assert_eq!(<Option<String>>::__ty_identifier(), "Option<String>");
 
     assert_eq!(
         <Vec<Vec<Vec<BTreeSet<BTreeSet<Vec<BTreeSet<String>>>>>>>>::__ty_name(),
@@ -67,6 +72,7 @@ pub fn ty_names_arrays() {
     assert_eq!(<[u8; 101]>::__ty_name(), "[u8; 101]");
 }
 
+#[track_caller]
 fn assert_ty<T: CreateTypeSpec>(ord: &[u8]) {
     let mut vec = Vec::new();
     T::__ty_spec_write(&mut vec, &BTreeMap::new());
@@ -104,6 +110,31 @@ pub fn ty_ordinals_complex_types() {
     assert_ty::<Vec<i32>>(&[0x0e, 0x08]);
     assert_ty::<Vec<i64>>(&[0x0e, 0x09]);
     assert_ty::<Vec<i128>>(&[0x0e, 0x0a]);
+
+    assert_ty::<VecDeque<u8>>(&[0x0e, 0x01]);
+    assert_ty::<VecDeque<u16>>(&[0x0e, 0x02]);
+    assert_ty::<VecDeque<u32>>(&[0x0e, 0x03]);
+    assert_ty::<VecDeque<u64>>(&[0x0e, 0x04]);
+    assert_ty::<VecDeque<u128>>(&[0x0e, 0x05]);
+
+    assert_ty::<VecDeque<i8>>(&[0x0e, 0x06]);
+    assert_ty::<VecDeque<i16>>(&[0x0e, 0x07]);
+    assert_ty::<VecDeque<i32>>(&[0x0e, 0x08]);
+    assert_ty::<VecDeque<i64>>(&[0x0e, 0x09]);
+    assert_ty::<VecDeque<i128>>(&[0x0e, 0x0a]);
+
+    assert_ty::<Option<u8>>(&[0x12, 0x01]);
+    assert_ty::<Option<u16>>(&[0x12, 0x02]);
+    assert_ty::<Option<u32>>(&[0x12, 0x03]);
+    assert_ty::<Option<u64>>(&[0x12, 0x04]);
+    assert_ty::<Option<u128>>(&[0x12, 0x05]);
+
+    assert_ty::<Option<i8>>(&[0x12, 0x06]);
+    assert_ty::<Option<i16>>(&[0x12, 0x07]);
+    assert_ty::<Option<i32>>(&[0x12, 0x08]);
+    assert_ty::<Option<i64>>(&[0x12, 0x09]);
+    assert_ty::<Option<i128>>(&[0x12, 0x0a]);
+    assert_ty::<Option<Option<i128>>>(&[0x12, 0x12, 0x0a]);
 
     assert_ty::<BTreeSet<i128>>(&[0x10, 0x0a]);
 
@@ -145,4 +176,58 @@ pub fn ty_ordinals_arrays() {
     assert_ty::<[u8; 31]>(&[0x11, 0x1f]);
     assert_ty::<[u8; 32]>(&[0x11, 0x20]);
     assert_ty::<[u8; 101]>(&[0x11, 101]);
+}
+
+#[test]
+pub fn sorted_vec() {
+    assert_eq!(<SortedVec<u32>>::__ty_name(), "SortedVec<u32>");
+    assert_eq!(
+        <SortedVec<SortedVec<u32>>>::__ty_name(),
+        "SortedVec<SortedVec<u32>>"
+    );
+    assert_eq!(<SortedVec<u32>>::__ty_identifier(), "SortedVec<u32>");
+    assert_eq!(
+        <SortedVec<SortedVec<u32>>>::__ty_identifier(),
+        "SortedVec<SortedVec<u32>>"
+    );
+    assert_ty::<SortedVec<u32>>(&[0x0e, 0x03]);
+    assert_ty::<SortedVec<SortedVec<u32>>>(&[0x0e, 0x0e, 0x03]);
+}
+
+#[test]
+pub fn sorted_vec_map() {
+    assert_eq!(
+        <SortedVecMap<u32, String>>::__ty_name(),
+        "SortedVecMap<u32, String>"
+    );
+    assert_eq!(
+        <SortedVecMap<u32, SortedVecMap<String, u32>>>::__ty_name(),
+        "SortedVecMap<u32, SortedVecMap<String, u32>>"
+    );
+    assert_eq!(
+        <SortedVecMap<u32, String>>::__ty_identifier(),
+        "SortedVecMap<u32, String>"
+    );
+    assert_eq!(
+        <SortedVecMap<u32, SortedVecMap<String, u32>>>::__ty_identifier(),
+        "SortedVecMap<u32, SortedVecMap<String, u32>>"
+    );
+    assert_ty::<SortedVecMap<u32, String>>(&[0x0f, 0x03, 0xb]);
+    assert_ty::<SortedVecMap<u32, SortedVecMap<String, u32>>>(&[0x0f, 0x03, 0x0f, 0xb, 0x03]);
+}
+
+#[test]
+pub fn sorted_vec_set() {
+    assert_eq!(<SortedVecSet<u32>>::__ty_name(), "SortedVecSet<u32>");
+    assert_eq!(
+        <SortedVecSet<SortedVecSet<u32>>>::__ty_name(),
+        "SortedVecSet<SortedVecSet<u32>>"
+    );
+    assert_eq!(<SortedVecSet<u32>>::__ty_identifier(), "SortedVecSet<u32>");
+    assert_eq!(
+        <SortedVecSet<SortedVecSet<u32>>>::__ty_identifier(),
+        "SortedVecSet<SortedVecSet<u32>>"
+    );
+    assert_ty::<SortedVecSet<u32>>(&[0x10, 0x03]);
+    assert_ty::<SortedVecSet<SortedVecSet<u32>>>(&[0x10, 0x10, 0x03]);
 }
