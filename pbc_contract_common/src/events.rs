@@ -69,7 +69,6 @@
 
 use pbc_traits::WriteRPC;
 
-use read_write_rpc_derive::ReadRPC;
 use read_write_rpc_derive::WriteRPC;
 
 use crate::address::{Address, Shortname, ShortnameCallback};
@@ -87,7 +86,7 @@ pub type GasCost = u64;
 /// - `cost` - the max cost of the interaction.
 ///
 /// Serialized with the RPC format.
-#[derive(ReadRPC, WriteRPC, Eq, PartialEq, Debug)]
+#[derive(WriteRPC, Debug)]
 pub struct Interaction {
     dest: Address,
     payload: Vec<u8>,
@@ -103,7 +102,7 @@ pub struct Interaction {
 /// - `cost` - the max cost of the callback. If set to `None` the max cost is automatically set from the remaining gas.
 ///
 /// Serialized with the RPC format.
-#[derive(ReadRPC, WriteRPC, Eq, PartialEq, Debug)]
+#[derive(Debug)]
 pub struct Callback {
     payload: Vec<u8>,
     cost: Option<GasCost>,
@@ -115,7 +114,7 @@ pub struct Callback {
 /// - `cost` - the max cost of the callback. If set to `None` the max cost is automatically set from the remaining gas.
 ///
 /// Serialized with the RPC format.
-#[derive(ReadRPC, WriteRPC, Eq, PartialEq, Debug)]
+#[derive(WriteRPC, Debug)]
 pub struct ReturnData {
     data: Vec<u8>,
 }
@@ -133,7 +132,7 @@ impl ReturnData {
 /// See docs for `Interaction`.
 ///
 /// Serialized with the RPC format.
-#[derive(ReadRPC, WriteRPC, Eq, PartialEq, Debug)]
+#[derive(WriteRPC, Debug)]
 pub struct EventGroup {
     callback_payload: Option<Vec<u8>>,
     callback_cost: Option<GasCost>,

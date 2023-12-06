@@ -1,6 +1,5 @@
 use proc_macro2::TokenStream as TokenStream2;
 
-#[derive(Debug)]
 pub(crate) struct InstantiableArgument {
     /// Argument is treated as ignored when None.
     pub(crate) name: String,

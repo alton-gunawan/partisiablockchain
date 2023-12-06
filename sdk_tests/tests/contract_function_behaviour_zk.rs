@@ -1,14 +1,22 @@
 #![cfg(feature = "test_lib")]
 
+use create_type_spec_derive::CreateTypeSpec;
 use pbc_contract_codegen::*;
 use pbc_contract_common::address::Shortname;
 use pbc_contract_common::context::{CallbackContext, ContractContext};
 use pbc_contract_common::events::EventGroup;
 use pbc_contract_common::test_examples::*;
 use pbc_contract_common::zk::*;
+use pbc_zk::{Sbi32, SecretBinary};
 #[cfg(feature = "abi")]
 use sdk_tests::test_contract_behaviour::{assert_abi_serializable, EXPECTED_DO_THING_ABI_BYTES};
 use sdk_tests::test_contract_behaviour::{rpc_self, test_contract_function_with_variants};
+
+#[derive(SecretBinary, CreateTypeSpec)]
+struct SbiPair {
+    a: Sbi32,
+    b: Sbi32,
+}
 
 type ContractState = u64;
 
@@ -66,14 +74,66 @@ fn do_zk_on_secret_input(
     mut state: ContractState,
     _zk_state: ZkState<ZkMetadata>,
     arg1: u16,
-) -> (ContractState, Vec<EventGroup>, ZkInputDef<ZkMetadata>) {
+) -> (
+    ContractState,
+    Vec<EventGroup>,
+    ZkInputDef<ZkMetadata, Sbi32>,
+) {
     state = state.wrapping_add(arg1 as ContractState);
-    let def = ZkInputDef {
-        expected_bit_lengths: vec![10],
-        seal: false,
-        metadata: state as ZkMetadata,
-    };
+    let def = ZkInputDef::with_metadata(state as ZkMetadata);
     (state, vec![], def)
+}
+
+#[zk_on_secret_input(shortname = 0x05, secret_type = "Sbi32")]
+fn do_zk_on_secret_input_0x05(
+    _context: ContractContext,
+    mut state: ContractState,
+    _zk_state: ZkState<ZkMetadata>,
+    arg1: u16,
+) -> (
+    ContractState,
+    Vec<EventGroup>,
+    ZkInputDef<ZkMetadata, Sbi32>,
+) {
+    state = state.wrapping_add(arg1 as ContractState);
+    let def = ZkInputDef::with_metadata(state as ZkMetadata);
+    (state, vec![], def)
+}
+
+#[zk_on_secret_input(shortname = 0x06, secret_type = "SbiPair")]
+fn do_zk_on_secret_input_0x06(
+    _context: ContractContext,
+    mut state: ContractState,
+    _zk_state: ZkState<ZkMetadata>,
+    arg1: u16,
+) -> (
+    ContractState,
+    Vec<EventGroup>,
+    ZkInputDef<ZkMetadata, SbiPair>,
+) {
+    state = state.wrapping_add(arg1 as ContractState);
+    let def = ZkInputDef::with_metadata(state as ZkMetadata);
+    (state, vec![], def)
+}
+
+#[zk_on_variable_inputted]
+fn do_zk_on_variable_inputted(
+    _context: ContractContext,
+    state: ContractState,
+    _zk_state: ZkState<ZkMetadata>,
+    _inputted_id: SecretVarId,
+) -> (ContractState, Vec<EventGroup>) {
+    (state, vec![])
+}
+
+#[zk_on_variable_rejected]
+fn do_zk_on_variable_rejected(
+    _context: ContractContext,
+    state: ContractState,
+    _zk_state: ZkState<ZkMetadata>,
+    _inputted_id: SecretVarId,
+) -> (ContractState, Vec<EventGroup>) {
+    (state, vec![])
 }
 
 #[zk_on_compute_complete]
@@ -90,6 +150,26 @@ fn do_zk_on_compute_complete(
             variables: created_variables,
         }],
     )
+}
+
+#[zk_on_variables_opened]
+fn do_zk_on_variables_opened(
+    _context: ContractContext,
+    state: ContractState,
+    _zk_state: ZkState<ZkMetadata>,
+    _opened_variables: Vec<SecretVarId>,
+) -> ContractState {
+    state
+}
+
+#[zk_on_attestation_complete]
+fn do_zk_on_attestation_complete(
+    _context: ContractContext,
+    state: ContractState,
+    _zk_state: ZkState<ZkMetadata>,
+    _attestation_id: AttestationId,
+) -> ContractState {
+    state
 }
 
 #[test]

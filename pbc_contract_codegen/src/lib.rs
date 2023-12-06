@@ -7,6 +7,7 @@ extern crate quote;
 extern crate syn;
 
 use proc_macro::TokenStream;
+use syn::__private::TokenStream2;
 
 use syn::{parse_macro_input, AttributeArgs};
 
@@ -314,17 +315,13 @@ pub fn callback(attrs: TokenStream, input: TokenStream) -> TokenStream {
 /// type ContractState = u32;
 /// type Metadata = u32;
 ///
-/// #[zk_on_secret_input(shortname = 0x13)]
+/// #[zk_on_secret_input(shortname = 0x13, secret_type = "Sbi32")]
 /// pub fn receive_bitlengths_10_10(
 ///   context: ContractContext,
 ///   state: ContractState,
 ///   zk_state: ZkState<u32>,
-/// ) -> (ContractState, Vec<EventGroup>, ZkInputDef<u32>) {
-///     let def = ZkInputDef {
-///         seal: false,
-///         expected_bit_lengths: vec![10, 10],
-///         metadata: 23u32,
-///     };
+/// ) -> (ContractState, Vec<EventGroup>, ZkInputDef<u32, Sbi32>) {
+///     let def = ZkInputDef::with_metadata(23u32);
 ///     (state, vec![], def)
 /// }
 /// ```
@@ -339,13 +336,18 @@ pub fn zk_on_secret_input(attrs: TokenStream, input: TokenStream) -> TokenStream
     let shortname_override = parse_shortname_override(&attributes);
     let secret_type_input = parse_secret_type_input(attributes);
 
+    let zk_input_def_arg = match secret_type_input.to_secret_type_str() {
+        Some(secret_type) => {
+            let secret_type: TokenStream2 = secret_type.parse().unwrap();
+            quote! { pbc_contract_common::zk::ZkInputDef<_, #secret_type> }
+        }
+        _ => quote! { pbc_contract_common::zk::ZkInputDef<_, _> },
+    };
+
     let function_kind = WrappedFunctionKind {
         output_state_and_events: true,
         min_allowed_num_results: 3,
-        output_other_types: vec![(
-            quote! { pbc_contract_common::zk::ZkInputDef<_> },
-            format_ident!("write_zk_input_def_result"),
-        )],
+        output_other_types: vec![(zk_input_def_arg, format_ident!("write_zk_input_def_result"))],
         system_arguments: 3,
         fn_kind: FunctionKind::ZkSecretInputWithExplicitType,
         allow_rpc_arguments: true,
@@ -758,6 +760,67 @@ pub fn zk_on_attestation_complete(attrs: TokenStream, input: TokenStream) -> Tok
         input,
         None,
         "zk_on_attestation_complete",
+        &function_kind,
+        false,
+        SecretInput::None,
+    )
+}
+
+/// External event zero-knowledge contract annotation
+///
+/// **OPTIONAL HOOK**: This is an optional hook, and is not required for a well-formed
+/// zero-knowledge contract. The default behaviour is to do nothing.
+///
+/// Annotated function is automatically called when the contract is informed of a new external event
+/// that has been confirmed by the EVM oracle to have occurred on an external EVM chain. This can
+/// only happen after the use of
+/// [`ZkStateChange::SubscribeToEvmEvents`](pbc_contract_common::zk::ZkStateChange::SubscribeToEvmEvents).
+/// This hook is exclusively called by the blockchain itself, and cannot be called manually from the
+/// dashboard, nor from another contract.
+/// Allows the contract to automatically choose some action to take.
+///
+/// Annotated function must have a signature of following format:
+///
+/// ```ignore
+/// # use pbc_contract_codegen::zk_on_external_event;
+/// # use pbc_contract_common::context::*;
+/// # use pbc_contract_common::zk::*;
+/// # use pbc_contract_common::events::*;
+/// # type ContractState = u32;
+/// # type Metadata = u32;
+/// #[zk_on_external_event]
+/// pub fn zk_on_external_event(
+///   context: ContractContext,
+///   state: ContractState,
+///   zk_state: ZkState<Metadata>,
+///   subscription_id: EventSubscriptionId,
+///   event_id: ExternalEventId,
+/// ) -> (ContractState, Vec<EventGroup>, Vec<ZkStateChange>)
+/// # { (state, vec![], vec![]) }
+/// ```
+///
+/// Where `ZkState` can be further accessed to read the event, etc.
+#[proc_macro_attribute]
+pub fn zk_on_external_event(attrs: TokenStream, input: TokenStream) -> TokenStream {
+    assert!(
+        attrs.is_empty(),
+        "No attributes are supported for zk_on_external_event"
+    );
+    let function_kind = WrappedFunctionKind {
+        output_state_and_events: true,
+        min_allowed_num_results: 1,
+        output_other_types: vec![(
+            quote! { Vec<pbc_contract_common::zk::ZkStateChange> },
+            format_ident!("write_zk_state_change"),
+        )],
+        system_arguments: 5,
+        fn_kind: FunctionKind::ZkExternalEvent,
+        allow_rpc_arguments: false,
+    };
+    zk_macro::handle_zk_macro(
+        input,
+        None,
+        "zk_on_external_event",
         &function_kind,
         false,
         SecretInput::None,

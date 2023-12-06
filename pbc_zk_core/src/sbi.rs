@@ -1,6 +1,6 @@
 //! Contains implementation of [`Sbi`].
 
-use crate::{Sbi1, SecretBinary};
+use crate::{Sbi1, SecretBinary, SecretBinaryFixedSize};
 use pbc_traits::{ReadInt, WriteInt};
 use std::cmp::Ordering;
 use std::io::{Read, Write};
@@ -210,12 +210,16 @@ impl_from_to_bits!(
 );
 
 macro_rules! read_write_secret {
-    ($($type:ty, $read_method:ident, $write_method:ident)*) => {
+    ($($inner_type:ty, $read_method:ident, $write_method:ident)*) => {
         $(
-            #[doc = "Implementation of [`SecretBinary`] trait for [`"]
-            #[doc = stringify!($type)]
-            #[doc = "`]. Encoded as a little-endian integer."]
-            impl SecretBinary for $type {
+            #[doc = "Implementation of [`SecretBinary`] trait for [`Sbi<"]
+            #[doc = stringify!($inner_type)]
+            #[doc = ">`]. Encoded as a little-endian integer."]
+            impl SecretBinaryFixedSize for Sbi<$inner_type> {
+                const BITS: u32 = <$inner_type>::BITS;
+            }
+
+            impl SecretBinary for Sbi<$inner_type> {
                 fn secret_read_from<T: Read>(reader: &mut T) -> Self {
                     Self::from(reader.$read_method())
                 }
@@ -227,8 +231,11 @@ macro_rules! read_write_secret {
     }
 }
 
-read_write_secret!(Sbi<i8>, read_i8, write_i8);
-read_write_secret!(Sbi<i16>, read_i16_le, write_i16_le);
-read_write_secret!(Sbi<i32>, read_i32_le, write_i32_le);
-read_write_secret!(Sbi<i64>, read_i64_le, write_i64_le);
-read_write_secret!(Sbi<i128>, read_i128_le, write_i128_le);
+impl SecretBinaryFixedSize for Sbi1 {
+    const BITS: u32 = 1;
+}
+read_write_secret!(i8, read_i8, write_i8);
+read_write_secret!(i16, read_i16_le, write_i16_le);
+read_write_secret!(i32, read_i32_le, write_i32_le);
+read_write_secret!(i64, read_i64_le, write_i64_le);
+read_write_secret!(i128, read_i128_le, write_i128_le);

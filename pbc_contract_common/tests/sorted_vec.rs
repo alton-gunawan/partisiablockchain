@@ -77,3 +77,12 @@ fn is_empty() {
     set.insert(1);
     assert!(!set.is_empty());
 }
+
+#[test]
+fn iterator() {
+    let mut set: SortedVec<u32> = SortedVec::new();
+    set.insert(1);
+    set.insert(2);
+
+    assert_eq!(set.iter().sum::<u32>(), 3u32);
+}

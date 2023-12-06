@@ -16,6 +16,8 @@ Additionally defines the zero-knowledge lifetime attribute macros:
 - [`macro@zk_on_variables_opened`] declares an automatic hook for when one of the contract's own secret variables is ready to be read.
 - [`macro@zk_on_attestation_complete`] declares an automatic hook for when the contract have
 asked nodes to attest a piece of data, and this process have completed.
+- [`macro@zk_on_external_event`] declares an automatic hook for when the contract have subscribed to external events and nodes send events to the contract.
+
 
 This crate can automatically produce [ABI files](https://partisiablockchain.gitlab.io/documentation/smart-contracts/smart-contract-binary-formats.html),
 and serialization boilerplate for actions. Additionally, the crate will type check the

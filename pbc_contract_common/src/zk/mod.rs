@@ -1,12 +1,15 @@
 //! Definitions specifically for Zero-Knowledge Contracts.
 //!
 //! These should be used in conjunction with the Zk macros in `pbc_contract_codegen`.
+pub mod evm_event;
 
 use std::io::{Read, Write};
+use std::marker::PhantomData;
 
 use create_type_spec_derive::CreateTypeSpecInternal;
 use pbc_traits::WriteInt;
 use pbc_traits::{ReadRPC, ReadWriteState, WriteRPC};
+use pbc_zk_core::{SecretBinary, SecretBinaryFixedSize};
 use read_write_rpc_derive::ReadRPC;
 use read_write_rpc_derive::WriteRPC;
 use read_write_state_derive::ReadWriteState;
@@ -14,6 +17,10 @@ use read_write_state_derive::ReadWriteState;
 use crate::address::Address;
 use crate::shortname::ShortnameZkComputation;
 use crate::signature::Signature;
+use crate::zk::evm_event::{
+    EventSubscription, EventSubscriptionId, EvmChainId, EvmEventFilter, ExternalEvent,
+    ExternalEventId,
+};
 
 /// Identifier for a secret variable.
 #[repr(transparent)]
@@ -188,10 +195,10 @@ pub struct ZkState<SecretVarMetadataT> {
     pub secret_variables: Vec<ZkClosed<SecretVarMetadataT>>,
     /// Attested data
     pub data_attestations: Vec<DataAttestation>,
-    /// Reserved 1
-    pub reserved_1: u32,
-    /// Reserved 2
-    pub reserved_2: u32,
+    /// Event subscriptions
+    pub event_subscriptions: Vec<EventSubscription>,
+    /// External events
+    pub external_events: Vec<ExternalEvent>,
 }
 
 impl<MetadataT: ReadWriteState> ReadRPC for ZkState<MetadataT> {
@@ -201,8 +208,8 @@ impl<MetadataT: ReadWriteState> ReadRPC for ZkState<MetadataT> {
             pending_inputs: <_>::rpc_read_from(reader),
             secret_variables: <_>::rpc_read_from(reader),
             data_attestations: <_>::rpc_read_from(reader),
-            reserved_1: u32::rpc_read_from(reader),
-            reserved_2: u32::rpc_read_from(reader),
+            event_subscriptions: <_>::rpc_read_from(reader),
+            external_events: <_>::rpc_read_from(reader),
         }
     }
 }
@@ -213,8 +220,8 @@ impl<MetadataT: ReadWriteState> WriteRPC for ZkState<MetadataT> {
         self.pending_inputs.rpc_write_to(writer)?;
         self.secret_variables.rpc_write_to(writer)?;
         self.data_attestations.rpc_write_to(writer)?;
-        self.reserved_1.rpc_write_to(writer)?;
-        self.reserved_2.rpc_write_to(writer)
+        self.event_subscriptions.rpc_write_to(writer)?;
+        self.external_events.rpc_write_to(writer)
     }
 }
 
@@ -259,28 +266,32 @@ impl<SecretVarMetadataT> ZkState<SecretVarMetadataT> {
 /// `<MetadataT>` is the type of the piece of public information associated with the variable.
 #[repr(C)]
 #[derive(Debug)]
-pub struct ZkInputDef<MetadataT> {
-    /// The bit lengths expected of the variable, and the number of subvariables wanted.
-    pub expected_bit_lengths: Vec<u32>,
+pub struct ZkInputDef<MetadataT, SecretT: SecretBinary> {
     /// Whether or not the variable should be sealed.
-    pub seal: bool,
+    seal: bool,
     /// A piece of public contract-defined information associated with each variable.
-    pub metadata: MetadataT,
+    metadata: MetadataT,
+    /// Phantom data for the type of the secret variable. Used to determine the
+    /// [`SecretBinary::BITS`] value for the input value.
+    secret_type: PhantomData<SecretT>,
 }
 
-impl<MetadataT: ReadWriteState> ReadRPC for ZkInputDef<MetadataT> {
-    fn rpc_read_from<T: Read>(reader: &mut T) -> Self {
+impl<MetadataT, SecretT: SecretBinary> ZkInputDef<MetadataT, SecretT> {
+    /// Create new [`ZkInputDef`] with the given metadata.
+    pub fn with_metadata(metadata: MetadataT) -> Self {
         Self {
-            expected_bit_lengths: <_>::rpc_read_from(reader),
-            seal: <_>::rpc_read_from(reader),
-            metadata: <_>::state_read_from(reader),
+            seal: false,
+            metadata,
+            secret_type: PhantomData,
         }
     }
 }
 
-impl<MetadataT: ReadWriteState> WriteRPC for ZkInputDef<MetadataT> {
+impl<MetadataT: ReadWriteState, SecretT: SecretBinary + SecretBinaryFixedSize> WriteRPC
+    for ZkInputDef<MetadataT, SecretT>
+{
     fn rpc_write_to<T: Write>(&self, writer: &mut T) -> std::io::Result<()> {
-        self.expected_bit_lengths.rpc_write_to(writer)?;
+        vec![SecretT::BITS].rpc_write_to(writer)?;
         self.seal.rpc_write_to(writer)?;
         self.metadata.state_write_to(writer)
     }
@@ -380,6 +391,34 @@ pub enum ZkStateChange {
         /// The piece of data to attest.
         data_to_attest: Vec<u8>,
     },
+
+    /// Subscribe to events emitted by an EVM chain.
+    SubscribeToEvmEvents {
+        /// Identification of the chain to subscribe to events from.
+        chain_id: EvmChainId,
+        /// Event filter to specify which events to receive.
+        filter: EvmEventFilter,
+    },
+
+    /// Unsubscribe from events emitted by an EVM chain.
+    UnsubscribeFromEvmEvents {
+        /// Identifier for the subscription to cancel.
+        subscription_id: EventSubscriptionId,
+    },
+
+    /// Delete an EVM event.
+    DeleteEvmEvent {
+        /// Identifier for the subscription to delete from.
+        subscription_id: EventSubscriptionId,
+        /// Identifier for the event to delete.
+        event_id: ExternalEventId,
+    },
+
+    /// Delete EVM events.
+    DeleteEvmEvents {
+        /// List of subscription and event ids.
+        events_to_delete: Vec<(EventSubscriptionId, ExternalEventId)>,
+    },
 }
 
 impl ZkStateChange {
@@ -454,6 +493,9 @@ impl ZkStateChange {
     const DISCRIMINANT_CONTRACT_DONE: u8 = 0x06;
     const DISCRIMINANT_ATTEST: u8 = 0x07;
     const DISCRIMINANT_START_3: u8 = 0x09;
+    const DISCRIMINANT_SUBSCRIBE_TO_EVM_EVENTS: u8 = 0x0A;
+    const DISCRIMINANT_UNSUBSCRIBE_FROM_EVM_EVENTS: u8 = 0x0B;
+    const DISCRIMINANT_DELETE_EXTERNAL_EVENTS: u8 = 0x0C;
 }
 
 #[allow(deprecated)]
@@ -504,6 +546,33 @@ impl WriteRPC for ZkStateChange {
             Self::Attest { data_to_attest } => {
                 writer.write_u8(Self::DISCRIMINANT_ATTEST)?;
                 data_to_attest.rpc_write_to(writer)
+            }
+            Self::SubscribeToEvmEvents { chain_id, filter } => {
+                writer.write_u8(Self::DISCRIMINANT_SUBSCRIBE_TO_EVM_EVENTS)?;
+                chain_id.rpc_write_to(writer)?;
+                filter.rpc_write_to(writer)
+            }
+            Self::UnsubscribeFromEvmEvents { subscription_id } => {
+                writer.write_u8(Self::DISCRIMINANT_UNSUBSCRIBE_FROM_EVM_EVENTS)?;
+                subscription_id.rpc_write_to(writer)
+            }
+            Self::DeleteEvmEvent {
+                subscription_id,
+                event_id,
+            } => {
+                writer.write_u8(Self::DISCRIMINANT_DELETE_EXTERNAL_EVENTS)?;
+                writer.write_i32_be(1)?;
+                subscription_id.rpc_write_to(writer)?;
+                event_id.rpc_write_to(writer)
+            }
+            Self::DeleteEvmEvents { events_to_delete } => {
+                writer.write_u8(Self::DISCRIMINANT_DELETE_EXTERNAL_EVENTS)?;
+                writer.write_i32_be(events_to_delete.len() as i32)?;
+                for event in events_to_delete {
+                    event.0.rpc_write_to(writer)?;
+                    event.1.rpc_write_to(writer)?;
+                }
+                Ok(())
             }
         }
     }

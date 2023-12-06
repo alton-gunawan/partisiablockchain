@@ -157,18 +157,6 @@ fn canary_secret_var() {
 }
 
 #[test]
-fn canary_zk_input_def() {
-    let examples = vec![
-        test_examples::zk_input_def(1),
-        test_examples::zk_input_def(2),
-        test_examples::zk_input_def(0xFF),
-    ];
-    for example in examples {
-        canary_rpc_noeq(&example);
-    }
-}
-
-#[test]
 fn canary_zk_closed() {
     canary_rpc_noeq(&test_examples::ZK_CLOSED_1);
     canary_rpc_noeq(&test_examples::ZK_CLOSED_2);

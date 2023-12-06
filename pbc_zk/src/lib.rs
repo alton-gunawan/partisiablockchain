@@ -78,7 +78,6 @@ pub mod api {
     use std::thread::ThreadId;
 
     /// A secret variable containing a secret-shared value and meta-data information for the value
-    #[derive(Clone)]
     pub struct SecretVarWithId {
         /// id of the variable
         pub id: SecretVarId,

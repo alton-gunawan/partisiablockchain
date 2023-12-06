@@ -34,11 +34,15 @@ pub struct SortedVecMap<K, V> {
 impl<K: CreateTypeSpec, V: CreateTypeSpec> CreateTypeSpec for SortedVecMap<K, V> {
     /// Type name is `VecMap<K, V>`.
     fn __ty_name() -> String {
-        format!("VecMap<{}, {}>", K::__ty_name(), V::__ty_name())
+        format!("SortedVecMap<{}, {}>", K::__ty_name(), V::__ty_name())
     }
 
     fn __ty_identifier() -> String {
-        format!("VecMap<{}, {}>", K::__ty_identifier(), V::__ty_identifier())
+        format!(
+            "SortedVecMap<{}, {}>",
+            K::__ty_identifier(),
+            V::__ty_identifier()
+        )
     }
 
     /// Ordinal is `0x0f` followed by ordinals of `K` and `V`,

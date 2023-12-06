@@ -1,8 +1,16 @@
+#![allow(dead_code)]
 use std::fmt::Debug;
 
+use core::cmp::Ordering;
+use create_type_spec_derive::{create_type_spec_for_generic, CreateTypeSpec};
 use pbc_contract_common::address::{Address, AddressType};
+use pbc_contract_common::avl_tree_map::AvlTreeMap;
+use pbc_contract_common::signature::Signature;
+use pbc_contract_common::sorted_vec_map::{SortedVec, SortedVecMap, SortedVecSet};
 use pbc_traits::ReadWriteState;
+use pbc_zk::SecretBinary;
 use read_write_state_derive::ReadWriteState;
+use std::collections::VecDeque;
 
 // Test Utility
 
@@ -23,23 +31,49 @@ fn read_write_state_roundtrip_with_eq<T: ReadWriteState + Debug + Eq>(
     byte_repr: &[u8],
 ) -> T {
     let struct_2 = read_write_state_roundtrip(struct_1, byte_repr);
+    assert_eq!(format!("{:?}", struct_1), format!("{:?}", struct_2));
+    assert_eq!(*struct_1, struct_2);
+
+    read_write_secret_roundtrip_with_eq(struct_1, byte_repr);
+
+    struct_2
+}
+
+fn read_write_secret_roundtrip<T: SecretBinary>(struct_1: &T, byte_repr: &[u8]) -> T {
+    let mut buf: Vec<u8> = Vec::new();
+    struct_1.secret_write_to(&mut buf).unwrap();
+    assert_eq!(&buf, byte_repr);
+
+    let mut buf: Vec<u8> = Vec::new();
+    struct_1.secret_write_to(&mut buf).unwrap();
+
+    let mut ctx_reader = std::io::Cursor::new(buf);
+    T::secret_read_from(&mut ctx_reader)
+}
+
+fn read_write_secret_roundtrip_with_eq<T: SecretBinary + Debug + Eq>(
+    struct_1: &T,
+    byte_repr: &[u8],
+) -> T {
+    let struct_2 = read_write_secret_roundtrip(struct_1, byte_repr);
+    assert_eq!(format!("{:?}", struct_1), format!("{:?}", struct_2));
     assert_eq!(*struct_1, struct_2);
     struct_2
 }
 
 // Structures
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct EmptyStruct {}
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct SimpleStruct {
     a: u8,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct ComplexStruct {
     a: SimpleStruct,
@@ -47,40 +81,46 @@ struct ComplexStruct {
     c: u16,
 }
 
-#[derive(ReadWriteState, Debug)]
+#[derive(ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct StructWithVec {
     ls: Vec<SimpleStruct>,
     b: u32,
 }
 
-#[derive(ReadWriteState, Debug)]
+#[derive(ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct StructWithEmptyStructVec {
     ls: Vec<EmptyStruct>,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct StructWithPadding {
     a: u8,
     b: u16,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct VecStructWithPadding {
     ls: Vec<StructWithPadding>,
 }
 
 #[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[repr(C)]
+struct VecDequeStructWithPadding {
+    ls: VecDeque<StructWithPadding>,
+}
+
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C, align(4))]
 struct StructWithAlignment {
     b: u16,
     a: u8,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C, align(2))]
 struct StructWithSizeLargerThanAlignment {
     v1: u8,
@@ -89,55 +129,55 @@ struct StructWithSizeLargerThanAlignment {
     v4: u8,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C, align(4))]
 struct StructWithSizeSmallerThanAlignment {
     v1: u8,
     v2: u8,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct VecStructWithSizeLargerThanAlignment {
     ls: Vec<StructWithSizeLargerThanAlignment>,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct VecStructWithSizeSmallerThanAlignment {
     ls: Vec<StructWithSizeSmallerThanAlignment>,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 struct VecStructWithAlignment {
     ls: Vec<StructWithAlignment>,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct StructWithOption {
     a: Option<ComplexStruct>,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct StructWithByteArray {
     a: [u8; 5],
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct VecWithByteArray {
     ls: Vec<StructWithByteArray>,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct StructWithLargeByteArray {
     a: [u8; 100],
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct NestedStruct {
     a: StructWithByteArray,
@@ -146,17 +186,24 @@ struct NestedStruct {
     d: SimpleStruct,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct VecNestedStruct {
     ls: Vec<NestedStruct>,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct VecWithAddresses {
     sender: Address,
     recipients: Vec<Address>,
+}
+
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
+#[repr(C)]
+struct VecDequeWithAddresses {
+    sender: Address,
+    recipients: VecDeque<Address>,
 }
 
 #[derive(Eq, PartialEq, ReadWriteState, Debug)]
@@ -215,14 +262,57 @@ enum EnumWithConstantDiscriminants {
     Var2 = DISCR_VAR2,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 enum EnumItemStruct {
     #[discriminant(0)]
-    A { a: u8 },
+    A { a: bool },
     #[discriminant(3)]
     B { a: u8, b: u8 },
     #[discriminant(125)]
     C { a: SimpleStruct },
+}
+
+#[derive(ReadWriteState, Debug, CreateTypeSpec)]
+struct StateWithAvlMap {
+    map: AvlTreeMap<u32, String>,
+}
+
+#[derive(ReadWriteState, Debug, CreateTypeSpec, Clone)]
+struct StateWithSortedVecMap {
+    map: SortedVecMap<u32, String>,
+}
+
+#[derive(ReadWriteState, Debug, CreateTypeSpec, Clone)]
+struct StateWithSortedVecSet {
+    map: SortedVecSet<String>,
+}
+
+#[derive(ReadWriteState, Debug, CreateTypeSpec, Clone)]
+struct StateWithSortedVec {
+    map: SortedVec<String>,
+}
+
+#[derive(Eq, PartialEq, ReadWriteState, Debug, Clone)]
+#[repr(C)]
+struct SignatureMapState {
+    signatures: SortedVecMap<Signature, String>,
+}
+
+#[derive(Eq, PartialEq, Ord, PartialOrd, Clone, ReadWriteState, CreateTypeSpec, Debug)]
+enum RoleEnum {
+    #[discriminant(1)]
+    Admin {},
+    #[discriminant(2)]
+    Moderator {},
+    #[discriminant(3)]
+    User {},
+}
+
+create_type_spec_for_generic! {AccessControl<RoleEnum>}
+
+#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
+pub struct AccessControl<RoleEnum: Ord + Clone + Eq + PartialEq> {
+    pub roles_admin: SortedVecMap<RoleEnum, RoleEnum>,
 }
 
 // Tests
@@ -338,6 +428,161 @@ pub fn serialize_vec_struct_with_padding() {
     ];
     let state2 = read_write_state_roundtrip(&state, &buffer);
     assert_eq!(state.ls.len(), state2.ls.len());
+}
+
+#[test]
+pub fn serialize_state_with_avltree() {
+    let _unused1: AvlTreeMap<u32, u32> = AvlTreeMap::default();
+    let _unused2: AvlTreeMap<u32, u32> = AvlTreeMap::default();
+    let _unused3: AvlTreeMap<u32, u32> = AvlTreeMap::default();
+    let _unused4: AvlTreeMap<u32, u32> = AvlTreeMap::new();
+    let state = StateWithAvlMap {
+        map: AvlTreeMap::new(),
+    };
+    state.map.insert(1, "Hello, world!".to_string());
+
+    let buffer = [
+        0x04, 0x00, 0x00, 0x00, // Tree id
+    ];
+    let state2 = read_write_state_roundtrip(&state, &buffer);
+    assert_eq!(state.map.len(), state2.map.len());
+}
+
+#[test]
+pub fn signature_map_state() {
+    let mut signatures = SortedVecMap::default();
+    let sig1 = Signature {
+        recovery_id: 1,
+        value_r: [0; 32],
+        value_s: [1; 32],
+    };
+    let sig2 = Signature {
+        recovery_id: 5,
+        value_r: [2; 32],
+        value_s: [3; 32],
+    };
+    assert_eq!(sig1.partial_cmp(&sig2), Some(Ordering::Less));
+
+    signatures.insert(sig1, "Hello, world 1!".to_string());
+    signatures.insert(sig2, "Hello, world 2!".to_string());
+
+    let state = SignatureMapState { signatures };
+
+    let buffer = [
+        2, 0, 0, 0, // Len
+        // Signature 1
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, // Value 1
+        15, 0, 0, 0, 72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 32, 49, 33,
+        // Signature 1
+        5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 3, 3, // Value 1
+        15, 0, 0, 0, 72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 32, 50, 33,
+    ];
+    let state2 = read_write_state_roundtrip_with_eq(&state, &buffer);
+    assert_eq!(state2.clone(), state2);
+    assert_eq!(format!("{:?}", state2), "SignatureMapState { signatures: SortedVecMap { entries: [Entry { key: Signature { recovery_id: 1, value_r: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], value_s: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, value: \"Hello, world 1!\" }, Entry { key: Signature { recovery_id: 5, value_r: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], value_s: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, value: \"Hello, world 2!\" }] } }");
+}
+
+#[test]
+pub fn serialize_state_with_sortedvecmap() {
+    let mut state = StateWithSortedVecMap {
+        map: SortedVecMap::default(),
+    };
+    state.map.insert(1, "Hello, world!".to_string());
+
+    let buffer = [
+        1, 0, 0, 0, 1, 0, 0, 0, 13, 0, 0, 0, 72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108,
+        100, 33,
+    ];
+    let state2 = read_write_state_roundtrip(&state, &buffer);
+    assert_eq!(state.map.len(), state2.map.len());
+    assert_eq!(state.map.clone(), state2.map.clone());
+    assert_eq!(
+        format!("{:?}", state.map),
+        "SortedVecMap { entries: [Entry { key: 1, value: \"Hello, world!\" }] }"
+    );
+}
+
+#[test]
+pub fn serialize_state_with_sortedvec() {
+    let mut state = StateWithSortedVec {
+        map: SortedVec::default(),
+    };
+    state.map.insert("Hello, world!".to_string());
+
+    let buffer = [
+        1, 0, 0, 0, 13, 0, 0, 0, 72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33,
+    ];
+    let state2 = read_write_state_roundtrip(&state.clone(), &buffer);
+    assert_eq!(state.map.len(), state2.map.len());
+    assert_eq!(
+        format!("{:?}", state.map),
+        "SortedVec { elements: SortedVecSet { elements: [\"Hello, world!\"] } }"
+    );
+}
+
+#[test]
+pub fn serialize_state_with_sortedvecset() {
+    let mut state = StateWithSortedVecSet {
+        map: SortedVecSet::default(),
+    };
+    state.map.insert("Hello, world!".to_string());
+
+    let buffer = [
+        1, 0, 0, 0, 13, 0, 0, 0, 72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33,
+    ];
+    let state2 = read_write_state_roundtrip(&state.clone(), &buffer);
+    assert_eq!(state.map.len(), state2.map.len());
+    assert_eq!(
+        format!("{:?}", state.map),
+        "SortedVecSet { elements: [\"Hello, world!\"] }"
+    );
+}
+
+#[test]
+pub fn serialize_state_with_vec_deque() {
+    let state = VecDequeStructWithPadding {
+        ls: vec![
+            StructWithPadding { a: 0x42, b: 0x1234 },
+            StructWithPadding { a: 0x43, b: 0x1333 },
+            StructWithPadding { a: 0x44, b: 0x1432 },
+            StructWithPadding { a: 0x45, b: 0x1531 },
+        ]
+        .into_iter()
+        .collect(),
+    };
+    let buffer = [
+        0x04, 0x00, 0x00, 0x00, // Vec length
+        0x42, 0x34, 0x12, // Element 1
+        0x43, 0x33, 0x13, // Element 2
+        0x44, 0x32, 0x14, // Element 3
+        0x45, 0x31, 0x15, // Element 4
+    ];
+    read_write_state_roundtrip_with_eq(&state, &buffer);
+}
+
+#[test]
+pub fn serialize_vecdeque_with_addresses() {
+    let state = VecDequeWithAddresses {
+        sender: ADDR_1,
+        recipients: vec![ADDR_2, ADDR_3, ADDR_4].into_iter().collect(),
+    };
+    let expected_bytes = [
+        2, // sender.address_type
+        0, 1, 2, 3, 4, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 6, 7, 8, 9, // sender.identifier
+        3, 0, 0, 0, // recipients.len()
+        1, // recipients[0].address_type
+        0, 1, 2, 3, 4, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5, 7, 7, 8, 9, // recipients[0].ide
+        0, // recipients[1].address_type
+        0, 1, 2, 3, 4, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 5, 8, 7, 8, 9, // recipients[1].ide
+        3, // recipients[2].address_type
+        0, 1, 2, 3, 4, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 5, 9, 7, 8, 9, // recipients[2].ide
+    ];
+
+    read_write_state_roundtrip_with_eq(&state, &expected_bytes);
 }
 
 #[test]
@@ -591,28 +836,28 @@ pub fn serialize_vec_nested_struct() {
     read_write_state_roundtrip_with_eq(&state, &expected_bytes);
 }
 
+const ADDR_1: Address = Address {
+    address_type: AddressType::PublicContract,
+    identifier: [0, 1, 2, 3, 4, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 6, 7, 8, 9],
+};
+const ADDR_2: Address = Address {
+    address_type: AddressType::SystemContract,
+    identifier: [0, 1, 2, 3, 4, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5, 7, 7, 8, 9],
+};
+const ADDR_3: Address = Address {
+    address_type: AddressType::Account,
+    identifier: [0, 1, 2, 3, 4, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 5, 8, 7, 8, 9],
+};
+const ADDR_4: Address = Address {
+    address_type: AddressType::ZkContract,
+    identifier: [0, 1, 2, 3, 4, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 5, 9, 7, 8, 9],
+};
+
 #[test]
 pub fn serialize_vec_with_addresses() {
-    let addr1 = Address {
-        address_type: AddressType::PublicContract,
-        identifier: [0, 1, 2, 3, 4, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 6, 7, 8, 9],
-    };
-    let addr2 = Address {
-        address_type: AddressType::SystemContract,
-        identifier: [0, 1, 2, 3, 4, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5, 7, 7, 8, 9],
-    };
-    let addr3 = Address {
-        address_type: AddressType::Account,
-        identifier: [0, 1, 2, 3, 4, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 5, 8, 7, 8, 9],
-    };
-    let addr4 = Address {
-        address_type: AddressType::ZkContract,
-        identifier: [0, 1, 2, 3, 4, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 5, 9, 7, 8, 9],
-    };
-
     let state = VecWithAddresses {
-        sender: addr1,
-        recipients: vec![addr2, addr3, addr4],
+        sender: ADDR_1,
+        recipients: vec![ADDR_2, ADDR_3, ADDR_4],
     };
     let expected_bytes = [
         2, // sender.address_type
@@ -631,18 +876,9 @@ pub fn serialize_vec_with_addresses() {
 
 #[test]
 pub fn serialize_address_tuple() {
-    let addr1 = Address {
-        address_type: AddressType::PublicContract,
-        identifier: [0, 1, 2, 3, 4, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 6, 7, 8, 9],
-    };
-    let addr2 = Address {
-        address_type: AddressType::SystemContract,
-        identifier: [0, 1, 2, 3, 4, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5, 7, 7, 8, 9],
-    };
-
     let state = AddressTuple {
-        sender: addr1,
-        recipient: addr2,
+        sender: ADDR_1,
+        recipient: ADDR_2,
     };
     let expected_bytes = [
         2, // sender.address_type
@@ -726,7 +962,7 @@ pub fn serialize_enum_with_constant_fields() {
 
 #[test]
 pub fn serialize_enum_item_struct() {
-    let my_enum_a = EnumItemStruct::A { a: 1 };
+    let my_enum_a = EnumItemStruct::A { a: true };
     let my_enum_b = EnumItemStruct::B { a: 2, b: 3 };
     let my_enum_c = EnumItemStruct::C {
         a: SimpleStruct { a: 0 },

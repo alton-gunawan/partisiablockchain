@@ -17,19 +17,45 @@ struct SomeStruct {
 }
 
 #[test]
-fn some_test() {
+fn event_group_builder() {
+    let e = EventGroup::default();
+    assert_eq!(format!("{:?}", e), format!("{:?}", e));
+}
+
+#[test]
+fn event_group_builder_2() {
     let mut e = EventGroup::builder();
 
     e.call(DEFAULT_ADDRESS, Shortname::from_be_bytes(&[0x33]).unwrap())
         .done();
 
-    e.call(DEFAULT_ADDRESS, Shortname::from_be_bytes(&[0x79]).unwrap())
-        .argument(99u8)
-        .argument(DEFAULT_ADDRESS)
-        .with_cost(100010)
-        .done();
+    {
+        let interaction = e
+            .call(DEFAULT_ADDRESS, Shortname::from_be_bytes(&[0x79]).unwrap())
+            .argument(99u8)
+            .argument(DEFAULT_ADDRESS)
+            .with_cost(100010);
+        assert_eq!(format!("{:?}", interaction), format!("{:?}", interaction));
+        interaction.done();
+        e.ping(DEFAULT_ADDRESS, None);
+    }
 
-    e.build();
+    assert_eq!(format!("{:?}", e), format!("{:?}", e));
+
+    {
+        let callback = e
+            .with_callback(ShortnameCallback::from_u32(0x10))
+            .argument(DEFAULT_ADDRESS)
+            .with_cost(100010);
+        assert_eq!(format!("{:?}", callback), format!("{:?}", callback));
+        callback.done();
+    }
+
+    assert_eq!(format!("{:?}", e), format!("{:?}", e));
+
+    let result = e.build();
+
+    assert_eq!(format!("{:?}", result), format!("{:?}", result));
 }
 
 #[test]

@@ -7,6 +7,12 @@ fn assert_from_to(value: Sbi8, bits: [Sbi1; 8]) {
 }
 
 #[test]
+fn clone() {
+    let x = Sbi8::from(0x33);
+    assert_eq!(x, x.clone());
+}
+
+#[test]
 fn from_to_i8_specific() {
     assert_from_to(Sbi8::from(0), [false; 8]);
     assert_from_to(

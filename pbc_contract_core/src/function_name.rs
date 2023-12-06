@@ -6,8 +6,6 @@ use sha2::{Digest, Sha256};
 use pbc_traits::WriteRPC;
 
 #[cfg(feature = "abi")]
-use read_write_rpc_derive::ReadRPC;
-#[cfg(feature = "abi")]
 use read_write_rpc_derive::WriteRPC;
 
 #[cfg(feature = "abi")]
@@ -18,9 +16,8 @@ use crate::shortname::Shortname;
 /// A small struct that automatically calculates the shortname of a function.
 ///
 /// Serialized with the ABI format.
-#[derive(PartialEq, Eq)]
-#[cfg_attr(feature = "abi", derive(ReadRPC, WriteRPC))]
 pub struct FunctionName {
+    #[allow(unused)]
     name: String,
     shortname: Shortname,
 }
@@ -54,7 +51,7 @@ impl FunctionName {
 
 /// Denotes the kind of the ABI function hook.
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
-#[cfg_attr(feature = "abi", derive(ReadRPC, WriteRPC))]
+#[cfg_attr(feature = "abi", derive(WriteRPC))]
 #[repr(u8)]
 pub enum FunctionKind {
     /// Kind for `init` hook.
@@ -81,6 +78,8 @@ pub enum FunctionKind {
     ZkAttestationComplete = 0x16,
     /// Kind for `zk_on_secret_input` hook.
     ZkSecretInputWithExplicitType = 0x17,
+    /// Kind for `zk_on_external_event` hook.
+    ZkExternalEvent = 0x18,
 }
 
 #[cfg(feature = "abi")]
@@ -104,7 +103,7 @@ fn name_to_shortname(raw_name: &str) -> Shortname {
 
 #[cfg(all(test, feature = "abi"))]
 mod test_abi_serialization {
-    use super::FunctionName;
+    use super::{FunctionKind, FunctionName};
     use crate::shortname::Shortname;
 
     fn interesting_shortname_values() -> Vec<(u32, Vec<u8>)> {
@@ -117,6 +116,12 @@ mod test_abi_serialization {
             (1000, vec![0xe8, 0x07]),
             (586977299, vec![0x93, 0xA0, 0xF2, 0x97, 0x02]),
         ]
+    }
+
+    #[test]
+    fn function_kind_clone() {
+        let kind = FunctionKind::Init;
+        assert_eq!(kind, kind.clone());
     }
 
     #[test]
@@ -160,7 +165,7 @@ mod test_abi_serialization {
         ];
         for bytes in invalid_shortname_bytes {
             let result = Shortname::from_be_bytes(&bytes);
-            assert!(result.is_err(), "Must not succeed for bytes: {:?}", &bytes);
+            assert!(result.is_err());
         }
     }
 

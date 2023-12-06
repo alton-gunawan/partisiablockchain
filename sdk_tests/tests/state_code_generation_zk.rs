@@ -16,6 +16,6 @@ pub fn initialize(_ctx: ContractContext, _zk_state: ZkState<u8>) -> Something {
 #[test]
 #[allow(clippy::unit_cmp)]
 pub fn smoke_test_versions() {
-    assert_eq!(__PBC_VERSION_BINDER_10_1_0, ());
-    assert_eq!(__PBC_VERSION_CLIENT_5_3_0, ());
+    assert_eq!(__PBC_VERSION_BINDER_10_3_0, ());
+    assert_eq!(__PBC_VERSION_CLIENT_5_4_0, ());
 }

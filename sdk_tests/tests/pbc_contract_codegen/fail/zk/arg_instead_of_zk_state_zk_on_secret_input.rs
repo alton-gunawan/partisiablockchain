@@ -3,6 +3,7 @@ use pbc_contract_codegen::init;
 use pbc_contract_common::zk::*;
 use pbc_contract_common::context::ContractContext;
 use pbc_contract_common::events::EventGroup;
+use pbc_zk::Sbi8;
 
 pub fn main() {}
 
@@ -19,7 +20,7 @@ fn do_zk_on_secret_input(
     _context: ContractContext,
     mut state: u32,
     arg1: u32,
-) -> (u32, Vec<EventGroup>, ZkInputDef<u32>) {
+) -> (u32, Vec<EventGroup>, ZkInputDef<u32, Sbi8>) {
     state = state.wrapping_add(arg1);
     let def = ZkInputDef {
         expected_bit_lengths: vec![10],

@@ -85,6 +85,7 @@ impl ReadRPC for CallbackContext {
 }
 
 /// Due to the implementation details of the code generation `rpc_read_from` is required for CallbackContext.
+#[cfg(any(test, doc, feature = "test_examples"))]
 impl WriteRPC for CallbackContext {
     fn rpc_write_to<T: Write>(&self, writer: &mut T) -> std::io::Result<()> {
         self.success.rpc_write_to(writer)?;
@@ -131,6 +132,7 @@ impl ReadRPC for ExecutionResult {
 }
 
 /// Needed since this struct is nested in [`CallbackContext`].
+#[cfg(any(test, doc, feature = "test_examples"))]
 impl WriteRPC for ExecutionResult {
     fn rpc_write_to<T: Write>(&self, writer: &mut T) -> std::io::Result<()> {
         self.succeeded.rpc_write_to(writer)?;

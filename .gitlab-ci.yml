@@ -6,10 +6,12 @@ variables:
 include:
 - project: 'secata-public/pom/shared-ci'
   file: 'rust-base.yml'
-  ref: 'v.2.19.1'
+  ref: 'v.2.26.0'
 - project: 'secata-public/pom/shared-ci'
   file: 'rust-docs.yml'
-  ref: 'v.2.19.1'
+  ref: 'v.2.26.0'
 - project: 'secata-public/pom/shared-ci'
   file: 'rust-coverage.yml'
-  ref: 'v.2.19.1'
+  ref: 'v.2.26.0'
+
+

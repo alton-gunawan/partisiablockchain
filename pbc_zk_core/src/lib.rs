@@ -24,7 +24,7 @@ pub type Sbi64 = Sbi<i64>;
 /// A secret-shared [`i128`] value. See [`Sbi`].
 pub type Sbi128 = Sbi<i128>;
 
-/// A secret-shared value.
+/// Required for secret-shared values.
 /// Secret variables are serialized like their public counterparts using the
 /// [State serialization format](https://partisiablockchain.gitlab.io/documentation/smart-contracts/smart-contract-binary-formats.html#state-binary-format).
 pub trait SecretBinary {
@@ -34,6 +34,12 @@ pub trait SecretBinary {
     fn secret_write_to<T: Write>(&self, writer: &mut T) -> std::io::Result<()>;
 }
 pub use crate::SecretBinary as Secret;
+
+/// Required for secret-shared values. Used to determine the size of secret-shared inputs.
+pub trait SecretBinaryFixedSize {
+    /// The bitsize of the type.
+    const BITS: u32;
+}
 
 impl<T: pbc_traits::ReadWriteState> SecretBinary for T {
     fn secret_read_from<ReadT: Read>(reader: &mut ReadT) -> Self {
