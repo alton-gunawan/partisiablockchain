@@ -1,5 +1,6 @@
 use proc_macro::TokenStream;
 use quote::ToTokens;
+use syn::parse_quote;
 
 pub(crate) fn implement_secret(input: TokenStream) -> TokenStream {
     // Parse the string representation
@@ -21,49 +22,73 @@ pub(crate) fn implement_secret(input: TokenStream) -> TokenStream {
         derive_commons::SupportedKind::ItemStructEnum { .. } => unimplemented!("ItemStructEnum"),
     };
 
-    let read_block = quote! {
-        #(
-            let #field_names = <#field_types>::secret_read_from(reader);
-        )*
-        Self { #(#field_names),* }
-    };
+    let impl_fixed_size = {
+        let trait_name: syn::Path = parse_quote! { ::pbc_zk::SecretBinaryFixedSize };
 
-    let write_block = quote! {
-        #(
-            <#field_types>::secret_write_to(&self.#field_names, writer)?;
-        )*
-        Ok(())
-    };
+        let mut generics = ast.generics.clone();
+        derive_commons::extend_generic_bounds_with_trait(&mut generics, &trait_name);
+        let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-    let bits = quote! { #( <#field_types>::BITS +)* 0 };
+        let bits = quote! { #( <#field_types as #trait_name>::BITS +)* 0 };
 
-    let impl_secret_block = quote! {
-        #[automatically_derived]
-        impl ::pbc_zk::SecretBinaryFixedSize for #type_name {
-            const BITS: u32 = #bits;
-        }
-
-        impl ::pbc_zk::SecretBinary for #type_name {
-            fn secret_read_from<T: std::io::Read>(reader: &mut T) -> Self {
-                #read_block
-            }
-            fn secret_write_to<T: std::io::Write>(&self, writer: &mut T) -> std::io::Result<()> {
-                #write_block
-            }
-        }
-        #[automatically_derived]
-        impl #type_name {
+        quote! {
             #[automatically_derived]
-            #[allow(dead_code)]
-            fn __ignore_for_secret_binary() {
-                fn ignore<T: ::pbc_zk::SecretBinary>() {}
-                #(
-                    ignore::<#field_types>();
-                )*
+            impl #impl_generics #trait_name for #type_name #ty_generics #where_clause {
+                const BITS: u32 = #bits;
             }
+        }
+    };
+
+    let impl_secret_block = {
+        let trait_name: syn::Path = parse_quote! { ::pbc_zk::SecretBinary };
+        let mut generics = ast.generics.clone();
+        derive_commons::extend_generic_bounds_with_trait(&mut generics, &trait_name);
+        let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+        let read_block = quote! {
+            #(
+                let #field_names = <#field_types as #trait_name>::secret_read_from(reader);
+            )*
+            Self { #(#field_names),* }
         };
+
+        let write_block = quote! {
+            #(
+                <#field_types as #trait_name>::secret_write_to(&self.#field_names, writer)?;
+            )*
+            Ok(())
+        };
+
+        quote! {
+            #[automatically_derived]
+            impl #impl_generics #trait_name for #type_name #ty_generics #where_clause {
+                fn secret_read_from<ReadT: std::io::Read>(reader: &mut ReadT) -> Self {
+                    #read_block
+                }
+                fn secret_write_to<WriteT: std::io::Write>(&self, writer: &mut WriteT) -> std::io::Result<()> {
+                    #write_block
+                }
+            }
+
+            #[automatically_derived]
+            impl #impl_generics #type_name #ty_generics #where_clause {
+                #[automatically_derived]
+                #[allow(dead_code)]
+                fn __ignore_for_secret_binary() {
+                    fn ignore<IgnoreT: #trait_name>() {}
+                    #(
+                        ignore::<#field_types>();
+                    )*
+                }
+            };
+        }
     };
 
     // Return the generated impl
-    impl_secret_block.into()
+    quote! {
+        #impl_fixed_size
+
+        #impl_secret_block
+    }
+    .into()
 }

@@ -1,5 +1,7 @@
 #![doc = include_str!("../README.md")]
+
 mod sbi;
+mod secret_binary;
 
 use std::io::{Read, Write};
 
@@ -10,6 +12,7 @@ pub use sbi::FromToBits;
 pub use sbi::Sbi;
 #[cfg(not(doc))]
 use sbi::Sbi;
+pub use secret_binary::*;
 
 /// A secret-shared [`bool`] value.
 pub type Sbi1 = bool;
@@ -41,20 +44,46 @@ pub trait SecretBinaryFixedSize {
     const BITS: u32;
 }
 
-impl<T: pbc_traits::ReadWriteState> SecretBinary for T {
-    fn secret_read_from<ReadT: Read>(reader: &mut ReadT) -> Self {
-        Self::state_read_from(reader)
-    }
+macro_rules! impl_secretbinary_delegate_to_read_write_state {
+    ($($type:ty)*) => {
+        $(
+            #[doc = "Implementation of the [`SecretBinary`] trait for [`"]
+            #[doc = stringify!($type)]
+            #[doc = "`]."]
+            impl SecretBinary for $type {
+                fn secret_read_from<ReadT: Read>(reader: &mut ReadT) -> Self {
+                    <Self as pbc_traits::ReadWriteState>::state_read_from(reader)
+                }
 
-    fn secret_write_to<WriteT: Write>(&self, writer: &mut WriteT) -> std::io::Result<()> {
-        self.state_write_to(writer)
+                fn secret_write_to<WriteT: Write>(&self, writer: &mut WriteT) -> std::io::Result<()> {
+                    <Self as pbc_traits::ReadWriteState>::state_write_to(self, writer)
+                }
+            }
+
+            impl SecretBinaryFixedSize for $type {
+                const BITS: u32 = <$type>::BITS as u32;
+            }
+        )*
     }
+}
+
+impl_secretbinary_delegate_to_read_write_state! {
+    i8
+    i16
+    i32
+    i64
+    i128
+    u8
+    u16
+    u32
+    u64
+    u128
 }
 
 /// The output is n implementations of [`CreateTypeSpec`] that simply write the type as a string
 /// and fill the ordinal in the [`CreateTypeSpec::__ty_ordinal`] vector output.
 #[cfg(feature = "abi")]
-macro_rules! impl_for_type {
+macro_rules! impl_createtypespec_for_type {
     ($($type:ty, $val:literal)*) => {
         $(
             #[doc = "Implementation of the [`CreateTypeSpec`] trait for [`"]
@@ -82,10 +111,29 @@ macro_rules! impl_for_type {
 
 // Sbi types are mapped to their public counterparts.
 #[cfg(feature = "abi")]
-impl_for_type!(
+impl_createtypespec_for_type!(
     Sbi8,   0x06
     Sbi16,  0x07
     Sbi32,  0x08
     Sbi64,  0x09
     Sbi128, 0x0a
 );
+
+/// Implementation of [`SecretBinary`] for arrays of arbitrary sizes and types.
+impl<const LEN: usize, ElementT: SecretBinary + Sized> SecretBinary for [ElementT; LEN] {
+    fn secret_read_from<T: Read>(reader: &mut T) -> Self {
+        let mut data: [std::mem::MaybeUninit<ElementT>; LEN] =
+            unsafe { std::mem::MaybeUninit::uninit().assume_init() };
+        for element_addr in &mut data[..] {
+            element_addr.write(<ElementT as SecretBinary>::secret_read_from(reader));
+        }
+        data.map(|x| unsafe { x.assume_init() })
+    }
+
+    fn secret_write_to<T: Write>(&self, writer: &mut T) -> std::io::Result<()> {
+        for elem in self {
+            <ElementT as SecretBinary>::secret_write_to(elem, writer)?;
+        }
+        Ok(())
+    }
+}

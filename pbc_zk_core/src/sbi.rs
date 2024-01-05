@@ -209,16 +209,35 @@ impl_from_to_bits!(
     i128
 );
 
+#[doc = "Implementation of [`SecretBinaryFixedSize`] trait for [`Sbi1`]."]
+impl SecretBinaryFixedSize for Sbi1 {
+    const BITS: u32 = 1;
+}
+
+#[doc = "Implementation of [`SecretBinary`] trait for [`Sbi1`]. Uses a full byte to present a single bit."]
+impl SecretBinary for Sbi1 {
+    fn secret_read_from<T: Read>(reader: &mut T) -> Self {
+        reader.read_u8() != 0
+    }
+
+    fn secret_write_to<T: Write>(&self, writer: &mut T) -> std::io::Result<()> {
+        writer.write_u8(u8::from(*self))
+    }
+}
+
 macro_rules! read_write_secret {
     ($($inner_type:ty, $read_method:ident, $write_method:ident)*) => {
         $(
-            #[doc = "Implementation of [`SecretBinary`] trait for [`Sbi<"]
+            #[doc = "Implementation of [`SecretBinaryFixedSize`] trait for [`Sbi<"]
             #[doc = stringify!($inner_type)]
-            #[doc = ">`]. Encoded as a little-endian integer."]
+            #[doc = ">`]."]
             impl SecretBinaryFixedSize for Sbi<$inner_type> {
                 const BITS: u32 = <$inner_type>::BITS;
             }
 
+            #[doc = "Implementation of [`SecretBinary`] trait for [`Sbi<"]
+            #[doc = stringify!($inner_type)]
+            #[doc = ">`]. Encoded as a little-endian integer."]
             impl SecretBinary for Sbi<$inner_type> {
                 fn secret_read_from<T: Read>(reader: &mut T) -> Self {
                     Self::from(reader.$read_method())
@@ -231,9 +250,6 @@ macro_rules! read_write_secret {
     }
 }
 
-impl SecretBinaryFixedSize for Sbi1 {
-    const BITS: u32 = 1;
-}
 read_write_secret!(i8, read_i8, write_i8);
 read_write_secret!(i16, read_i16_le, write_i16_le);
 read_write_secret!(i32, read_i32_le, write_i32_le);

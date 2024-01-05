@@ -2,6 +2,7 @@
 use pbc_contract_common::abi::{AbiSerialize, FnAbi, NamedEntityAbi, NamedTypeSpec};
 use pbc_contract_common::address::Shortname;
 use pbc_contract_common::{FunctionKind, FunctionName};
+use pbc_contract_core::abi::capitalize;
 use std::collections::BTreeMap;
 
 fn assert_serialized_to<T: AbiSerialize>(e: &T, expected_buf: &[u8]) {
@@ -91,4 +92,10 @@ fn serialize_function_name_defined_name() {
     ];
 
     assert_serialized_to(&obj, &expected_buf);
+}
+
+#[test]
+fn test_capitalize() {
+    assert_eq!(capitalize("test"), "Test");
+    assert_eq!(capitalize(""), "");
 }

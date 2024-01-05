@@ -48,6 +48,9 @@ pub fn option() {
     let complex = vec![Some(42u64), Some(43u64)];
     assert_serializes(Some(complex.clone()));
     assert_serializes(complex);
+
+    assert_serializes(Some(vec![1u8, 2u8, 3u8]));
+    assert_serializes(None::<Vec<u8>>);
 }
 
 #[test]

@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use pbc_contract_common::address::AddressType;
-use pbc_contract_common::{test_examples, U256};
+use pbc_contract_common::{test_examples, zk, U256};
 use pbc_traits::{ReadRPC, ReadWriteState, WriteRPC};
 
 fn canary_rpc_noeq<T: ReadRPC + WriteRPC>(example: &T) -> Vec<u8> {
@@ -34,6 +34,27 @@ fn canary_rpc<T: ReadRPC + WriteRPC + PartialEq + Debug>(example: &T) -> Vec<u8>
 
     assert_eq!(example, &example_from_rpc);
     buf_rpc
+}
+
+fn canary_state_noeq<T: ReadWriteState>(example: &T) -> Vec<u8> {
+    // Check serializable
+    let mut buf_state_1 = Vec::with_capacity(21);
+    example
+        .state_write_to(&mut buf_state_1)
+        .expect("Write entire value");
+
+    // Check deserializable
+    let example_from_state = T::state_read_from(&mut buf_state_1.as_slice());
+
+    // Check that serialization of deserialized is identical to original
+    let mut buf_state_2 = Vec::with_capacity(21);
+    example_from_state
+        .state_write_to(&mut buf_state_2)
+        .expect("Write entire value");
+    assert_eq!(buf_state_1, buf_state_2);
+
+    // Result!
+    buf_state_2
 }
 
 fn canary_state<T: ReadWriteState + PartialEq + Debug>(example: &T) -> Vec<u8> {
@@ -111,6 +132,11 @@ fn canary_bls_signature() {
 }
 
 #[test]
+fn canary_signature() {
+    canary_rpc_state_eq(&test_examples::example_signature());
+}
+
+#[test]
 fn canary_sorted_vec_map() {
     let buffer = canary_state(&test_examples::example_vec_map());
     let expected: Vec<u8> = vec![
@@ -158,12 +184,41 @@ fn canary_secret_var() {
 
 #[test]
 fn canary_zk_closed() {
-    canary_rpc_noeq(&test_examples::ZK_CLOSED_1);
-    canary_rpc_noeq(&test_examples::ZK_CLOSED_2);
-    canary_rpc_noeq(&test_examples::zk_closed_open());
+    canary_state_noeq(&test_examples::ZK_CLOSED_1);
+    canary_state_noeq(&test_examples::ZK_CLOSED_2);
+    canary_state_noeq(&test_examples::zk_closed_open());
 }
 
 #[test]
-fn canary_zk_state() {
-    canary_rpc_noeq(&test_examples::example_zk_state());
+fn canary_attestation() {
+    canary_state_noeq(&test_examples::example_data_attestation());
+}
+
+#[test]
+fn canary_event_subscription() {
+    canary_state_noeq(&test_examples::example_subscription());
+}
+
+#[test]
+fn canary_external_event() {
+    canary_state_noeq(&test_examples::example_external_event());
+}
+
+#[test]
+fn canary_ids() {
+    canary_state(&test_examples::example_secret_var_id());
+    canary_rpc(&test_examples::example_secret_var_id());
+    canary_state(&test_examples::example_attestation_id());
+    canary_rpc(&test_examples::example_attestation_id());
+    canary_state(&test_examples::example_event_subscription_id());
+    canary_rpc(&test_examples::example_event_subscription_id());
+    canary_state(&test_examples::example_external_event_id());
+    canary_rpc(&test_examples::example_external_event_id());
+}
+
+#[test]
+fn read_zk_state() {
+    let input: Vec<u8> = test_examples::example_zk_state_bytes();
+    let state = zk::ZkState::<u32>::rpc_read_from(&mut input.as_slice());
+    assert_eq!(state.calculation_state, zk::CalculationStatus::Waiting);
 }

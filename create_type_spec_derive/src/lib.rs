@@ -92,7 +92,7 @@ fn impl_create_type_spec(
 
     // Generics
     let mut generics = ast.generics;
-    derive_commons::extend_generic_bounds_with_trait(&mut generics, trait_name.clone());
+    derive_commons::extend_generic_bounds_with_trait(&mut generics, &trait_name);
 
     let uuid = Uuid::new_v4();
     let type_id: String = uuid.hyphenated().to_string();
@@ -112,16 +112,9 @@ fn impl_create_type_spec(
         Data::Struct(ref data_struct) => {
             let (field_names, field_types) = data_to_field_types(data_struct);
             let field_names_ts = field_names.iter().map(|x| x.to_token_stream()).collect();
-            create_struct_type_spec_body(
-                type_name,
-                &field_names_ts,
-                &field_types,
-                &abi_module_prefix,
-            )
+            create_struct_type_spec_body(&field_names_ts, &field_types, &abi_module_prefix)
         }
-        Data::Enum(ref data_enum) => {
-            create_enum_type_spec_body(type_name, data_enum, &abi_module_prefix)
-        }
+        Data::Enum(ref data_enum) => create_enum_type_spec_body(data_enum, &abi_module_prefix),
         _ => panic!(
             "CreateTypeSpec derive does not support Union, currently only structs with named \
         fields and explicitly discriminated enums consisting of struct variants"
@@ -133,11 +126,16 @@ fn impl_create_type_spec(
 
         #[cfg(feature = "abi")]
         #[automatically_derived]
-        fn #abi_for_type_function_name #impl_generics (named_types: &std::collections::BTreeMap<String, u8>) -> Vec<#abi_module_prefix::NamedTypeSpec> #where_clause {
+        #[doc = "PBC ABI gen internal method. Ensures that [`"]
+        #[doc = stringify!(#type_name #ty_generics)]
+        #[doc = "`] is visible to the ABI generator."]
+        #[doc = "This is a method used by the PBC ABI-gen system for generating ABI (machine-readable descriptions of smart contracts.)"]
+        pub fn #abi_for_type_function_name #impl_generics (named_types: &std::collections::BTreeMap<String, u8>) -> Vec<#abi_module_prefix::NamedTypeSpec> #where_clause {
             let type_id: String = <#type_name #ty_generics as #trait_name> :: __ty_identifier();
+            let type_name: String = <#type_name #ty_generics as #trait_name> :: __ty_name();
             let mut named_types_in_fn = vec![];
             let mut type_spec: Vec<u8> = vec![];
-            let type_index: u8 = *named_types.get(&type_id).unwrap_or(&0xFF);
+            <#type_name #ty_generics as #trait_name> :: __ty_spec_write(&mut type_spec, named_types);
 
             #abi_for_type_function_name_body
             named_types_in_fn
@@ -148,7 +146,6 @@ fn impl_create_type_spec(
 }
 
 fn create_enum_type_spec_body(
-    type_name: &Ident,
     data_enum: &DataEnum,
     abi_module_prefix: &syn::Path,
 ) -> proc_macro2::TokenStream {
@@ -163,9 +160,13 @@ fn create_enum_type_spec_body(
         .map(|n| format_ident!("struct_{}", n))
         .collect();
 
-    let variant_type_ids: Vec<String> = variant_names
+    let variant_type_uuids: Vec<String> = variant_names
         .iter()
         .map(|_| Uuid::new_v4().hyphenated().to_string())
+        .collect();
+    let variant_type_ids: Vec<Ident> = variant_names_lowercase
+        .iter()
+        .map(|n| format_ident!("type_id_{}", n))
         .collect();
     let variant_type_specs: Vec<Ident> = variant_names_lowercase
         .iter()
@@ -174,7 +175,8 @@ fn create_enum_type_spec_body(
     let calculate_variant_type_specs = quote! {
         #(
             let mut #variant_type_specs = vec![];
-            let type_index: u8 = *named_types.get(#variant_type_ids).unwrap_or(&0xFF) ;
+            let #variant_type_ids: String = format!("{}{}", type_id, #variant_type_uuids);
+            let type_index: u8 = *named_types.get(&#variant_type_ids).unwrap_or(&0xFF) ;
 
             #variant_type_specs.push(0x00);
             #variant_type_specs.push(type_index);
@@ -197,13 +199,11 @@ fn create_enum_type_spec_body(
     }).collect();
 
     quote! {
-        type_spec.push(0x00);
-        type_spec.push(type_index);
 
         #calculate_variant_type_specs
 
         let mut type_spec = #abi_module_prefix::NamedTypeSpec::new_enum(
-            stringify!(#type_name).to_string(),
+            type_name,
             type_id, type_spec,
         );
 
@@ -218,7 +218,7 @@ fn create_enum_type_spec_body(
         #(
             let mut #struct_variant_names = #abi_module_prefix::NamedTypeSpec::new_struct(
                 #variant_names_string.to_string(),
-                #variant_type_ids.to_string(),
+                #variant_type_ids,
                 #variant_type_specs,
             );
             #add_fields_to_variants
@@ -228,7 +228,6 @@ fn create_enum_type_spec_body(
 }
 
 fn create_struct_type_spec_body(
-    type_name: &Ident,
     field_names: &Vec<TokenStream2>,
     field_types: &Vec<TokenStream2>,
     abi_module_prefix: &syn::Path,
@@ -239,11 +238,9 @@ fn create_struct_type_spec_body(
         .collect();
 
     quote! {
-        type_spec.push(0x00);
-        type_spec.push(type_index);
 
         let mut type_abi = #abi_module_prefix::NamedTypeSpec::new_struct(
-            stringify!(#type_name).to_string(),
+            type_name,
             type_id,
             type_spec,
         );
@@ -295,16 +292,11 @@ fn identifier_creator(
     generics: &syn::Generics,
 ) -> proc_macro2::TokenStream {
     let type_params: Vec<syn::Ident> = generics.type_params().map(|x| x.ident.clone()).collect();
-    let type_prefix: Vec<&'static str> = type_params
-        .iter()
-        .enumerate()
-        .map(|(i, _)| if i == 0 { "<" } else { "," })
-        .collect();
     let generics_str = if type_params.is_empty() {
         quote! {}
     } else {
         quote! {
-            #( + #type_prefix + &#type_params::#called_method())* + ">"
+            #( + &pbc_contract_common::abi::capitalize(&#type_params::#called_method()))*
         }
     };
     quote! { #type_id.to_owned() #generics_str }
@@ -347,9 +339,10 @@ fn create_type_spec_impl(
 
 fn tokens_to_ident<T: ToTokens>(v: &T) -> String {
     format!("{}", v.to_token_stream())
-        .replace([':', ' '], "_")
-        .replace(['<', '>', '"'], "")
         .to_lowercase()
+        .replace(char::is_whitespace, "_")
+        .matches(|c: char| c.is_ascii_alphanumeric() || c == '_')
+        .collect()
 }
 
 fn abi_for_type_fn_name(ast_type: &syn::TypePath) -> syn::Ident {
@@ -376,7 +369,10 @@ fn create_type_spec_extern_c(ast_type: &syn::TypePath) -> proc_macro2::TokenStre
     quote! {
         #[cfg(feature = "abi")]
         #[no_mangle]
-        #[doc = "ABI: Function pointer lookup"]
+        #[doc = "PBC ABI gen internal method. Ensures that [`"]
+        #[doc = stringify!(#ast_type)]
+        #[doc = "`] is visible to the ABI generator."]
+        #[doc = "This is a method used by the PBC ABI-gen system for generating ABI (machine-readable descriptions of smart contracts.)"]
         #[automatically_derived]
         pub unsafe extern "C" fn #abi_type_as_fn_ptr_function_name () -> u32 {
             let function_pointer = #abi_for_type_function_name #ty_generics_turbofish as *const ();

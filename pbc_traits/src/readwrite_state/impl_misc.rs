@@ -95,16 +95,22 @@ rw_int_copyable!(i64, read_i64_le, write_i64_le);
 rw_int_copyable!(i128, read_i128_le, write_i128_le);
 
 /// Implementation of [`ReadWriteState`] for byte arrays of arbitrary sizes.
-impl<const LEN: usize> ReadWriteState for [u8; LEN] {
-    const SERIALIZABLE_BY_COPY: bool = <u8 as ReadWriteState>::SERIALIZABLE_BY_COPY;
+impl<const LEN: usize, ElementT: ReadWriteState + Sized> ReadWriteState for [ElementT; LEN] {
+    const SERIALIZABLE_BY_COPY: bool = <ElementT as ReadWriteState>::SERIALIZABLE_BY_COPY;
 
     fn state_read_from<T: Read>(reader: &mut T) -> Self {
-        let mut buf: [u8; LEN] = [0; LEN];
-        reader.read_exact(&mut buf).unwrap();
-        buf
+        let mut data: [std::mem::MaybeUninit<ElementT>; LEN] =
+            unsafe { std::mem::MaybeUninit::uninit().assume_init() };
+        for element_addr in &mut data[..] {
+            element_addr.write(<ElementT as ReadWriteState>::state_read_from(reader));
+        }
+        data.map(|x| unsafe { x.assume_init() })
     }
 
     fn state_write_to<T: Write>(&self, writer: &mut T) -> std::io::Result<()> {
-        writer.write_all(self)
+        for elem in self {
+            <ElementT as ReadWriteState>::state_write_to(elem, writer)?;
+        }
+        Ok(())
     }
 }

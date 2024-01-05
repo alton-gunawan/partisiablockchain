@@ -1,0 +1,13 @@
+error[E0277]: the trait bound `[pbc_zk_core::sbi::Sbi<i8>; 10]: CreateTypeSpec` is not satisfied
+  --> tests/pbc_contract_codegen/compile_but_fail_abi/zk_happy_input_struct_with_byte_array.rs:16:10
+   |
+16 | #[derive(CreateTypeSpec, SecretBinary)]
+   |          ^^^^^^^^^^^^^^ the trait `CreateTypeSpec` is not implemented for `[pbc_zk_core::sbi::Sbi<i8>; 10]`
+   |
+   = help: the trait `CreateTypeSpec` is implemented for `[u8; LEN]`
+note: required by a bound in `NamedEntityAbi::new`
+  --> $WORKSPACE/pbc_contract_core/src/abi/named_entity.rs
+   |
+   |     pub fn new<T: CreateTypeSpec>(name: String, lut: &BTreeMap<String, u8>) -> Self {
+   |                   ^^^^^^^^^^^^^^ required by this bound in `NamedEntityAbi::new`
+   = note: this error originates in the derive macro `CreateTypeSpec` (in Nightly builds, run with -Z macro-backtrace for more info)

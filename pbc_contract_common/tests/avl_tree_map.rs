@@ -14,7 +14,7 @@ fn debug() {
 
 #[test]
 fn avl_tree_map() {
-    let tree: AvlTreeMap<i32, u128> = AvlTreeMap::new();
+    let mut tree: AvlTreeMap<i32, u128> = AvlTreeMap::new();
     assert_eq!(tree.len(), 0);
     assert!(tree.is_empty());
     tree.insert(1, 12);
@@ -37,7 +37,7 @@ fn avl_tree_map() {
 
 #[test]
 fn avl_tree_map_with_blobs() {
-    let tree: AvlTreeMap<i32, Vec<u8>> = AvlTreeMap::new();
+    let mut tree: AvlTreeMap<i32, Vec<u8>> = AvlTreeMap::new();
     assert_eq!(tree.len(), 0);
     assert!(tree.is_empty());
     tree.insert(1, vec![0, 1, 2, 3]);
@@ -80,7 +80,7 @@ fn avl_deserialize() {
 
 #[test]
 fn avl_iter() {
-    let tree: AvlTreeMap<i32, u128> = AvlTreeMap::new();
+    let mut tree: AvlTreeMap<i32, u128> = AvlTreeMap::new();
     tree.insert(3, 32);
     tree.insert(1, 12);
     tree.insert(4, 42);
@@ -96,7 +96,7 @@ fn avl_iter() {
 
 #[test]
 fn avl_iter_too_much() {
-    let tree: AvlTreeMap<i32, i32> = AvlTreeMap::new();
+    let mut tree: AvlTreeMap<i32, u128> = AvlTreeMap::new();
     tree.insert(3, 32);
     let mut iter = tree.iter();
     assert_eq!(iter.next(), Some((3, 32)));
@@ -112,7 +112,7 @@ fn avl_iter_too_much() {
 
 #[test]
 fn avl_iter_not_serializable_by_copy() {
-    let tree: AvlTreeMap<i32, Option<u128>> = AvlTreeMap::new();
+    let mut tree: AvlTreeMap<i32, Option<u128>> = AvlTreeMap::new();
     tree.insert(3, Some(32));
     tree.insert(1, None);
     tree.insert(4, Some(42));

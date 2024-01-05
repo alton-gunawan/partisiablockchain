@@ -471,17 +471,17 @@ fn assert_abi<T: AbiSerialize>(obj: &T, expected: Vec<u8>) {
 
 #[test]
 fn type_names_for_generic() {
-    assert_eq!(MyRoleEnum::<u32>::__ty_name(), "MyRoleEnum<u32>");
+    assert_eq!(MyRoleEnum::<u32>::__ty_name(), "MyRoleEnumU32");
     assert_eq!(
         AccessControl::<MiniAccess>::__ty_name(),
-        "AccessControl<MiniAccess>"
+        "AccessControlMiniAccess"
     );
     assert_eq!(
         StateWithAccessControl::__ty_name(),
         "StateWithAccessControl"
     );
-    assert!(MyRoleEnum::<u32>::__ty_identifier().ends_with("<u32>"));
-    assert!(AccessControl::<MiniAccess>::__ty_identifier().ends_with('>'));
+    assert!(MyRoleEnum::<u32>::__ty_identifier().ends_with("U32"));
+    assert_eq!(AccessControl::<MiniAccess>::__ty_identifier().len(), 72);
 }
 
 create_type_spec_for_generic! {MyRoleEnum::<u32>}
@@ -499,14 +499,14 @@ fn create_type_spec_for_generics() {
         .into_iter()
         .next()
         .unwrap();
-    assert_eq!(abi.name, "MyRoleEnum".to_string());
+    assert_eq!(abi.name, "MyRoleEnumU32".to_string());
     assert_eq!(abi.type_spec, vec![0x00, 1]);
 
     let abi: NamedTypeSpec = __abi_for_type_accesscontrol::<MyRoleEnum<u32>>(&lut)
         .into_iter()
         .next()
         .unwrap();
-    assert_eq!(abi.name, "AccessControl".to_string());
+    assert_eq!(abi.name, "AccessControlMyRoleEnumU32".to_string());
     assert_eq!(abi.type_spec, vec![0x00, 2]);
 
     let abi: NamedTypeSpec = __abi_for_type_statewithaccesscontrol(&lut)

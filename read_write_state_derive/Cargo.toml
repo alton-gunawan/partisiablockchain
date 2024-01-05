@@ -1,6 +1,6 @@
 [package]
 name = "read_write_state_derive"
-version = "16.32.0"
+version = "16.40.0"
 edition = "2021"
 license = "MIT"
 

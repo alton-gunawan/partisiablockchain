@@ -1,8 +1,8 @@
-
+use std::io::Write;
 use pbc_contract_codegen::init;
 use pbc_traits::WriteRPC;
 use pbc_contract_common::context::ContractContext;
-use pbc_contract_common::test_examples::{EXAMPLE_CONTEXT,example_zk_state};
+use pbc_contract_common::test_examples::{EXAMPLE_CONTEXT,example_zk_state_bytes};
 
 fn main() {}
 
@@ -27,7 +27,7 @@ fn setup_buffers() -> Vec<u8> {
     let mut input_buf = Vec::new();
     EXAMPLE_CONTEXT.rpc_write_to(&mut input_buf).unwrap();
     // ZkState Argument
-    example_zk_state().rpc_write_to(&mut input_buf).unwrap();
+    input_buf.write(&example_zk_state_bytes()).unwrap();
     // RPC Argument
     0x01020304u32.rpc_write_to(&mut input_buf).unwrap();
     input_buf

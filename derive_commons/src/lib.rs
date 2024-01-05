@@ -63,7 +63,7 @@ impl ReadWriteGenType {
 /// # Arguments
 /// * `generics` - Generics AST element to modify.
 /// * `trait_name` - Name of the trait.
-pub fn extend_generic_bounds_with_trait(generics: &mut syn::Generics, trait_name: syn::Path) {
+pub fn extend_generic_bounds_with_trait(generics: &mut syn::Generics, trait_name: &syn::Path) {
     // This method operates on syn directly, instead of emitting syntax directly, as this domain is
     // complex, and we want to minimize the risk of accidentally producing wrong syntax.
 
@@ -71,7 +71,7 @@ pub fn extend_generic_bounds_with_trait(generics: &mut syn::Generics, trait_name
         paren_token: None,
         modifier: syn::TraitBoundModifier::None,
         lifetimes: None,
-        path: trait_name,
+        path: trait_name.clone(),
     };
 
     for type_param in generics.type_params_mut() {
@@ -102,7 +102,7 @@ pub fn impl_read_write(
     let mut generics = ast.generics.clone();
 
     // Determine additional where clause for type parameters.
-    extend_generic_bounds_with_trait(&mut generics, trait_name.clone().into());
+    extend_generic_bounds_with_trait(&mut generics, &trait_name.clone().into());
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
@@ -265,7 +265,7 @@ pub fn field_to_type(field: &syn::Field) -> TokenStream {
 
             parse(quote!([#ident; #len]))
         }
-        _ => panic!("Unknown type."),
+        ty => panic!("Unsupported type: {:}", quote! { #ty }),
     };
     ty.to_token_stream()
 }
