@@ -1,14 +1,20 @@
 use crate::SecretBinaryFixedSize;
-use std::io::Read;
-use std::io::Write;
 
+/// Array implementation of [`SecretBinaryFixedSize`]
+#[automatically_derived]
+#[allow(unused, clippy::unused_unit)]
+impl<const LEN: usize, ElementT: SecretBinaryFixedSize> SecretBinaryFixedSize for [ElementT; LEN] {
+    const BITS: u32 = (LEN as u32) * <ElementT as SecretBinaryFixedSize>::BITS;
+}
+
+// Tuple implementations of [`SecretBinaryFixedSize`]
 macro_rules! tuple_impls {
     ( $( $name:ident )* ) => {
         #[automatically_derived]
         #[allow(unused, clippy::unused_unit)]
         impl<$($name: SecretBinaryFixedSize),*> SecretBinaryFixedSize for ($($name,)*)
         {
-            const BITS: u32 = $(<$name>::BITS+)* 0;
+            const BITS: u32 = $(<$name as SecretBinaryFixedSize>::BITS+)* 0;
         }
     };
 }

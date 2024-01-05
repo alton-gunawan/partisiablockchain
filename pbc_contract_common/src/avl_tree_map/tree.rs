@@ -134,13 +134,13 @@ impl<K: CreateTypeSpec, V: CreateTypeSpec> CreateTypeSpec for AvlTreeMap<K, V> {
     }
 }
 
-impl<K: ReadWriteState + Ord, V: ReadWriteState> Default for AvlTreeMap<K, V> {
+impl<K: ReadWriteState, V: ReadWriteState> Default for AvlTreeMap<K, V> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<K: ReadWriteState + Ord, V: ReadWriteState> AvlTreeMap<K, V> {
+impl<K: ReadWriteState, V: ReadWriteState> AvlTreeMap<K, V> {
     const VALUE_SERIALIZABLE_BY_COPY: bool = <V as ReadWriteState>::SERIALIZABLE_BY_COPY;
 
     /// Constructor of [`AvlTreeMap`].
@@ -210,7 +210,7 @@ impl<K: ReadWriteState + Ord, V: ReadWriteState> AvlTreeMap<K, V> {
     ///
     /// * `key`: the key to insert
     /// * `value`: the corresponding value to insert
-    pub fn insert(&self, key: K, value: V) {
+    pub fn insert(&mut self, key: K, value: V) {
         let mut key_bytes = Vec::new();
         key.state_write_to(&mut key_bytes).unwrap();
         let mut value_bytes = Vec::new();
@@ -223,7 +223,7 @@ impl<K: ReadWriteState + Ord, V: ReadWriteState> AvlTreeMap<K, V> {
     /// ### Parameter:
     ///
     /// * `key`: the key to remove from the map
-    pub fn remove(&self, key: &K) {
+    pub fn remove(&mut self, key: &K) {
         let mut key_bytes = Vec::new();
         key.state_write_to(&mut key_bytes).unwrap();
         remove(self.tree_id, &key_bytes);

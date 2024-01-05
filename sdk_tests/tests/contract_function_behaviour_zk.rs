@@ -175,10 +175,10 @@ fn do_zk_on_attestation_complete(
 #[test]
 fn action_behaviour() {
     let segments: [&[u8]; 4] = [
-        &rpc_self(EXAMPLE_CONTEXT),    // Context
-        &[1, 2, 3, 4, 1, 2, 3, 4],     // State
-        &rpc_self(example_zk_state()), // ZkState
-        &[8, 9],                       // RPC: arg1
+        &rpc_self(EXAMPLE_CONTEXT), // Context
+        &[1, 2, 3, 4, 1, 2, 3, 4],  // State
+        &example_zk_state_bytes(),  // ZkState
+        &[8, 9],                    // RPC: arg1
     ];
     test_contract_function_with_variants(__pbc_autogen__do_thing_wrapped, &segments);
 }
@@ -189,7 +189,7 @@ fn callback_behaviour() {
         &rpc_self(EXAMPLE_CONTEXT),            // Context
         &rpc_self(example_callback_context()), // Callback context
         &[1, 2, 3, 4, 1, 2, 3, 4],             // State
-        &rpc_self(example_zk_state()),         // ZkState
+        &example_zk_state_bytes(),             // ZkState
         &[8, 9],                               // RPC: arg1
     ];
     test_contract_function_with_variants(__pbc_autogen__call_me_discretely_wrapped, &segments);
@@ -198,10 +198,10 @@ fn callback_behaviour() {
 #[test]
 fn zk_on_secret_input_behaviour() {
     let segments: [&[u8]; 4] = [
-        &rpc_self(EXAMPLE_CONTEXT),    // Context
-        &[1, 2, 3, 4, 1, 2, 3, 4],     // State
-        &rpc_self(example_zk_state()), // ZkState
-        &[8, 9],                       // RPC: arg1
+        &rpc_self(EXAMPLE_CONTEXT), // Context
+        &[1, 2, 3, 4, 1, 2, 3, 4],  // State
+        &example_zk_state_bytes(),  // ZkState
+        &[8, 9],                    // RPC: arg1
     ];
     test_contract_function_with_variants(__pbc_autogen__do_zk_on_secret_input_wrapped, &segments);
 }
@@ -210,10 +210,10 @@ fn zk_on_secret_input_behaviour() {
 fn zk_on_compute_complete() {
     let variables = vec![SECRET_VAR_ID_30, SECRET_VAR_ID_31];
     let segments: [&[u8]; 4] = [
-        &rpc_self(EXAMPLE_CONTEXT),    // Context
-        &[1, 2, 3, 4, 1, 2, 3, 4],     // State
-        &rpc_self(example_zk_state()), // ZkState
-        &rpc_self(variables),          // RPC: Created variables
+        &rpc_self(EXAMPLE_CONTEXT), // Context
+        &[1, 2, 3, 4, 1, 2, 3, 4],  // State
+        &example_zk_state_bytes(),  // ZkState
+        &rpc_self(variables),       // RPC: Created variables
     ];
     test_contract_function_with_variants(
         __pbc_autogen__do_zk_on_compute_complete_wrapped,

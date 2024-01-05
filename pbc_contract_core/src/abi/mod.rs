@@ -8,7 +8,7 @@ pub use enum_variant::EnumVariant;
 pub use func::FnAbi;
 pub use named_entity::NamedEntityAbi;
 use pbc_traits::WriteInt;
-pub use types::NamedTypeSpec;
+pub use types::{capitalize, NamedTypeSpec};
 
 mod contract;
 mod enum_variant;

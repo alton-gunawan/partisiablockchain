@@ -132,7 +132,7 @@ fn wrap_zk_compute_creator(
                 #(
                     {
                         let mut buf: Vec<u8> = Vec::new();
-                        #parameter_names.secret_write_to(&mut buf).unwrap();
+                        <#parameter_types as SecretBinary>::secret_write_to(&#parameter_names, &mut buf).unwrap();
                         buf
                     },
                 )*

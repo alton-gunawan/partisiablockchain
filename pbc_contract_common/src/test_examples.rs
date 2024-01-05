@@ -166,12 +166,18 @@ pub fn zk_closed_open() -> zk::ZkClosed<ExampleZkMetadata> {
 }
 
 /// Generator of Signatures examples
-fn example_signature(rng: &mut Rng) -> Signature {
+fn example_signature_rng(rng: &mut Rng) -> Signature {
     Signature {
         recovery_id: rng.get_u8(),
         value_r: rng.get_bytearray(),
         value_s: rng.get_bytearray(),
     }
+}
+
+/// Generator of Signatures examples
+pub fn example_signature() -> Signature {
+    let mut rng = Rng::new(312);
+    example_signature_rng(&mut rng)
 }
 
 /// Generator of example data attestations.
@@ -181,16 +187,16 @@ pub fn example_data_attestation() -> zk::DataAttestation {
         attestation_id: zk::AttestationId::new(1),
         data: vec![1, 2, 3, 4, 5, 6, 7, 8],
         signatures: vec![
-            example_signature(&mut rng),
-            example_signature(&mut rng),
-            example_signature(&mut rng),
-            example_signature(&mut rng),
+            Some(example_signature_rng(&mut rng)),
+            Some(example_signature_rng(&mut rng)),
+            Some(example_signature_rng(&mut rng)),
+            Some(example_signature_rng(&mut rng)),
         ],
     }
 }
 
 /// Generate example event subscription.
-fn example_subscription() -> zk::evm_event::EventSubscription {
+pub fn example_subscription() -> zk::evm_event::EventSubscription {
     let mut rng = Rng::new(312);
     zk::evm_event::EventSubscription {
         subscription_id: zk::evm_event::EventSubscriptionId::new(1),
@@ -209,7 +215,7 @@ fn example_subscription() -> zk::evm_event::EventSubscription {
 }
 
 /// Generate example external event log.
-fn example_external_event() -> zk::evm_event::ExternalEvent {
+pub fn example_external_event() -> zk::evm_event::ExternalEvent {
     let mut rng = Rng::new(312);
     zk::evm_event::ExternalEvent {
         subscription_id: zk::evm_event::EventSubscriptionId::new(1),
@@ -225,15 +231,42 @@ fn example_external_event() -> zk::evm_event::ExternalEvent {
 }
 
 /// Generator of example callback contexts
-pub fn example_zk_state() -> zk::ZkState<ExampleZkMetadata> {
-    zk::ZkState {
-        calculation_state: zk::CalculationStatus::Waiting,
-        pending_inputs: vec![ZK_CLOSED_1],
-        secret_variables: vec![ZK_CLOSED_2, zk_closed_open()],
-        data_attestations: vec![example_data_attestation()],
-        event_subscriptions: vec![example_subscription()],
-        external_events: vec![example_external_event()],
-    }
+/// Deserializes to:
+/// `
+/// zk::ZkState {
+///     calculation_state: zk::CalculationStatus::Waiting,
+///     pending_inputs: AvlTreeMap::with_id(-1),
+///     secret_variables: AvlTreeMap::with_id(-2),
+///     data_attestations: AvlTreeMap::with_id(-3),
+///     event_subscriptions: AvlTreeMap::with_id(-4),
+///     external_events: AvlTreeMap::with_id(-5),
+/// }
+/// `
+pub fn example_zk_state_bytes() -> Vec<u8> {
+    vec![
+        0, 255, 255, 255, 255, 255, 255, 255, 254, 255, 255, 255, 253, 255, 255, 255, 252, 255,
+        255, 255, 251,
+    ]
+}
+
+/// Generate example secret var id
+pub fn example_secret_var_id() -> zk::SecretVarId {
+    zk::SecretVarId::new(1)
+}
+
+/// Generate example attestation id
+pub fn example_attestation_id() -> zk::AttestationId {
+    zk::AttestationId::new(1)
+}
+
+/// Generate example event subscription id
+pub fn example_event_subscription_id() -> zk::evm_event::EventSubscriptionId {
+    zk::evm_event::EventSubscriptionId::new(1)
+}
+
+/// Generate example external event id
+pub fn example_external_event_id() -> zk::evm_event::ExternalEventId {
+    zk::evm_event::ExternalEventId::new(1)
 }
 
 /// Simple Linear Congruential Generator RNG for generating example data.

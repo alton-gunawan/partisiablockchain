@@ -97,7 +97,9 @@ impl EvmEventFilterBuilder {
 ///
 /// Cannot be manually created; must be retrieved from state.
 #[repr(transparent)]
-#[derive(PartialEq, Eq, ReadRPC, WriteRPC, Debug, Clone, Copy, CreateTypeSpecInternal)]
+#[derive(
+    PartialEq, Eq, ReadRPC, WriteRPC, ReadWriteState, Debug, Clone, Copy, CreateTypeSpecInternal,
+)]
 #[non_exhaustive]
 pub struct EventSubscriptionId {
     raw_id: i32,
@@ -116,7 +118,7 @@ impl EventSubscriptionId {
 /// # Invariants
 ///
 /// Cannot be manually created; must be retrieved from state.
-#[derive(Debug, ReadRPC, WriteRPC)]
+#[derive(Debug, ReadWriteState)]
 #[non_exhaustive]
 pub struct EventSubscription {
     /// The id of this event subscription.
@@ -139,7 +141,9 @@ pub struct EventSubscription {
 ///
 /// Cannot be manually created; must be retrieved from state.
 #[repr(transparent)]
-#[derive(PartialEq, Eq, ReadRPC, WriteRPC, Debug, Clone, Copy, CreateTypeSpecInternal)]
+#[derive(
+    PartialEq, Eq, ReadRPC, WriteRPC, ReadWriteState, Debug, Clone, Copy, CreateTypeSpecInternal,
+)]
 #[non_exhaustive]
 pub struct ExternalEventId {
     raw_id: i32,
@@ -158,7 +162,7 @@ impl ExternalEventId {
 /// # Invariants
 ///
 /// Cannot be manually created; must be retrieved from state.
-#[derive(Debug, ReadRPC, WriteRPC)]
+#[derive(Debug, ReadWriteState)]
 #[non_exhaustive]
 pub struct ExternalEvent {
     /// The id of the event subscription.

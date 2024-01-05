@@ -15,6 +15,7 @@ use read_write_rpc_derive::WriteRPC;
 use read_write_state_derive::ReadWriteState;
 
 use crate::address::Address;
+use crate::avl_tree_map::AvlTreeMap;
 use crate::shortname::ShortnameZkComputation;
 use crate::signature::Signature;
 use crate::zk::evm_event::{
@@ -52,6 +53,16 @@ impl SecretVarId {
     }
 }
 
+impl SecretBinary for SecretVarId {
+    fn secret_read_from<ReadT: Read>(reader: &mut ReadT) -> Self {
+        <Self as pbc_traits::ReadWriteState>::state_read_from(reader)
+    }
+
+    fn secret_write_to<WriteT: Write>(&self, writer: &mut WriteT) -> std::io::Result<()> {
+        <Self as pbc_traits::ReadWriteState>::state_write_to(self, writer)
+    }
+}
+
 /// Identifier for a secret input (variable).
 type SecretInputId = SecretVarId;
 
@@ -61,7 +72,7 @@ type SecretInputId = SecretVarId;
 ///
 /// Cannot be manually created; must be retrieved from state.
 #[repr(transparent)]
-#[derive(PartialEq, Eq, ReadRPC, WriteRPC, Debug, Clone, Copy)]
+#[derive(PartialEq, Eq, ReadRPC, WriteRPC, ReadWriteState, Debug, Clone, Copy)]
 #[non_exhaustive]
 pub struct AttestationId {
     raw_id: u32,
@@ -80,13 +91,13 @@ impl AttestationId {
 /// # Invariants
 ///
 /// Cannot be manually created; must be retrieved from state.
-#[derive(Debug, ReadRPC, WriteRPC)]
+#[derive(Debug, ReadWriteState)]
 #[non_exhaustive]
 pub struct DataAttestation {
     /// The id of this data attestation.
     pub attestation_id: AttestationId,
     /// Signatures that have attested for this data.
-    pub signatures: Vec<Signature>,
+    pub signatures: Vec<Option<Signature>>,
     /// The attested data itself.
     pub data: Vec<u8>,
 }
@@ -132,7 +143,7 @@ pub enum CalculationStatus {
 ///
 /// - `<MetadataT>`: Additional data stored along with each variable.
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, ReadWriteState)]
 #[non_exhaustive]
 pub struct ZkClosed<MetadataT> {
     /// Id of the secret variable
@@ -145,28 +156,6 @@ pub struct ZkClosed<MetadataT> {
     pub metadata: MetadataT,
     /// Data, but only if published
     pub data: Option<Vec<u8>>,
-}
-
-impl<MetadataT: ReadWriteState> ReadRPC for ZkClosed<MetadataT> {
-    fn rpc_read_from<T: Read>(reader: &mut T) -> Self {
-        Self {
-            variable_id: SecretVarId::rpc_read_from(reader),
-            owner: Address::rpc_read_from(reader),
-            is_sealed: bool::rpc_read_from(reader),
-            metadata: MetadataT::state_read_from(reader),
-            data: <Option<Vec<u8>>>::rpc_read_from(reader),
-        }
-    }
-}
-
-impl<MetadataT: ReadWriteState> WriteRPC for ZkClosed<MetadataT> {
-    fn rpc_write_to<T: Write>(&self, writer: &mut T) -> std::io::Result<()> {
-        self.variable_id.rpc_write_to(writer)?;
-        self.owner.rpc_write_to(writer)?;
-        self.is_sealed.rpc_write_to(writer)?;
-        self.metadata.state_write_to(writer)?;
-        self.data.rpc_write_to(writer)
-    }
 }
 
 impl<MetaDataT> ZkClosed<MetaDataT> {
@@ -190,73 +179,44 @@ pub struct ZkState<SecretVarMetadataT> {
     /// The MPC's current state.
     pub calculation_state: CalculationStatus,
     /// Variables that are in the process of being input.
-    pub pending_inputs: Vec<ZkClosed<SecretVarMetadataT>>,
+    pub pending_inputs: AvlTreeMap<SecretVarId, ZkClosed<SecretVarMetadataT>>,
     /// Secret variables that have been commited to.
-    pub secret_variables: Vec<ZkClosed<SecretVarMetadataT>>,
+    pub secret_variables: AvlTreeMap<SecretVarId, ZkClosed<SecretVarMetadataT>>,
     /// Attested data
-    pub data_attestations: Vec<DataAttestation>,
+    pub data_attestations: AvlTreeMap<AttestationId, DataAttestation>,
     /// Event subscriptions
-    pub event_subscriptions: Vec<EventSubscription>,
+    pub event_subscriptions: AvlTreeMap<EventSubscriptionId, EventSubscription>,
     /// External events
-    pub external_events: Vec<ExternalEvent>,
+    pub external_events: AvlTreeMap<ExternalEventId, ExternalEvent>,
 }
 
 impl<MetadataT: ReadWriteState> ReadRPC for ZkState<MetadataT> {
     fn rpc_read_from<T: Read>(reader: &mut T) -> Self {
         Self {
             calculation_state: CalculationStatus::rpc_read_from(reader),
-            pending_inputs: <_>::rpc_read_from(reader),
-            secret_variables: <_>::rpc_read_from(reader),
-            data_attestations: <_>::rpc_read_from(reader),
-            event_subscriptions: <_>::rpc_read_from(reader),
-            external_events: <_>::rpc_read_from(reader),
+            pending_inputs: <_>::state_read_from(reader),
+            secret_variables: <_>::state_read_from(reader),
+            data_attestations: <_>::state_read_from(reader),
+            event_subscriptions: <_>::state_read_from(reader),
+            external_events: <_>::state_read_from(reader),
         }
     }
 }
 
-impl<MetadataT: ReadWriteState> WriteRPC for ZkState<MetadataT> {
-    fn rpc_write_to<T: Write>(&self, writer: &mut T) -> std::io::Result<()> {
-        self.calculation_state.rpc_write_to(writer)?;
-        self.pending_inputs.rpc_write_to(writer)?;
-        self.secret_variables.rpc_write_to(writer)?;
-        self.data_attestations.rpc_write_to(writer)?;
-        self.event_subscriptions.rpc_write_to(writer)?;
-        self.external_events.rpc_write_to(writer)
-    }
-}
-
-impl<SecretVarMetadataT> ZkState<SecretVarMetadataT> {
+impl<SecretVarMetadataT: ReadWriteState> ZkState<SecretVarMetadataT> {
     /// Utility method for finding pending input with given id
-    pub fn get_pending_input(&self, id: SecretInputId) -> Option<&ZkClosed<SecretVarMetadataT>> {
-        self.pending_inputs.iter().find(|x| x.variable_id == id)
-    }
-
-    /// Utility method for finding input with given id.
-    pub fn get_pending_inputs_for(&self, owner: Address) -> Vec<&ZkClosed<SecretVarMetadataT>> {
-        self.pending_inputs
-            .iter()
-            .filter(|x| x.owner == owner)
-            .collect()
+    pub fn get_pending_input(&self, id: SecretInputId) -> Option<ZkClosed<SecretVarMetadataT>> {
+        self.pending_inputs.get(&id)
     }
 
     /// Utility method for finding variable with given id
-    pub fn get_variable(&self, id: SecretVarId) -> Option<&ZkClosed<SecretVarMetadataT>> {
-        self.secret_variables.iter().find(|x| x.variable_id == id)
-    }
-
-    /// Utility method for finding variables for the given owner
-    pub fn get_variables_for(&self, owner: Address) -> Vec<&ZkClosed<SecretVarMetadataT>> {
-        self.secret_variables
-            .iter()
-            .filter(|x| x.owner == owner)
-            .collect()
+    pub fn get_variable(&self, id: SecretVarId) -> Option<ZkClosed<SecretVarMetadataT>> {
+        self.secret_variables.get(&id)
     }
 
     /// Utility method for finding attestation by attestation id
-    pub fn get_attestation(&self, attestation_id: AttestationId) -> Option<&DataAttestation> {
-        self.data_attestations
-            .iter()
-            .find(|x| x.attestation_id == attestation_id)
+    pub fn get_attestation(&self, attestation_id: AttestationId) -> Option<DataAttestation> {
+        self.data_attestations.get(&attestation_id)
     }
 }
 
@@ -408,8 +368,6 @@ pub enum ZkStateChange {
 
     /// Delete an EVM event.
     DeleteEvmEvent {
-        /// Identifier for the subscription to delete from.
-        subscription_id: EventSubscriptionId,
         /// Identifier for the event to delete.
         event_id: ExternalEventId,
     },
@@ -417,7 +375,7 @@ pub enum ZkStateChange {
     /// Delete EVM events.
     DeleteEvmEvents {
         /// List of subscription and event ids.
-        events_to_delete: Vec<(EventSubscriptionId, ExternalEventId)>,
+        events_to_delete: Vec<ExternalEventId>,
     },
 }
 
@@ -556,23 +514,14 @@ impl WriteRPC for ZkStateChange {
                 writer.write_u8(Self::DISCRIMINANT_UNSUBSCRIBE_FROM_EVM_EVENTS)?;
                 subscription_id.rpc_write_to(writer)
             }
-            Self::DeleteEvmEvent {
-                subscription_id,
-                event_id,
-            } => {
+            Self::DeleteEvmEvent { event_id } => {
                 writer.write_u8(Self::DISCRIMINANT_DELETE_EXTERNAL_EVENTS)?;
                 writer.write_i32_be(1)?;
-                subscription_id.rpc_write_to(writer)?;
                 event_id.rpc_write_to(writer)
             }
             Self::DeleteEvmEvents { events_to_delete } => {
                 writer.write_u8(Self::DISCRIMINANT_DELETE_EXTERNAL_EVENTS)?;
-                writer.write_i32_be(events_to_delete.len() as i32)?;
-                for event in events_to_delete {
-                    event.0.rpc_write_to(writer)?;
-                    event.1.rpc_write_to(writer)?;
-                }
-                Ok(())
+                events_to_delete.rpc_write_to(writer)
             }
         }
     }

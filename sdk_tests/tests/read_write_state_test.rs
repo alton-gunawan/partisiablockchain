@@ -12,6 +12,8 @@ use pbc_zk::SecretBinary;
 use read_write_state_derive::ReadWriteState;
 use std::collections::VecDeque;
 
+use proptest::proptest;
+
 // Test Utility
 
 fn read_write_state_roundtrip<T: ReadWriteState>(struct_1: &T, byte_repr: &[u8]) -> T {
@@ -33,9 +35,6 @@ fn read_write_state_roundtrip_with_eq<T: ReadWriteState + Debug + Eq>(
     let struct_2 = read_write_state_roundtrip(struct_1, byte_repr);
     assert_eq!(format!("{:?}", struct_1), format!("{:?}", struct_2));
     assert_eq!(*struct_1, struct_2);
-
-    read_write_secret_roundtrip_with_eq(struct_1, byte_repr);
-
     struct_2
 }
 
@@ -63,17 +62,17 @@ fn read_write_secret_roundtrip_with_eq<T: SecretBinary + Debug + Eq>(
 
 // Structures
 
-#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, SecretBinary, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct EmptyStruct {}
 
-#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, SecretBinary, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct SimpleStruct {
     a: u8,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, SecretBinary, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct ComplexStruct {
     a: SimpleStruct,
@@ -94,7 +93,7 @@ struct StructWithEmptyStructVec {
     ls: Vec<EmptyStruct>,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, SecretBinary, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct StructWithPadding {
     a: u8,
@@ -113,14 +112,14 @@ struct VecDequeStructWithPadding {
     ls: VecDeque<StructWithPadding>,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, SecretBinary, CreateTypeSpec, Debug)]
 #[repr(C, align(4))]
 struct StructWithAlignment {
     b: u16,
     a: u8,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, SecretBinary, CreateTypeSpec, Debug)]
 #[repr(C, align(2))]
 struct StructWithSizeLargerThanAlignment {
     v1: u8,
@@ -129,7 +128,7 @@ struct StructWithSizeLargerThanAlignment {
     v4: u8,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, SecretBinary, CreateTypeSpec, Debug)]
 #[repr(C, align(4))]
 struct StructWithSizeSmallerThanAlignment {
     v1: u8,
@@ -159,7 +158,7 @@ struct StructWithOption {
     a: Option<ComplexStruct>,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, SecretBinary, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct StructWithByteArray {
     a: [u8; 5],
@@ -171,13 +170,13 @@ struct VecWithByteArray {
     ls: Vec<StructWithByteArray>,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, SecretBinary, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct StructWithLargeByteArray {
     a: [u8; 100],
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, SecretBinary, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct NestedStruct {
     a: StructWithByteArray,
@@ -213,22 +212,50 @@ struct AddressTuple {
     recipient: Address,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, SecretBinary, Debug)]
 #[repr(C)]
 struct Tuple1<T> {
     v: T,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+#[derive(Eq, PartialEq, ReadWriteState, SecretBinary, CreateTypeSpec, Debug)]
 #[repr(C)]
 struct Tuple2<V1, V2> {
     v1: V1,
     v2: V2,
 }
 
-#[derive(Eq, PartialEq, ReadWriteState, Debug)]
+create_type_spec_for_generic! {Tuple2<u8, u8>}
+create_type_spec_for_generic! {Tuple2<[u8; 5], [u8; 3]>}
+create_type_spec_for_generic! {Tuple2<u8, u16>}
+create_type_spec_for_generic! {Tuple2<u32, Tuple2<u8, u16>>}
+
+#[derive(Eq, PartialEq, ReadWriteState, SecretBinary, CreateTypeSpec, Debug)]
 #[repr(C)]
-struct Range<T: ReadWriteState>
+struct Tuple6<V1, V2, V3, V4, V5, V6> {
+    v1: V1,
+    v2: V2,
+    v3: V3,
+    v4: V4,
+    v5: V5,
+    v6: V6,
+}
+
+create_type_spec_for_generic! {Tuple6<u8, i8, u16, i16, u32, i32>}
+
+#[derive(Eq, PartialEq, ReadWriteState, SecretBinary, CreateTypeSpec, Debug)]
+#[repr(C)]
+struct WeirdState {
+    f1: Tuple2<u8, u8>,
+    f2: Tuple2<[u8; 5], [u8; 3]>,
+    f3: Tuple2<u8, u16>,
+    f4: Tuple2<u32, Tuple2<u8, u16>>,
+    f5: Tuple6<u8, i8, u16, i16, u32, i32>,
+}
+
+#[derive(Eq, PartialEq, ReadWriteState, SecretBinary, Debug)]
+#[repr(C)]
+struct Range<T>
 where
     T: Ord,
 {
@@ -309,6 +336,7 @@ enum RoleEnum {
 }
 
 create_type_spec_for_generic! {AccessControl<RoleEnum>}
+create_type_spec_for_generic! {AccessControl<u32>}
 
 #[derive(Eq, PartialEq, ReadWriteState, CreateTypeSpec, Debug)]
 pub struct AccessControl<RoleEnum: Ord + Clone + Eq + PartialEq> {
@@ -317,16 +345,61 @@ pub struct AccessControl<RoleEnum: Ord + Clone + Eq + PartialEq> {
 
 // Tests
 
-#[test]
-pub fn serialize_u8() {
-    let state = 42u8;
-    read_write_state_roundtrip_with_eq(&state, &[42]);
+proptest! {
+    #[test]
+    fn serialize_bool(state: bool) {
+        let expected_bytes = [if state { 1 } else { 0 }];
+        read_write_state_roundtrip_with_eq(&state, &expected_bytes);
+        read_write_secret_roundtrip_with_eq(&state, &expected_bytes);
+    }
 }
 
-#[test]
-pub fn serialize_simple_struct() {
-    let state = SimpleStruct { a: 42 };
-    read_write_state_roundtrip_with_eq(&state, &[42]);
+proptest! {
+    #[test]
+    fn serialize_u8(state: u8) {
+        let expected_bytes = [state];
+        read_write_state_roundtrip_with_eq(&state, &expected_bytes);
+        read_write_secret_roundtrip_with_eq(&state, &expected_bytes);
+    }
+}
+
+proptest! {
+    #[test]
+    fn serialize_simple_struct(a: u8) {
+        let state = SimpleStruct { a };
+        let expected_bytes = [a];
+        read_write_state_roundtrip_with_eq(&state, &expected_bytes);
+        read_write_secret_roundtrip_with_eq(&state, &expected_bytes);
+    }
+}
+
+proptest! {
+    #[test]
+    fn serialize_tuple2_u8_u8(v1: u8, v2: u8) {
+        let state = Tuple2 { v1, v2 };
+        let expected_bytes = [v1, v2];
+        read_write_state_roundtrip_with_eq(&state, &expected_bytes);
+        read_write_secret_roundtrip_with_eq(&state, &expected_bytes);
+    }
+}
+
+proptest! {
+    #[test]
+    fn serialize_tuple2_byte_arrays(v1: [u8; 5], v2: [u8; 3]) {
+        let state = Tuple2 { v1, v2 };
+        let expected_bytes = [
+             v1[0],
+             v1[1],
+             v1[2],
+             v1[3],
+             v1[4],
+             v2[0],
+             v2[1],
+             v2[2],
+        ];
+        read_write_state_roundtrip_with_eq(&state, &expected_bytes);
+        read_write_secret_roundtrip_with_eq(&state, &expected_bytes);
+    }
 }
 
 #[test]
@@ -347,6 +420,7 @@ pub fn serialize_complex_struct() {
     ];
 
     read_write_state_roundtrip_with_eq(&state, &expected_bytes);
+    read_write_secret_roundtrip_with_eq(&state, &expected_bytes);
 }
 
 #[test]
@@ -376,7 +450,9 @@ pub fn serialize_struct_with_vec() {
 #[test]
 pub fn serialize_empty_struct() {
     let state = EmptyStruct {};
-    read_write_state_roundtrip_with_eq(&state, &[]);
+    let expected_bytes = [];
+    read_write_state_roundtrip_with_eq(&state, &expected_bytes);
+    read_write_secret_roundtrip_with_eq(&state, &expected_bytes);
 }
 
 #[test]
@@ -407,6 +483,7 @@ pub fn serialize_struct_with_padding() {
     assert_eq!(std::mem::size_of_val(&state), 4);
     assert_eq!(std::mem::align_of_val(&state), 2);
     read_write_state_roundtrip_with_eq(&state, &expected_bytes);
+    read_write_secret_roundtrip_with_eq(&state, &expected_bytes);
 }
 
 #[test]
@@ -436,7 +513,7 @@ pub fn serialize_state_with_avltree() {
     let _unused2: AvlTreeMap<u32, u32> = AvlTreeMap::default();
     let _unused3: AvlTreeMap<u32, u32> = AvlTreeMap::default();
     let _unused4: AvlTreeMap<u32, u32> = AvlTreeMap::new();
-    let state = StateWithAvlMap {
+    let mut state = StateWithAvlMap {
         map: AvlTreeMap::new(),
     };
     state.map.insert(1, "Hello, world!".to_string());
@@ -595,6 +672,7 @@ pub fn serialize_struct_with_alignment() {
     assert_eq!(std::mem::size_of_val(&state), 4);
     assert_eq!(std::mem::align_of_val(&state), 4);
     read_write_state_roundtrip_with_eq(&state, &expected_bytes);
+    read_write_secret_roundtrip_with_eq(&state, &expected_bytes);
 }
 
 #[test]
@@ -616,6 +694,7 @@ pub fn serialize_struct_with_size_larger_than_alignment() {
     assert_eq!(std::mem::size_of_val(&state), 4);
     assert_eq!(std::mem::align_of_val(&state), 2);
     read_write_state_roundtrip_with_eq(&state, &expected_bytes);
+    read_write_secret_roundtrip_with_eq(&state, &expected_bytes);
 }
 
 #[test]
@@ -630,6 +709,7 @@ pub fn serialize_struct_with_size_smaller_than_alignment() {
     assert_eq!(std::mem::size_of_val(&state), 4);
     assert_eq!(std::mem::align_of_val(&state), 4);
     read_write_state_roundtrip_with_eq(&state, &expected_bytes);
+    read_write_secret_roundtrip_with_eq(&state, &expected_bytes);
 }
 
 #[test]
@@ -743,6 +823,7 @@ pub fn serialize_struct_with_bytearray() {
     assert_eq!(std::mem::size_of_val(&state), 5);
     assert_eq!(std::mem::align_of_val(&state), 1);
     read_write_state_roundtrip_with_eq(&state, &expected_bytes);
+    read_write_secret_roundtrip_with_eq(&state, &expected_bytes);
 }
 
 #[test]
@@ -753,6 +834,7 @@ pub fn serialize_struct_with_bytearray_large() {
     assert_eq!(std::mem::size_of_val(&state), 100);
     assert_eq!(std::mem::align_of_val(&state), 1);
     read_write_state_roundtrip_with_eq(&state, &expected_bytes);
+    read_write_secret_roundtrip_with_eq(&state, &expected_bytes);
 }
 
 #[test]
@@ -765,6 +847,7 @@ pub fn serialize_struct_with_bytearray_zeroes() {
     assert_eq!(std::mem::size_of_val(&state), 5);
     assert_eq!(std::mem::align_of_val(&state), 1);
     read_write_state_roundtrip_with_eq(&state, &expected_bytes);
+    read_write_secret_roundtrip_with_eq(&state, &expected_bytes);
 }
 
 #[test]
@@ -804,6 +887,7 @@ pub fn serialize_nested_struct() {
     assert_eq!(std::mem::size_of_val(&state), 8);
     assert_eq!(std::mem::align_of_val(&state), 1);
     read_write_state_roundtrip_with_eq(&state, &expected_bytes);
+    read_write_secret_roundtrip_with_eq(&state, &expected_bytes);
 }
 
 #[test]
@@ -905,6 +989,7 @@ pub fn serialize_tuple1() {
     assert_eq!(std::mem::size_of_val(&state), 4);
     assert_eq!(std::mem::align_of_val(&state), 4);
     read_write_state_roundtrip_with_eq(&state, &expected_bytes);
+    read_write_secret_roundtrip_with_eq(&state, &expected_bytes);
 }
 
 #[test]
@@ -926,6 +1011,7 @@ pub fn serialize_tuple2() {
     assert_eq!(std::mem::size_of_val(&state), 8);
     assert_eq!(std::mem::align_of_val(&state), 4);
     read_write_state_roundtrip_with_eq(&state, &expected_bytes);
+    read_write_secret_roundtrip_with_eq(&state, &expected_bytes);
 }
 
 #[test]
